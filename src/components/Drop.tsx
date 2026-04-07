@@ -67,7 +67,7 @@ export function Drop({ id, title, state, effortHours, xOffset, isBlocked, refere
           style={{ width, position: 'absolute', left: actualLeft }}
           className={cn(
             "h-16 rounded-full flex items-center pl-6 pr-4 cursor-pointer backdrop-blur-md border relative overflow-hidden group transition-all duration-300 z-20 outline-none",
-            isCompleted && "bg-[#0a192f]/90 border-blue-900/50 w-full hover:bg-slate-800/80",
+            isCompleted && "bg-green-950/20 border-green-500/30 w-full hover:bg-green-900/30",
             isActive && !isBlocked && "bg-gradient-to-r from-blue-900/60 to-cyan-900/40 border-cyan-500/50 hover:border-cyan-400",
             isActive && isBlocked && "bg-gradient-to-r from-rose-900/60 to-rose-950/40 border-rose-500/50 hover:border-rose-400",
             isGhost && !isBlocked && "bg-teal-900/20 border-teal-500/30 border-dashed hover:border-teal-500/50 hover:bg-teal-900/30",
@@ -85,7 +85,7 @@ export function Drop({ id, title, state, effortHours, xOffset, isBlocked, refere
             {isBlocked ? (
               <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
             ) : isCompleted ? (
-              <CheckCircle2 className="w-5 h-5 text-slate-500 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
             ) : isActive ? (
               <div className="w-5 h-5 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
@@ -96,7 +96,7 @@ export function Drop({ id, title, state, effortHours, xOffset, isBlocked, refere
             
             <span className={cn(
               "text-sm font-medium truncate pointer-events-none",
-              isCompleted ? "text-blue-100" : isActive ? "text-cyan-50" : "text-teal-200/70"
+              isCompleted ? "text-green-100" : isActive ? "text-cyan-50" : "text-teal-200/70"
             )}>
               {title}
             </span>

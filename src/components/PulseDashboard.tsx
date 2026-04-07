@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AgentPanel, FeedItem } from './AgentPanel';
 import { Drop, DropState } from './Drop';
-import { OracleBriefing } from './OracleBriefing';
 import { VitalsBar } from './VitalsBar';
 import { cn } from '@/lib/utils';
 import { GLOBAL_STREAMS, STREAM_COLORS, Reference } from '@/lib/streams';
@@ -238,7 +237,6 @@ export function PulseDashboard() {
     <div 
       className="relative w-full h-full flex flex-col transition-all duration-500 ease-in-out bg-[#020617] text-slate-50"
     >
-      <OracleBriefing isOpen={isAgentOpen} />
       <VitalsBar isOpen={isAgentOpen} />
       
       <div className="flex-1 flex relative">
@@ -252,7 +250,7 @@ export function PulseDashboard() {
              
              {/* Stream Active Path Selector */}
              <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-               <Zap className="w-4 h-4 ml-2 text-emerald-400" />
+               <Zap className="w-4 h-4 ml-2 text-teal-400" />
                <span className="text-xs font-bold text-slate-300 mr-2 tracking-wide uppercase">Stream Flow</span>
                <div className="flex gap-1">
                  <button onClick={() => setActiveStreamPathId(null)} className={cn("px-3 py-1 rounded-[10px] text-[10px] font-bold tracking-widest transition-all", !activeStreamPathId ? "bg-slate-800 text-slate-200" : "text-slate-500 hover:text-slate-300 hover:bg-white/5")}>NONE</button>
@@ -279,9 +277,9 @@ export function PulseDashboard() {
 
              {/* Zoom Scale Selector */}
              <div className="inline-flex bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-               <button onClick={() => setZoomScale(1)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 1 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>8h (Focus)</button>
-               <button onClick={() => setZoomScale(0.6)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.6 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>24h (Daily)</button>
-               <button onClick={() => setZoomScale(0.25)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.25 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>1w (Overview)</button>
+               <button onClick={() => setZoomScale(1)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 1 ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>8h (Focus)</button>
+               <button onClick={() => setZoomScale(0.6)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.6 ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>24h (Daily)</button>
+               <button onClick={() => setZoomScale(0.25)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.25 ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>1w (Overview)</button>
              </div>
           </div>
           
@@ -343,7 +341,7 @@ export function PulseDashboard() {
                       const vel = memberVelocity[member.id] || 0;
                       const isPositive = vel >= 0;
                       return (
-                        <div className={cn("text-[10px] font-bold px-2 py-1 rounded-md transition-all duration-500", isPositive ? "bg-cyan-950/40 text-cyan-400 border border-cyan-500/30 shadow-[0_0_8px_rgba(34,211,238,0.1)]" : "bg-amber-950/40 text-amber-500 border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.1)]")}>
+                        <div className={cn("text-[10px] font-bold px-2 py-1 rounded-md transition-all duration-500", isPositive ? "bg-green-950/40 text-green-400 border border-green-500/30 shadow-[0_0_8px_rgba(34,197,94,0.1)]" : "bg-amber-950/40 text-amber-500 border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.1)]")}>
                           {isPositive ? '+' : ''}{vel}%
                         </div>
                       )
@@ -389,7 +387,13 @@ export function PulseDashboard() {
         </div>
         
         {/* Agent Insights Panel */}
-        <AgentPanel feed={feed} isThinking={isThinking} isOpen={isAgentOpen} onToggle={setIsAgentOpen} />
+        <AgentPanel 
+          feed={feed} 
+          briefing="Current Momentum is high. All Streams are healthy. Oracle suggests reallocating 2 Drops from Developer B to Developer A to optimize for Friday’s milestone."
+          isThinking={isThinking} 
+          isOpen={isAgentOpen} 
+          onToggle={setIsAgentOpen} 
+        />
       </div>
     </div>
   );

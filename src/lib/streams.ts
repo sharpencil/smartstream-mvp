@@ -1,4 +1,4 @@
-export type StreamColorKey = 'teal' | 'purple' | 'cyan' | 'blue' | 'indigo' | 'emerald';
+export type StreamColorKey = 'teal' | 'purple' | 'cyan' | 'blue' | 'indigo' | 'violet';
 
 export interface StreamDef {
   id: string;
@@ -13,7 +13,7 @@ export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> 
   cyan: { hex: '#06b6d4', tw: 'cyan-500' },       // Cyan 500
   blue: { hex: '#3b82f6', tw: 'blue-500' },       // Blue 500
   indigo: { hex: '#6366f1', tw: 'indigo-500' },   // Indigo 500
-  emerald: { hex: '#10b981', tw: 'emerald-500' }, // Emerald 500
+  violet: { hex: '#8b5cf6', tw: 'violet-500' },   // Violet 500
 };
 
 export interface Reference {
@@ -34,8 +34,8 @@ export interface DropDef {
 
 export const GLOBAL_STREAMS: Record<string, StreamDef> = {
   's_auth': { id: 's_auth', title: 'Identity & Auth Hub', initials: 'AUTH', colorKey: 'purple' },
-  's_infra': { id: 's_infra', title: 'Core Infrastructure', initials: 'CORE', colorKey: 'teal' },
+  's_infra': { id: 's_infra', title: 'Core Infrastructure', initials: 'CORE', colorKey: 'indigo' },
   's_ux': { id: 's_ux', title: 'User Experience', initials: 'UX', colorKey: 'blue' },
-  's_billing': { id: 's_billing', title: 'Payment Gateway', initials: 'PAY', colorKey: 'emerald' },
+  's_billing': { id: 's_billing', title: 'Payment Gateway', initials: 'PAY', colorKey: 'violet' },
   's_comms': { id: 's_comms', title: 'Communications', initials: 'COM', colorKey: 'cyan' },
 };

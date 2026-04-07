@@ -85,7 +85,7 @@ export default function RosterPage() {
               onClick={() => setActiveTab('crew')}
               className={cn(
                 "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
-                activeTab === 'crew' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                activeTab === 'crew' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
               )}
             >
               The Crew
@@ -94,7 +94,7 @@ export default function RosterPage() {
               onClick={() => setActiveTab('bench')}
               className={cn(
                 "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
-                activeTab === 'bench' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                activeTab === 'bench' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
               )}
             >
               The Bench

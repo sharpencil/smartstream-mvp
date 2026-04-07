@@ -54,11 +54,11 @@ export function GlobalHeader() {
                     onClick={() => setSelectedOrg(org)}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded-[12px] text-left text-sm transition-all duration-200 hover:bg-white/5",
-                      selectedOrg === org ? "text-emerald-400 bg-emerald-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
+                      selectedOrg === org ? "text-teal-400 bg-teal-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
                     )}
                   >
                     {org}
-                    {selectedOrg === org && <Check className="w-4 h-4 text-emerald-400" />}
+                    {selectedOrg === org && <Check className="w-4 h-4 text-teal-400" />}
                   </button>
                 ))}
               </div>
@@ -82,11 +82,11 @@ export function GlobalHeader() {
                     onClick={() => setSelectedProject(project)}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded-[12px] text-left text-sm transition-all duration-200 hover:bg-white/5",
-                      selectedProject === project ? "text-emerald-400 bg-emerald-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
+                      selectedProject === project ? "text-teal-400 bg-teal-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
                     )}
                   >
                     {project}
-                    {selectedProject === project && <Check className="w-4 h-4 text-emerald-400" />}
+                    {selectedProject === project && <Check className="w-4 h-4 text-teal-400" />}
                   </button>
                 ))}
               </div>

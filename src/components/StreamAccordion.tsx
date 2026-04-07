@@ -140,12 +140,12 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
           <Accordion.Item 
             key={stream.id} 
             value={stream.id} 
-            className="border border-white/5 bg-[#0a192f]/60 backdrop-blur-xl rounded-[24px] overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-all focus-within:border-emerald-500/30 group"
+            className="border border-white/5 bg-[#0a192f]/60 backdrop-blur-xl rounded-[24px] overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-all focus-within:border-teal-500/30 group"
           >
             <Accordion.Header className="flex m-0">
               <Accordion.Trigger className={cn(
                 "flex flex-1 items-center justify-between p-6 transition-all w-full outline-none relative overflow-hidden",
-                stream.priority === 'Critical' ? "hover:bg-rose-950/10 focus-visible:border-rose-500/30" : "hover:bg-emerald-950/20",
+                stream.priority === 'Critical' ? "hover:bg-rose-950/10 focus-visible:border-rose-500/30" : "hover:bg-teal-950/20",
                 type === 'active' && "hover:bg-transparent bg-slate-900/40"
               )}>
                 {/* Visual Identity Decorator */}
@@ -190,7 +190,7 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
                   </div>
                 </div>
                 
-                <ChevronDown className="w-5 h-5 text-slate-400 group-data-[state=open]:rotate-180 group-data-[state=open]:text-emerald-400 transition-transform duration-300" />
+                <ChevronDown className="w-5 h-5 text-slate-400 group-data-[state=open]:rotate-180 group-data-[state=open]:text-teal-400 transition-transform duration-300" />
               </Accordion.Trigger>
             </Accordion.Header>
             
@@ -210,7 +210,7 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
                     </div>
                     <div className="flex flex-col flex-1 items-center justify-center">
                       <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Completed</span>
-                      <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /><span className="text-sm font-bold text-emerald-200">{counts.completed}</span></div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /><span className="text-sm font-bold text-green-200">{counts.completed}</span></div>
                     </div>
                   </div>
                 )}
@@ -221,13 +221,13 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
                       <button className="w-full flex items-center justify-between px-6 py-3.5 rounded-full bg-slate-900/60 border border-white/5 hover:border-cyan-500/20 hover:bg-[#0a192f] shadow-inner transition-all group/drop cursor-pointer outline-none relative overflow-hidden">
                         
                         {/* State visualizer overlay line */}
-                        <div className={cn("absolute bottom-0 left-6 right-6 h-[1px]", drop.state === 'Completed' ? "bg-emerald-500/50" : drop.state === 'In Progress' ? "bg-cyan-500/50" : "bg-transparent")} />
+                        <div className={cn("absolute bottom-0 left-6 right-6 h-[1px]", drop.state === 'Completed' ? "bg-green-500/50" : drop.state === 'In Progress' ? "bg-cyan-500/50" : "bg-transparent")} />
 
                         <div className="flex items-center gap-4">
                           <span className="text-xs font-mono text-slate-600 font-bold w-4">{idx + 1}.</span>
-                          <drop.icon className={cn("w-5 h-5 transition-colors", drop.state === 'Completed' ? "text-emerald-500" : drop.state === 'In Progress' ? "text-cyan-400" : "text-slate-400")} />
+                          <drop.icon className={cn("w-5 h-5 transition-colors", drop.state === 'Completed' ? "text-green-500" : drop.state === 'In Progress' ? "text-cyan-400" : "text-slate-400")} />
                           <div className="flex flex-col items-start gap-0.5">
-                            <span className={cn("text-sm font-medium transition-colors", drop.state === 'Completed' ? "text-emerald-100" : drop.state === 'In Progress' ? "text-cyan-100" : "text-slate-300")}>{drop.title}</span>
+                            <span className={cn("text-sm font-medium transition-colors", drop.state === 'Completed' ? "text-green-100" : drop.state === 'In Progress' ? "text-cyan-100" : "text-slate-300")}>{drop.title}</span>
                             <span className="text-[10px] text-slate-500 uppercase tracking-widest">{drop.skill}</span>
                           </div>
                         </div>

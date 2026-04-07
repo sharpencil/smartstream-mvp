@@ -43,7 +43,7 @@ export function LibraryDashboard() {
       if (val >= 100) {
         clearInterval(interval);
         setGenesisState('complete');
-        setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-emerald-400 font-bold">Analysis Complete:</span> 3 Streams successfully decompiled. Formulating dynamic Roster suggestions.</span> }, ...prev]);
+        setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-green-400 font-bold">Analysis Complete:</span> 3 Streams successfully decompiled. Formulating dynamic Roster suggestions.</span> }, ...prev]);
       }
     }, 200);
   };
@@ -67,19 +67,19 @@ export function LibraryDashboard() {
          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20">
            <button 
              onClick={() => setActiveTab('active')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'active' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'active' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Active Streams
            </button>
            <button 
              onClick={() => setActiveTab('dependencies')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'dependencies' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'dependencies' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Dependencies
            </button>
            <button 
              onClick={() => setActiveTab('genesis')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'genesis' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'genesis' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Genesis
            </button>
@@ -156,10 +156,10 @@ export function LibraryDashboard() {
 
                 {genesisState === 'complete' && (
                   <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center z-10">
-                    <div className="w-16 h-16 rounded-full bg-emerald-950/40 border border-emerald-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                      <Fingerprint className="w-8 h-8 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                    <div className="w-16 h-16 rounded-full bg-green-950/40 border border-green-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                      <Fingerprint className="w-8 h-8 text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
                     </div>
-                    <h3 className="text-xl font-bold text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">Context Decoded</h3>
+                    <h3 className="text-xl font-bold text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]">Context Decoded</h3>
                     <div className="flex gap-4 mt-3">
                        <div className="px-3 py-1 bg-slate-900/60 rounded-lg border border-white/5 text-xs text-slate-300 font-mono tracking-wide"><span className="text-cyan-400 font-bold">3</span> STREAMS</div>
                        <div className="px-3 py-1 bg-slate-900/60 rounded-lg border border-white/5 text-xs text-slate-300 font-mono tracking-wide"><span className="text-teal-400 font-bold">14</span> DROPS</div>
@@ -182,15 +182,15 @@ export function LibraryDashboard() {
 
                {genesisState === 'complete' ? (
                  <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-emerald-500/20 shadow-inner shadow-emerald-900/10">
+                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-green-500/20 shadow-inner shadow-green-900/10">
                      <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-900 to-slate-900 flex items-center justify-center border border-emerald-500/30 text-emerald-300 font-bold text-xs">S</div>
+                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-900 to-slate-900 flex items-center justify-center border border-green-500/30 text-green-300 font-bold text-xs">S</div>
                        <div className="flex flex-col">
                          <span className="text-sm font-medium text-slate-200">Sarah</span>
                          <span className="text-[10px] text-slate-500 uppercase tracking-widest">Authentication</span>
                        </div>
                      </div>
-                     <div className="text-emerald-400 text-xs font-bold font-mono tracking-wide">98% MATCH</div>
+                     <div className="text-green-400 text-xs font-bold font-mono tracking-wide">98% MATCH</div>
                    </div>
 
                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-teal-500/20 shadow-inner shadow-teal-900/10">

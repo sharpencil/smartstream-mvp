@@ -13,7 +13,7 @@ interface TalentCardProps {
 
 export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps) {
   const statusColors = {
-    available: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]',
+    available: 'bg-green-500 shadow-[0_0_10px_rgba(34,211,74,0.8)]',
     saturated: 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]',
     blocked: 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]',
   };
@@ -21,6 +21,7 @@ export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps
   // Velocity percentage for the meter
   const velocityPercent = Math.min((employee.velocity / 120) * 100, 100);
   const avgPercent = Math.min((employee.avgVelocity / 120) * 100, 100);
+  const isCooling = employee.velocity < employee.avgVelocity;
 
   return (
     <motion.div
@@ -29,22 +30,22 @@ export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps
       className={cn(
         "relative rounded-[32px] bg-[#0a192f]/40 backdrop-blur-xl border p-6 flex flex-col gap-6 cursor-pointer group transition-all duration-500",
         isHighlighted 
-          ? "border-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-400/20" 
+          ? "border-teal-400/50 shadow-[0_0_30px_rgba(13,148,136,0.15)] ring-1 ring-teal-400/20" 
           : "border-white/10 hover:border-white/20"
       )}
       onClick={() => onClick(employee)}
     >
       {/* Match Score Badge (if highlighted) */}
       {isHighlighted && employee.matchScore && (
-        <div className="absolute -top-3 -right-3 px-3 py-1 bg-emerald-500 text-[#020617] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10">
+        <div className="absolute -top-3 -right-3 px-3 py-1 bg-teal-500 text-[#020617] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(13,148,136,0.5)] z-10">
           {employee.matchScore}% Match
         </div>
       )}
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-950 to-[#0a192f] border border-emerald-800/30 flex items-center justify-center shadow-lg group-hover:border-emerald-400/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all">
-             <span className="text-emerald-200 font-bold text-lg">{employee.name.charAt(0)}</span>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-950 to-[#0a192f] border border-teal-800/30 flex items-center justify-center shadow-lg group-hover:border-teal-400/50 group-hover:shadow-[0_0_15px_rgba(13,148,136,0.2)] transition-all">
+             <span className="text-teal-200 font-bold text-lg">{employee.name.charAt(0)}</span>
           </div>
           <div>
             <h3 className="text-lg font-bold text-white tracking-tight">{employee.name}</h3>
@@ -71,15 +72,17 @@ export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps
       <div className="space-y-3 pt-2 cursor-default relative group/meter">
         <div className="flex justify-between items-end">
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-slate-500">
-            <Zap className="w-3 h-3 text-teal-500/70" />
+            <Zap className={cn("w-3 h-3 transition-colors", isCooling ? "text-amber-500/70" : "text-green-500/70")} />
             <span>VELOCITY PULSE</span>
           </div>
-          <span className="text-sm font-bold text-teal-400">{employee.velocity} <span className="text-[10px] text-slate-600 font-mono font-normal">PTS</span></span>
+          <span className={cn("text-sm font-bold transition-colors", isCooling ? "text-amber-400" : "text-green-400")}>
+            {employee.velocity} <span className="text-[10px] text-slate-600 font-mono font-normal">PTS</span>
+          </span>
         </div>
         
         {/* Sleek Tooltip */}
         <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-lg text-[10px] text-slate-200 opacity-0 group-hover/meter:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap shadow-xl">
-           Historical Velocity: <span className="text-teal-400 font-bold">{employee.velocity}</span> Drops/Day
+           Current Load: <span className={cn("font-bold", isCooling ? "text-amber-400" : "text-green-400")}>{employee.velocity}</span> Drops/Day
         </div>
 
         <div className="relative h-1.5 bg-slate-900/50 rounded-sm overflow-hidden border border-white/5">
@@ -93,7 +96,12 @@ export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps
             initial={{ width: 0 }}
             animate={{ width: `${velocityPercent}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            className="absolute top-0 bottom-0 rounded-sm bg-gradient-to-r from-teal-600 via-teal-400 to-emerald-400"
+            className={cn(
+              "absolute top-0 bottom-0 rounded-sm bg-gradient-to-r transition-all duration-1000",
+              isCooling 
+                ? "from-amber-600 via-amber-400 to-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]" 
+                : "from-green-600 via-green-400 to-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
+            )}
           />
         </div>
         <div className="flex justify-between text-[8px] text-slate-600 uppercase tracking-widest font-mono">

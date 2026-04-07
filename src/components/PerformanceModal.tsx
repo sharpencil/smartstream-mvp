@@ -44,14 +44,14 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
         <div className="flex flex-col md:flex-row h-full">
           {/* Left Sidebar: Profile Summary */}
           <div className="w-full md:w-80 bg-slate-900/40 p-8 border-r border-white/10 flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-950 to-[#0a192f] border border-emerald-800/30 flex items-center justify-center text-4xl font-bold text-emerald-200 shadow-2xl mb-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-teal-950 to-[#0a192f] border border-teal-800/30 flex items-center justify-center text-4xl font-bold text-teal-200 shadow-2xl mb-6">
               {employee.name.charAt(0)}
             </div>
             <DialogHeader className="p-0 space-y-0 text-center items-center">
               <DialogTitle className="text-2xl font-bold text-white mb-1 leading-tight tracking-tight">
                 {employee.name}
               </DialogTitle>
-              <DialogDescription className="text-emerald-400 font-mono text-sm tracking-widest mb-8">
+              <DialogDescription className="text-green-400 font-mono text-sm tracking-widest mb-8">
                 {employee.role}
               </DialogDescription>
             </DialogHeader>
@@ -59,36 +59,41 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
             <div className="w-full space-y-4">
               <div className="p-4 rounded-xl bg-[#0a192f]/60 border border-white/5 flex items-center justify-between group/meter relative">
                 <div className="flex items-center gap-3">
-                   <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400"><TrendingUp className="w-4 h-4" /></div>
+                   <div className="p-2 rounded-lg bg-green-500/10 text-green-400"><TrendingUp className="w-4 h-4" /></div>
                    <span className="text-xs text-slate-400 uppercase font-bold tracking-tight">Reliability</span>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="text-lg font-bold text-teal-400">{employee.reliability}%</span>
+                  <span className="text-lg font-bold text-green-400">{employee.reliability}%</span>
                   <div className="w-24 h-1 bg-slate-800 rounded-sm overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-sm" style={{ width: `${employee.reliability}%` }} />
+                    <div className="h-full bg-green-500 rounded-sm" style={{ width: `${employee.reliability}%` }} />
                   </div>
                 </div>
                 {/* Tooltip */}
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 opacity-0 group-hover/meter:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                   Consistency Score: <span className="text-emerald-400">{employee.reliability}%</span>
+                   Consistency Score: <span className="text-green-400">{employee.reliability}%</span>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#0a192f]/60 border border-white/5 flex items-center justify-between group/meter relative">
-                <div className="flex items-center gap-3">
-                   <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400"><Zap className="w-4 h-4" /></div>
-                   <span className="text-xs text-slate-400 uppercase font-bold tracking-tight">Avg Flow</span>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-lg font-bold text-teal-400">{employee.avgVelocity}</span>
-                  <div className="w-24 h-1 bg-slate-800 rounded-sm overflow-hidden">
-                    <div className="h-full bg-teal-500 rounded-sm" style={{ width: `${(employee.avgVelocity / 120) * 100}%` }} />
+              {(() => {
+                const isCooling = employee.velocity < employee.avgVelocity;
+                return (
+                  <div className="p-4 rounded-xl bg-[#0a192f]/60 border border-white/5 flex items-center justify-between group/meter relative">
+                    <div className="flex items-center gap-3">
+                       <div className={cn("p-2 rounded-lg transition-colors", isCooling ? "bg-amber-500/10 text-amber-400" : "bg-green-500/10 text-green-400")}><Zap className="w-4 h-4" /></div>
+                       <span className="text-xs text-slate-400 uppercase font-bold tracking-tight">Live Flow</span>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={cn("text-lg font-bold transition-colors", isCooling ? "text-amber-400" : "text-green-400")}>{employee.velocity}</span>
+                      <div className="w-24 h-1 bg-slate-800 rounded-sm overflow-hidden">
+                        <div className={cn("h-full transition-all duration-1000", isCooling ? "bg-amber-500" : "bg-green-500")} style={{ width: `${(employee.velocity / 120) * 100}%` }} />
+                      </div>
+                    </div>
+                    {/* Tooltip */}
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 opacity-0 group-hover/meter:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                       Historical Avg: <span className="text-slate-400 font-bold">{employee.avgVelocity}</span> PTS
+                    </div>
                   </div>
-                </div>
-                {/* Tooltip */}
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 opacity-0 group-hover/meter:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                   Average Output: <span className="text-teal-400">{employee.avgVelocity}</span> PTS
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -98,7 +103,7 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
             <div className="space-y-4">
               <div className="flex justify-between items-end">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                   <History className="w-4 h-4 text-teal-500/70" />
+                   <History className="w-4 h-4 text-green-500/70" />
                    Historical Velocity (6M)
                 </h3>
                 <span className="text-[10px] text-slate-500 font-mono tracking-widest">UNIT: PTS / DROP</span>
@@ -133,7 +138,7 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
                     <defs>
                       <linearGradient id="performance-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#0d9488" />
-                        <stop offset="100%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#22c55e" />
                       </linearGradient>
                     </defs>
                     {/* Data Points */}
@@ -150,7 +155,7 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.5 + i * 0.1 }}
                             fill="#0a192f"
-                            stroke="#10b981"
+                            stroke="#22c55e"
                             strokeWidth="2"
                           />
                        );
@@ -165,16 +170,15 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
               </div>
             </div>
 
-            {/* Project History */}
-            <div className="space-y-4">
+             <div className="space-y-4">
                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                   <Trophy className="w-4 h-4 text-emerald-400" />
+                   <Trophy className="w-4 h-4 text-green-400" />
                    Stream Contributions
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                    {employee.projectHistory.map(project => (
                       <div key={project} className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 group/item">
-                         <div className="p-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="w-3.5 h-3.5" /></div>
+                         <div className="p-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20"><CheckCircle2 className="w-3.5 h-3.5" /></div>
                          <span className="text-sm text-slate-300 font-light group-hover/item:text-white transition-colors uppercase tracking-tight">{project}</span>
                       </div>
                    ))}

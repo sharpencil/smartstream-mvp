@@ -47,7 +47,7 @@ export function GenesisModal() {
           className="fixed inset-0 z-[100] bg-[#020617] flex flex-col overflow-hidden font-sans"
         >
           {/* Subtle Background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(16,185,129,0.03),transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(13,148,136,0.03),transparent_70%)] pointer-events-none" />
           
           {/* Header with Centered Stepper */}
           <div className="relative z-10 px-12 py-8 grid grid-cols-3 items-center border-b border-white/5 bg-[#020617]/40 backdrop-blur-md">
@@ -65,11 +65,16 @@ export function GenesisModal() {
                     initial={false}
                     animate={{ 
                       width: step === s ? 64 : 20,
-                      backgroundColor: step >= s ? "rgba(16, 185, 129, 1)" : "rgba(255, 255, 255, 0.1)" 
+                      backgroundColor: step === s 
+                        ? "rgba(20, 184, 166, 1)" // Current: Teal
+                        : step > s 
+                          ? "rgba(34, 197, 94, 1)"  // Completed: Green
+                          : "rgba(255, 255, 255, 0.1)" // Upcoming
                     }}
                     className={cn(
                       "h-2 rounded-full transition-all duration-500",
-                      step >= s ? "shadow-[0_0_15px_rgba(16,185,129,0.4)]" : ""
+                      step === s ? "shadow-[0_0_15px_rgba(13,148,136,0.4)]" : 
+                      step > s ? "shadow-[0_0_15px_rgba(34,197,94,0.3)]" : ""
                     )}
                   />
                 ))}
@@ -259,10 +264,10 @@ function Step2Ingestion({
 
            {genesisState === 'complete' && (
              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center z-10 text-center">
-               <div className="w-16 h-16 rounded-full bg-emerald-950/40 border border-emerald-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                 <Fingerprint className="w-8 h-8 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+               <div className="w-16 h-16 rounded-full bg-green-950/40 border border-green-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                 <Fingerprint className="w-8 h-8 text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
                </div>
-               <h3 className="text-xl font-bold text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">Context Decoded</h3>
+               <h3 className="text-xl font-bold text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]">Context Decoded</h3>
                <div className="flex gap-4 mt-4">
                   <div className="px-3 py-1 bg-slate-900/60 rounded-lg border border-white/5 text-xs text-slate-300 font-mono tracking-wide"><span className="text-cyan-400 font-bold">3</span> STREAMS</div>
                   <div className="px-3 py-1 bg-slate-900/60 rounded-lg border border-white/5 text-xs text-slate-300 font-mono tracking-wide"><span className="text-teal-400 font-bold">14</span> DROPS</div>
@@ -285,7 +290,7 @@ function Step2Ingestion({
           {genesisState === 'complete' ? (
             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
               {[
-                { name: 'Sarah', role: 'Authentication', match: 98, color: 'emerald' },
+                { name: 'Sarah', role: 'Authentication', match: 98, color: 'green' },
                 { name: 'Mike', role: 'Database Arch', match: 92, color: 'teal' },
                 { name: 'Alex', role: 'UI / UX', match: 85, color: 'blue' }
               ].map((p, i) => (
@@ -369,7 +374,7 @@ function Step3Blueprint({ onLaunch, genesisState }: { onLaunch: () => void, gene
 
             <div className="flex flex-col gap-3">
                {[
-                 { name: 'Sarah', role: 'Authentication', match: 98, color: 'emerald' },
+                 { name: 'Sarah', role: 'Authentication', match: 98, color: 'green' },
                  { name: 'Mike', role: 'Database Arch', match: 92, color: 'teal' },
                  { name: 'Alex', role: 'UI / UX', match: 85, color: 'blue' }
                ].map((p) => (

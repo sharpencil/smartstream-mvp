@@ -17,14 +17,14 @@ export function VitalsBar({ isOpen }: VitalsBarProps) {
       {/* Project Health */}
       <div className="flex-1 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 flex items-center gap-4 shadow-inner shadow-cyan-900/5 hover:border-cyan-500/20 transition-colors group">
         <div className="w-12 h-12 rounded-full border-[3px] border-slate-700 relative flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-[3px] border-emerald-500/80 [clip-path:inset(0_0_0_15%)]" />
-          <Activity className="w-5 h-5 text-emerald-500" />
+          <div className="absolute inset-0 rounded-full border-[3px] border-green-500/80 [clip-path:inset(0_0_0_15%)]" />
+          <Activity className="w-5 h-5 text-green-500" />
         </div>
         <div>
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Project Health</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-slate-100 group-hover:text-emerald-50 transition-colors">88%</span>
-            <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-wider">On Track</span>
+            <span className="text-xl font-bold text-slate-100 group-hover:text-green-50 transition-colors">88%</span>
+            <span className="text-[10px] text-green-500/70 font-bold uppercase tracking-wider">On Track</span>
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@ export function VitalsBar({ isOpen }: VitalsBarProps) {
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Oracle Forecast</p>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-slate-100 group-hover:text-indigo-50 transition-colors">Jun 12, 2024</span>
-            <span className="text-[10px] text-teal-500/70 font-bold tracking-widest uppercase">92% CONF</span>
+            <span className="text-[10px] text-green-500/70 font-bold tracking-widest uppercase">92% CONF</span>
           </div>
         </div>
       </div>

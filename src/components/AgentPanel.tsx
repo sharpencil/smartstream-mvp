@@ -13,12 +13,13 @@ export interface FeedItem {
 
 export interface AgentPanelProps {
   feed: FeedItem[];
+  briefing?: string;
   isThinking?: boolean;
   isOpen?: boolean;
   onToggle?: (isOpen: boolean) => void;
 }
 
-export function AgentPanel({ feed, isThinking, isOpen: controlledIsOpen, onToggle }: AgentPanelProps) {
+export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpen, onToggle }: AgentPanelProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(true);
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
   
@@ -67,6 +68,22 @@ export function AgentPanel({ feed, isThinking, isOpen: controlledIsOpen, onToggl
           </div>
 
           <div className="flex flex-col gap-4">
+            {/* Direct Briefing Section */}
+            {briefing && (
+              <div className="p-5 rounded-[24px] bg-indigo-500/10 border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.05)] relative overflow-hidden group/briefing">
+                <div className="absolute top-0 right-0 p-3 opacity-20 group-hover/briefing:opacity-40 transition-opacity">
+                  <Sparkles className="w-8 h-8 text-indigo-400" />
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Daily Briefing</span>
+                  <div className="h-[1px] flex-1 bg-indigo-500/20" />
+                </div>
+                <p className="text-sm text-indigo-100 leading-relaxed font-medium">
+                  {briefing}
+                </p>
+              </div>
+            )}
+
             {isThinking && (
               <div className="flex items-center gap-2 p-4 rounded-[20px] bg-cyan-950/20 border border-cyan-500/20 shadow-inner shadow-cyan-900/10">
                 <div className="flex gap-1 h-3 ml-2 items-end pb-0.5">
