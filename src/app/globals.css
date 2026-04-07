@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #020617;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
@@ -12,15 +12,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes time-pulse {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.8)); }
+  50% { opacity: 0.6; filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.2)); }
+}
+
+.animate-time-pulse {
+  animation: time-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hide all scrollbars globally for a sleek interface */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
