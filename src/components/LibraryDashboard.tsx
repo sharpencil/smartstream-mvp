@@ -67,19 +67,19 @@ export function LibraryDashboard() {
          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20">
            <button 
              onClick={() => setActiveTab('active')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'active' ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20 border border-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'active' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Active Streams
            </button>
            <button 
              onClick={() => setActiveTab('dependencies')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'dependencies' ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20 border border-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'dependencies' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Dependencies
            </button>
            <button 
              onClick={() => setActiveTab('genesis')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'genesis' ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20 border border-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'genesis' ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20 border border-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Genesis
            </button>

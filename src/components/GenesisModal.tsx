@@ -65,11 +65,11 @@ export function GenesisModal() {
                     initial={false}
                     animate={{ 
                       width: step === s ? 64 : 20,
-                      backgroundColor: step >= s ? "rgba(34, 211, 238, 1)" : "rgba(255, 255, 255, 0.1)" 
+                      backgroundColor: step >= s ? "rgba(16, 185, 129, 1)" : "rgba(255, 255, 255, 0.1)" 
                     }}
                     className={cn(
                       "h-2 rounded-full transition-all duration-500",
-                      step >= s ? "shadow-[0_0_15px_rgba(34,211,238,0.4)]" : ""
+                      step >= s ? "shadow-[0_0_15px_rgba(16,185,129,0.4)]" : ""
                     )}
                   />
                 ))}

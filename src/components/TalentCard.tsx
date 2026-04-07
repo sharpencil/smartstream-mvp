@@ -29,22 +29,22 @@ export function TalentCard({ employee, onClick, isHighlighted }: TalentCardProps
       className={cn(
         "relative rounded-[32px] bg-[#0a192f]/40 backdrop-blur-xl border p-6 flex flex-col gap-6 cursor-pointer group transition-all duration-500",
         isHighlighted 
-          ? "border-cyan-400/50 shadow-[0_0_30px_rgba(34,211,238,0.15)] ring-1 ring-cyan-400/20" 
+          ? "border-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-400/20" 
           : "border-white/10 hover:border-white/20"
       )}
       onClick={() => onClick(employee)}
     >
       {/* Match Score Badge (if highlighted) */}
       {isHighlighted && employee.matchScore && (
-        <div className="absolute -top-3 -right-3 px-3 py-1 bg-cyan-500 text-[#020617] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(34,211,238,0.5)] z-10">
+        <div className="absolute -top-3 -right-3 px-3 py-1 bg-emerald-500 text-[#020617] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10">
           {employee.matchScore}% Match
         </div>
       )}
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-950 to-[#0a192f] border border-cyan-800/30 flex items-center justify-center shadow-lg group-hover:border-cyan-400/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all">
-             <span className="text-cyan-200 font-bold text-lg">{employee.name.charAt(0)}</span>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-950 to-[#0a192f] border border-emerald-800/30 flex items-center justify-center shadow-lg group-hover:border-emerald-400/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all">
+             <span className="text-emerald-200 font-bold text-lg">{employee.name.charAt(0)}</span>
           </div>
           <div>
             <h3 className="text-lg font-bold text-white tracking-tight">{employee.name}</h3>

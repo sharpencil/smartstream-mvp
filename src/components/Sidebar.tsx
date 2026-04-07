@@ -29,7 +29,7 @@ export function Sidebar() {
               href={pillar.href}
               className={cn(
                 "group relative p-3 rounded-[20px] transition-all duration-300",
-                isActive ? "bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] border border-cyan-500/30" : "text-slate-400 hover:text-cyan-400 hover:bg-cyan-950/30 border border-transparent"
+                isActive ? "bg-emerald-950/40 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] border border-emerald-500/30" : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/30 border border-transparent"
               )}
             >
               <Icon className="w-6 h-6 stroke-[1.5]" />

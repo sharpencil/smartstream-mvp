@@ -252,7 +252,7 @@ export function PulseDashboard() {
              
              {/* Stream Active Path Selector */}
              <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-               <Zap className="w-4 h-4 ml-2 text-cyan-400" />
+               <Zap className="w-4 h-4 ml-2 text-emerald-400" />
                <span className="text-xs font-bold text-slate-300 mr-2 tracking-wide uppercase">Stream Flow</span>
                <div className="flex gap-1">
                  <button onClick={() => setActiveStreamPathId(null)} className={cn("px-3 py-1 rounded-[10px] text-[10px] font-bold tracking-widest transition-all", !activeStreamPathId ? "bg-slate-800 text-slate-200" : "text-slate-500 hover:text-slate-300 hover:bg-white/5")}>NONE</button>
@@ -279,9 +279,9 @@ export function PulseDashboard() {
 
              {/* Zoom Scale Selector */}
              <div className="inline-flex bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-               <button onClick={() => setZoomScale(1)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 1 ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>8h (Focus)</button>
-               <button onClick={() => setZoomScale(0.6)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.6 ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>24h (Daily)</button>
-               <button onClick={() => setZoomScale(0.25)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.25 ? "bg-cyan-950/80 text-cyan-400 shadow-inner shadow-cyan-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>1w (Overview)</button>
+               <button onClick={() => setZoomScale(1)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 1 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>8h (Focus)</button>
+               <button onClick={() => setZoomScale(0.6)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.6 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>24h (Daily)</button>
+               <button onClick={() => setZoomScale(0.25)} className={cn("px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all", zoomScale === 0.25 ? "bg-emerald-950/80 text-emerald-400 shadow-inner shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}>1w (Overview)</button>
              </div>
           </div>
           

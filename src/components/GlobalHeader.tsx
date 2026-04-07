@@ -1,10 +1,32 @@
 'use client';
 
-import { ChevronDown, Search, Bell, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Search, Bell, Plus, Check } from 'lucide-react';
 import { useGenesis } from '@/context/GenesisContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+
+const organizations = [
+  "Acme Corp",
+  "Global Logistics",
+  "CyberDyne Systems",
+  "Stark Industries",
+  "Umbrella Corp",
+];
+
+const projects = [
+  "Project Phoenix",
+  "Arctic Pulse",
+  "Genesis Protocol",
+  "Nebula Stream",
+  "Solar Flare",
+];
 
 export function GlobalHeader() {
   const { openGenesis } = useGenesis();
+  const [selectedOrg, setSelectedOrg] = useState(organizations[0]);
+  const [selectedProject, setSelectedProject] = useState(projects[0]);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-[#162744]/60 backdrop-blur-2xl border-b border-white/15 z-50 px-6 flex items-center justify-between">
@@ -17,15 +39,59 @@ export function GlobalHeader() {
 
         {/* Organization & Project Selectors */}
         <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
-          <button className="h-[34px] flex items-center gap-2 hover:text-white transition-colors bg-slate-800/30 px-3 rounded-[12px]">
-            Acme Corp
-            <ChevronDown className="w-4 h-4 opacity-50" />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="h-[34px] flex items-center gap-2 hover:text-white transition-colors bg-slate-800/30 px-3 rounded-[12px] group focus:outline-none">
+                {selectedOrg}
+                <ChevronDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56">
+              <div className="flex flex-col gap-1">
+                {organizations.map((org) => (
+                  <button
+                    key={org}
+                    onClick={() => setSelectedOrg(org)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-[12px] text-left text-sm transition-all duration-200 hover:bg-white/5",
+                      selectedOrg === org ? "text-emerald-400 bg-emerald-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
+                    )}
+                  >
+                    {org}
+                    {selectedOrg === org && <Check className="w-4 h-4 text-emerald-400" />}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <span className="text-slate-600">/</span>
-          <button className="h-[34px] flex items-center gap-2 hover:text-white transition-colors bg-cyan-950/20 text-cyan-100 px-3 rounded-[12px] border border-cyan-500/10">
-            Project Phoenix
-            <ChevronDown className="w-4 h-4 opacity-50 text-cyan-400" />
-          </button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="h-[34px] flex items-center gap-2 hover:text-white transition-colors bg-cyan-950/20 text-cyan-100 px-3 rounded-[12px] border border-cyan-500/10 group focus:outline-none">
+                {selectedProject}
+                <ChevronDown className="w-4 h-4 opacity-50 text-cyan-400 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64">
+              <div className="flex flex-col gap-1">
+                {projects.map((project) => (
+                  <button
+                    key={project}
+                    onClick={() => setSelectedProject(project)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-[12px] text-left text-sm transition-all duration-200 hover:bg-white/5",
+                      selectedProject === project ? "text-emerald-400 bg-emerald-400/5 font-semibold" : "text-slate-400 hover:text-slate-200"
+                    )}
+                  >
+                    {project}
+                    {selectedProject === project && <Check className="w-4 h-4 text-emerald-400" />}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 

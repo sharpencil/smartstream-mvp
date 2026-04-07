@@ -44,14 +44,14 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
         <div className="flex flex-col md:flex-row h-full">
           {/* Left Sidebar: Profile Summary */}
           <div className="w-full md:w-80 bg-slate-900/40 p-8 border-r border-white/10 flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-950 to-[#0a192f] border border-cyan-800/30 flex items-center justify-center text-4xl font-bold text-cyan-200 shadow-2xl mb-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-950 to-[#0a192f] border border-emerald-800/30 flex items-center justify-center text-4xl font-bold text-emerald-200 shadow-2xl mb-6">
               {employee.name.charAt(0)}
             </div>
             <DialogHeader className="p-0 space-y-0 text-center items-center">
               <DialogTitle className="text-2xl font-bold text-white mb-1 leading-tight tracking-tight">
                 {employee.name}
               </DialogTitle>
-              <DialogDescription className="text-cyan-400 font-mono text-sm tracking-widest mb-8">
+              <DialogDescription className="text-emerald-400 font-mono text-sm tracking-widest mb-8">
                 {employee.role}
               </DialogDescription>
             </DialogHeader>
