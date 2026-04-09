@@ -119,7 +119,7 @@ const ACTIVE_STREAMS: StreamData[] = [
   }
 ];
 
-export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'active' }) {
+export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?: 'drafted' | 'active', showDrops?: boolean }) {
   const streams = type === 'drafted' ? DRAFTED_STREAMS : ACTIVE_STREAMS;
 
   return (
@@ -166,7 +166,7 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
                       )}>
                         {stream.priority}
                       </span>
-                      <span className="text-xs text-slate-500">{stream.drops.length} Drops</span>
+                      {showDrops && <span className="text-xs text-slate-500">{stream.drops.length} Drops</span>}
                       
                       {stream.dependsOn && stream.dependsOn.length > 0 && (
                         <div className="flex items-center gap-2 ml-4 flex-wrap">
@@ -190,116 +190,118 @@ export function StreamAccordion({ type = 'drafted' }: { type?: 'drafted' | 'acti
                   </div>
                 </div>
                 
-                <ChevronDown className="w-5 h-5 text-slate-400 group-data-[state=open]:rotate-180 group-data-[state=open]:text-teal-400 transition-transform duration-300" />
+                {showDrops && <ChevronDown className="w-5 h-5 text-slate-400 group-data-[state=open]:rotate-180 group-data-[state=open]:text-teal-400 transition-transform duration-300" />}
               </Accordion.Trigger>
             </Accordion.Header>
             
-            <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down border-t border-white/5 bg-[#020617]/50 relative">
-              <div className="p-6 flex flex-col gap-4">
-                
-                {/* Stream Status Bar */}
-                {type === 'active' && (
-                  <div className="flex items-center gap-4 bg-slate-900/80 border border-slate-800/50 rounded-xl p-3 mb-2 shadow-inner">
-                    <div className="flex flex-col flex-1 items-center justify-center border-r border-slate-700/50">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">In Queue</span>
-                      <div className="flex items-center gap-2"><CircleDashed className="w-4 h-4 text-slate-400" /><span className="text-sm font-bold text-slate-300">{counts.queue}</span></div>
+            {showDrops && (
+              <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down border-t border-white/5 bg-[#020617]/50 relative">
+                <div className="p-6 flex flex-col gap-4">
+                  
+                  {/* Stream Status Bar */}
+                  {type === 'active' && (
+                    <div className="flex items-center gap-4 bg-slate-900/80 border border-slate-800/50 rounded-xl p-3 mb-2 shadow-inner">
+                      <div className="flex flex-col flex-1 items-center justify-center border-r border-slate-700/50">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">In Queue</span>
+                        <div className="flex items-center gap-2"><CircleDashed className="w-4 h-4 text-slate-400" /><span className="text-sm font-bold text-slate-300">{counts.queue}</span></div>
+                      </div>
+                      <div className="flex flex-col flex-1 items-center justify-center border-r border-slate-700/50">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">In Progress</span>
+                        <div className="flex items-center gap-2"><Activity className="w-4 h-4 text-cyan-400" /><span className="text-sm font-bold text-cyan-200">{counts.progress}</span></div>
+                      </div>
+                      <div className="flex flex-col flex-1 items-center justify-center">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Completed</span>
+                        <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /><span className="text-sm font-bold text-green-200">{counts.completed}</span></div>
+                      </div>
                     </div>
-                    <div className="flex flex-col flex-1 items-center justify-center border-r border-slate-700/50">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">In Progress</span>
-                      <div className="flex items-center gap-2"><Activity className="w-4 h-4 text-cyan-400" /><span className="text-sm font-bold text-cyan-200">{counts.progress}</span></div>
-                    </div>
-                    <div className="flex flex-col flex-1 items-center justify-center">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Completed</span>
-                      <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /><span className="text-sm font-bold text-green-200">{counts.completed}</span></div>
-                    </div>
-                  </div>
-                )}
+                  )}
 
-                {stream.drops.map((drop, idx) => (
-                  <Popover.Root key={drop.id}>
-                    <Popover.Trigger asChild>
-                      <button className="w-full flex items-center justify-between px-6 py-3.5 rounded-full bg-slate-900/60 border border-white/5 hover:border-cyan-500/20 hover:bg-[#0a192f] shadow-inner transition-all group/drop cursor-pointer outline-none relative overflow-hidden">
-                        
-                        {/* State visualizer overlay line */}
-                        <div className={cn("absolute bottom-0 left-6 right-6 h-[1px]", drop.state === 'Completed' ? "bg-green-500/50" : drop.state === 'In Progress' ? "bg-cyan-500/50" : "bg-transparent")} />
+                  {stream.drops.map((drop, idx) => (
+                    <Popover.Root key={drop.id}>
+                      <Popover.Trigger asChild>
+                        <button className="w-full flex items-center justify-between px-6 py-3.5 rounded-full bg-slate-900/60 border border-white/5 hover:border-cyan-500/20 hover:bg-[#0a192f] shadow-inner transition-all group/drop cursor-pointer outline-none relative overflow-hidden">
+                          
+                          {/* State visualizer overlay line */}
+                          <div className={cn("absolute bottom-0 left-6 right-6 h-[1px]", drop.state === 'Completed' ? "bg-green-500/50" : drop.state === 'In Progress' ? "bg-cyan-500/50" : "bg-transparent")} />
 
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-mono text-slate-600 font-bold w-4">{idx + 1}.</span>
-                          <drop.icon className={cn("w-5 h-5 transition-colors", drop.state === 'Completed' ? "text-green-500" : drop.state === 'In Progress' ? "text-cyan-400" : "text-slate-400")} />
-                          <div className="flex flex-col items-start gap-0.5">
-                            <span className={cn("text-sm font-medium transition-colors", drop.state === 'Completed' ? "text-green-100" : drop.state === 'In Progress' ? "text-cyan-100" : "text-slate-300")}>{drop.title}</span>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-widest">{drop.skill}</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs font-mono text-slate-600 font-bold w-4">{idx + 1}.</span>
+                            <drop.icon className={cn("w-5 h-5 transition-colors", drop.state === 'Completed' ? "text-green-500" : drop.state === 'In Progress' ? "text-cyan-400" : "text-slate-400")} />
+                            <div className="flex flex-col items-start gap-0.5">
+                              <span className={cn("text-sm font-medium transition-colors", drop.state === 'Completed' ? "text-green-100" : drop.state === 'In Progress' ? "text-cyan-100" : "text-slate-300")}>{drop.title}</span>
+                              <span className="text-[10px] text-slate-500 uppercase tracking-widest">{drop.skill}</span>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-3">
-                          <div className="px-3 py-1 bg-slate-800/80 rounded-lg border border-slate-700/50">
-                            <span className="text-xs font-bold text-slate-400 font-mono">{drop.effort}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="px-3 py-1 bg-slate-800/80 rounded-lg border border-slate-700/50">
+                              <span className="text-xs font-bold text-slate-400 font-mono">{drop.effort}</span>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    </Popover.Trigger>
-                    <Popover.Portal>
-                      <Popover.Content 
-                        sideOffset={15} 
-                        side="bottom" 
-                        align="start"
-                        className="w-80 bg-[#0a192f]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.15)] p-5 outline-none z-50 animate-in fade-in zoom-in-95 duration-200"
-                      >
-                        <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
-                          <Map className="w-4 h-4 text-cyan-400" />
-                          <h4 className="text-sm font-semibold text-slate-200 tracking-wide">Timeline Mini-Map</h4>
-                        </div>
-                        
-                        {/* Interactive abstract mini-map representation */}
-                        <div className="bg-[#020617] rounded-xl p-3 border border-slate-800/60 relative overflow-hidden h-28 flex flex-col gap-1.5">
-                           <div className="absolute top-0 bottom-0 left-12 w-0.5 bg-cyan-900/40" />
-                           
-                           {/* Lane 1 */}
-                           <div className="flex items-center h-5 w-full relative z-10 gap-2">
-                              <div className="w-4 h-4 rounded-full bg-slate-800 border border-slate-700 shrink-0" />
-                              <div className="flex items-center gap-1 flex-1">
-                                <div className="h-2 w-8 bg-slate-800 rounded-full" />
-                                <div className="h-2 w-12 bg-slate-800 rounded-full" />
-                              </div>
-                           </div>
-                           
-                           {/* Highlight Lane */}
-                           <div className="flex items-center h-5 w-full relative z-10 gap-2 bg-cyan-950/20 -mx-3 px-3 py-4 border-y border-cyan-900/30">
-                              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-600 to-blue-800 shrink-0 flex items-center justify-center border border-cyan-400/50"><span className="text-[6px] text-white">●</span></div>
-                              <div className="flex items-center gap-1 flex-1 relative">
-                                <div className="h-2 w-8 bg-slate-800 rounded-full" />
-                                
-                                {/* Target Blinking Element */}
-                                <div className="h-2.5 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.6)] animate-pulse" />
-                                
-                                <div className="h-2 w-10 bg-slate-800 rounded-full" />
-                                
-                                <div className="absolute -top-3 left-12 text-[8px] font-bold text-cyan-300 bg-cyan-950/80 px-1 rounded">DROP LOCATION</div>
-                              </div>
-                           </div>
-                           
-                           {/* Lane 3 */}
-                           <div className="flex items-center h-5 w-full relative z-10 gap-2">
-                              <div className="w-4 h-4 rounded-full bg-slate-800 border border-slate-700 shrink-0" />
-                              <div className="flex items-center gap-1 flex-1">
-                                <div className="h-2 w-20 bg-slate-800 rounded-full" />
-                              </div>
-                           </div>
-                        </div>
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content 
+                          sideOffset={15} 
+                          side="bottom" 
+                          align="start"
+                          className="w-80 bg-[#0a192f]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.15)] p-5 outline-none z-50 animate-in fade-in zoom-in-95 duration-200"
+                        >
+                          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+                            <Map className="w-4 h-4 text-cyan-400" />
+                            <h4 className="text-sm font-semibold text-slate-200 tracking-wide">Timeline Mini-Map</h4>
+                          </div>
+                          
+                          {/* Interactive abstract mini-map representation */}
+                          <div className="bg-[#020617] rounded-xl p-3 border border-slate-800/60 relative overflow-hidden h-28 flex flex-col gap-1.5">
+                             <div className="absolute top-0 bottom-0 left-12 w-0.5 bg-cyan-900/40" />
+                             
+                             {/* Lane 1 */}
+                             <div className="flex items-center h-5 w-full relative z-10 gap-2">
+                                <div className="w-4 h-4 rounded-full bg-slate-800 border border-slate-700 shrink-0" />
+                                <div className="flex items-center gap-1 flex-1">
+                                  <div className="h-2 w-8 bg-slate-800 rounded-full" />
+                                  <div className="h-2 w-12 bg-slate-800 rounded-full" />
+                                </div>
+                             </div>
+                             
+                             {/* Highlight Lane */}
+                             <div className="flex items-center h-5 w-full relative z-10 gap-2 bg-cyan-950/20 -mx-3 px-3 py-4 border-y border-cyan-900/30">
+                                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-600 to-blue-800 shrink-0 flex items-center justify-center border border-cyan-400/50"><span className="text-[6px] text-white">●</span></div>
+                                <div className="flex items-center gap-1 flex-1 relative">
+                                  <div className="h-2 w-8 bg-slate-800 rounded-full" />
+                                  
+                                  {/* Target Blinking Element */}
+                                  <div className="h-2.5 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.6)] animate-pulse" />
+                                  
+                                  <div className="h-2 w-10 bg-slate-800 rounded-full" />
+                                  
+                                  <div className="absolute -top-3 left-12 text-[8px] font-bold text-cyan-300 bg-cyan-950/80 px-1 rounded">DROP LOCATION</div>
+                                </div>
+                             </div>
+                             
+                             {/* Lane 3 */}
+                             <div className="flex items-center h-5 w-full relative z-10 gap-2">
+                                <div className="w-4 h-4 rounded-full bg-slate-800 border border-slate-700 shrink-0" />
+                                <div className="flex items-center gap-1 flex-1">
+                                  <div className="h-2 w-20 bg-slate-800 rounded-full" />
+                                </div>
+                             </div>
+                          </div>
 
-                        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                           <span className="text-xs text-slate-500">Lane Assignment: <strong className="text-slate-300">Unassigned</strong></span>
-                           <button className="text-xs text-cyan-400 font-bold hover:text-cyan-300 transition-colors">GO TO DROP</button>
-                        </div>
-                        
-                        <Popover.Arrow className="fill-[#0a192f] opacity-95 w-4 h-2" />
-                      </Popover.Content>
-                    </Popover.Portal>
-                  </Popover.Root>
-                ))}
-              </div>
-            </Accordion.Content>
+                          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                             <span className="text-xs text-slate-500">Lane Assignment: <strong className="text-slate-300">Unassigned</strong></span>
+                             <button className="text-xs text-cyan-400 font-bold hover:text-cyan-300 transition-colors">GO TO DROP</button>
+                          </div>
+                          
+                          <Popover.Arrow className="fill-[#0a192f] opacity-95 w-4 h-2" />
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
+                  ))}
+                </div>
+              </Accordion.Content>
+            )}
           </Accordion.Item>
         );
       })}

@@ -132,24 +132,6 @@ export function Drop({ id, title, state, effortHours, xOffset, isBlocked, refere
             <div className="grid grid-cols-2 gap-2">
               <Popover.Close asChild>
                 <button 
-                  onClick={() => onAction?.(id, 'in-progress')}
-                  disabled={isActive && !isBlocked}
-                  className="bg-cyan-500/90 hover:bg-cyan-400 border border-cyan-400/50 text-[#020617] text-xs font-bold py-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                >
-                  {isBlocked ? 'Unblock Active' : 'Set Active'}
-                </button>
-              </Popover.Close>
-              <Popover.Close asChild>
-                <button 
-                  onClick={() => onAction?.(id, 'ghost')}
-                  disabled={isGhost && !isBlocked}
-                  className="bg-slate-900/50 hover:bg-teal-950/30 border border-white/5 border-dashed hover:border-teal-500/30 text-xs text-teal-400 py-2 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  {isBlocked ? 'Unblock Ghost' : 'Set Ghost'}
-                </button>
-              </Popover.Close>
-              <Popover.Close asChild>
-                <button 
                   onClick={() => onAction?.(id, 'complete')}
                   disabled={isCompleted}
                   className="bg-cyan-600/20 hover:bg-cyan-500 border border-cyan-500/50 text-cyan-400 hover:text-[#020617] text-xs font-bold py-2 rounded-full transition-all shadow-inner disabled:opacity-30 disabled:cursor-not-allowed"
@@ -166,6 +148,12 @@ export function Drop({ id, title, state, effortHours, xOffset, isBlocked, refere
                   {isBlocked ? 'Blocked' : 'Block'}
                 </button>
               </Popover.Close>
+            </div>
+
+            <div className="bg-slate-900/40 border border-white/5 rounded-xl p-2.5">
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest text-center leading-relaxed">
+                Assignment managed by <span className="text-cyan-400">Oracle AI</span> algorithm
+              </p>
             </div>
             {!isCompleted && (
               <div className="mt-2 pt-3 border-t border-white/10">

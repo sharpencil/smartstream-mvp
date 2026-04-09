@@ -1,7 +1,8 @@
 'use client';
 
-import { Activity, Brain, Coins, AlertTriangle } from 'lucide-react';
+import { Activity, Brain, TrendingDown, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BurndownChart } from './BurndownChart';
 
 interface VitalsBarProps {
   isOpen?: boolean;
@@ -43,19 +44,16 @@ export function VitalsBar({ isOpen }: VitalsBarProps) {
         </div>
       </div>
 
-      {/* Operational Burn */}
+      {/* Project Burndown */}
       <div className="flex-1 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 flex items-center gap-4 shadow-inner shadow-teal-900/5 hover:border-teal-500/20 transition-colors group">
         <div className="w-10 h-10 rounded-xl bg-teal-950/40 border border-teal-500/20 flex items-center justify-center">
-          <Coins className="w-5 h-5 text-teal-400" />
+          <TrendingDown className="w-5 h-5 text-teal-400" />
         </div>
         <div className="flex-1">
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Infrastructure Burn</p>
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Project Burndown</p>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-xl font-bold text-slate-100 group-hover:text-teal-50 transition-colors">$142.50</span>
-            <svg className="w-12 h-4 text-teal-500/50" viewBox="0 0 100 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M0 20 L20 15 L40 18 L60 5 L80 10 L100 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-               <path d="M0 20 L20 15 L40 18 L60 5 L80 10 L100 0 L100 20 L0 20 Z" fill="currentColor" opacity="0.2"/>
-            </svg>
+            <span className="text-xl font-bold text-slate-100 group-hover:text-teal-50 transition-colors">72%</span>
+            <BurndownChart />
           </div>
         </div>
       </div>

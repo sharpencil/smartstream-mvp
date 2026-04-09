@@ -16,7 +16,7 @@ import { StreamAccordion } from './StreamAccordion';
 export function GenesisModal() {
   const { isGenesisOpen, closeGenesis } = useGenesis();
   const [step, setStep] = useState(1);
-  const [genesisState, setGenesisState] = useState<'idle' | 'uploading' | 'scanning' | 'complete'>('idle');
+  const [genesisState, setGenesisState] = useState<'idle' | 'uploading' | 'scanning' | 'complete' | 'generating' | 'launched'>('idle');
   const [progress, setProgress] = useState(0);
   const router = useRouter();
 
@@ -56,10 +56,10 @@ export function GenesisModal() {
                <h1 className="text-2xl font-bold font-sans tracking-tight text-slate-100 whitespace-nowrap">Create New Project</h1>
             </div>
 
-            {/* Middle: Centered Progress Stepper (Enhanced) */}
+            {/* Middle: Centered Progress Stepper (4 Phases) */}
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-3">
-                {[1, 2, 3].map((s) => (
+                {[1, 2, 3, 4].map((s) => (
                   <motion.div 
                     key={s} 
                     initial={false}
@@ -80,7 +80,7 @@ export function GenesisModal() {
                 ))}
               </div>
               <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">
-                Phase {step} <span className="text-slate-800 mx-1">/</span> 3
+                Phase {step} <span className="text-slate-800 mx-1">/</span> 4
               </span>
             </div>
 
@@ -105,9 +105,9 @@ export function GenesisModal() {
                 />
               )}
               {step === 2 && (
-                <Step2Ingestion 
+                <Step2SynthesisWorkspace 
                   key="step2" 
-                  onNext={() => setStep(3)} 
+                  onConfirm={() => setStep(3)} 
                   genesisState={genesisState}
                   setGenesisState={setGenesisState}
                   progress={progress}
@@ -115,10 +115,17 @@ export function GenesisModal() {
                 />
               )}
               {step === 3 && (
-                <Step3Blueprint 
-                  key="step3" 
-                  onLaunch={handleLaunch} 
+                <Step3BacklogGeneration 
+                  key="step3"
+                  onComplete={() => setStep(4)}
                   genesisState={genesisState}
+                  setGenesisState={setGenesisState}
+                />
+              )}
+              {step === 4 && (
+                <Step4FinalPreview
+                  key="step4"
+                  onLaunch={handleLaunch}
                 />
               )}
             </AnimatePresence>
@@ -185,10 +192,10 @@ function Step1ProjectProfile({ onNext }: { onNext: () => void }) {
   );
 }
 
-function Step2Ingestion({ 
-  onNext, genesisState, setGenesisState, progress, setProgress 
+function Step2SynthesisWorkspace({ 
+  onConfirm, genesisState, setGenesisState, progress, setProgress 
 }: { 
-  onNext: () => void, 
+  onConfirm: () => void, 
   genesisState: string,
   setGenesisState: (s: any) => void,
   progress: number,
@@ -219,14 +226,14 @@ function Step2Ingestion({
   return (
     <motion.div 
       initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}
-      className="flex-1 flex flex-col px-12 py-10 max-w-7xl mx-auto w-full"
+      className="flex-1 flex flex-col px-12 py-10 max-w-7xl mx-auto w-full pb-32"
     >
       <div className="w-full flex gap-8">
         {/* Left: Intake Dropzone */}
         <div 
           className={cn(
             "flex-[2] bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-8 flex flex-col items-center justify-center min-h-[320px] transition-all relative overflow-hidden",
-            genesisState === 'idle' ? "border-dashed hover:border-cyan-500/50 hover:bg-cyan-950/10 cursor-pointer group" : "border-solid shadow-inner shadow-cyan-900/10"
+            ['idle', 'uploading', 'scanning'].includes(genesisState) ? "border-dashed hover:border-cyan-500/50 hover:bg-cyan-950/10 cursor-pointer group" : "border-solid shadow-inner shadow-cyan-900/10"
           )} 
           onClick={handleScan}
         >
@@ -262,7 +269,7 @@ function Step2Ingestion({
              </div>
            )}
 
-           {genesisState === 'complete' && (
+           {['complete', 'generating', 'launched'].includes(genesisState) && (
              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center z-10 text-center">
                <div className="w-16 h-16 rounded-full bg-green-950/40 border border-green-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
                  <Fingerprint className="w-8 h-8 text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
@@ -286,8 +293,7 @@ function Step2Ingestion({
             <UserPlus className="w-5 h-5 text-indigo-400" />
             <h2 className="text-sm font-semibold text-slate-200">Oracle Roster Alignments</h2>
           </div>
-
-          {genesisState === 'complete' ? (
+          {['complete', 'generating', 'launched'].includes(genesisState) ? (
             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
               {[
                 { name: 'Sarah', role: 'Authentication', match: 98, color: 'green' },
@@ -309,13 +315,11 @@ function Step2Ingestion({
                   <div className={cn("text-xs font-bold font-mono tracking-wide", `text-${p.color}-400`)}>{p.match}% MATCH</div>
                 </div>
               ))}
-
-              <button 
-                onClick={onNext}
-                className="w-full mt-4 py-3 rounded-full bg-cyan-500/90 border border-cyan-400/50 text-[#020617] font-bold text-xs tracking-widest hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all uppercase active:scale-95"
-              >
-                CONFIRM ROSTER
-              </button>
+              
+              <div className="mt-4 p-4 rounded-2xl bg-cyan-900/10 border border-cyan-500/20 flex items-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                 <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest leading-relaxed">Oracle matrixing roster to stream signatures...</p>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center opacity-40">
@@ -325,20 +329,17 @@ function Step2Ingestion({
           )}
         </div>
       </div>
-    </motion.div>
-  );
-}
 
-function Step3Blueprint({ onLaunch, genesisState }: { onLaunch: () => void, genesisState: string }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-      className="flex-1 flex flex-col p-12 max-w-7xl mx-auto w-full pb-32"
-    >
-       <div className="w-full flex gap-12 items-start">
-         {/* Left: Drafted Streams (Matching Library Tab) */}
-         <div className="flex-[2] flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/5 pb-6 mb-2">
+      {/* MERGED: Drafted Streams (Step 2 content appearing below once decoded) */}
+      <AnimatePresence>
+        {genesisState === 'complete' && (
+          <motion.div 
+            key="blueprint-area"
+            initial={{ opacity: 0, y: 30 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full mt-10 pt-10 border-t border-white/5 flex flex-col gap-6"
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                <div className="flex flex-col gap-1">
                   <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3 tracking-tight">
                     <Layers className="w-6 h-6 text-indigo-400" />
@@ -347,29 +348,219 @@ function Step3Blueprint({ onLaunch, genesisState }: { onLaunch: () => void, gene
                   <p className="text-sm text-slate-500 font-light">Review the AI-generated streams before activating the project in Pulse.</p>
                </div>
 
-               {/* SEND TO PULSE button in the header - exact match to LibraryDashboard */}
+               {/* APPROVE STREAMS button */}
                <motion.button 
-                 initial={{ opacity: 0, scale: 0.9 }} 
-                 animate={{ opacity: 1, scale: 1 }} 
-                 transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.5 }}
-                 onClick={onLaunch}
-                 className="group flex items-center gap-3 px-6 py-3 bg-cyan-500 rounded-full text-[#0a192f] font-bold text-sm tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_40px_rgba(34,211,238,0.6)] hover:scale-105 transition-all outline-none uppercase whitespace-nowrap active:scale-95"
+                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} 
+                 onClick={onConfirm}
+                 className="group flex items-center gap-3 px-8 py-3 bg-cyan-500 rounded-full text-[#0a192f] font-bold text-sm tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_40px_rgba(34,211,238,0.6)] hover:scale-105 transition-all outline-none uppercase whitespace-nowrap active:scale-95"
                >
-                 SEND TO PULSE
+                 APPROVE STREAMS
                  <div className="w-6 h-6 rounded-full bg-[#0a192f]/10 flex items-center justify-center group-hover:translate-x-1 transition-transform">
                    <ChevronDown className="w-4 h-4 text-[#0a192f] -rotate-90" />
                  </div>
                </motion.button>
             </div>
             
-            <StreamAccordion type="drafted" />
+            <StreamAccordion type="drafted" showDrops={false} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function PersistentGenesisSummary() {
+   return (
+    <div className="w-full flex gap-8 mb-10 pb-10 border-b border-white/5 opacity-80 pointer-events-none scale-95 origin-top grayscale-[0.2]">
+      {/* Left: Intake Dropzone Summary */}
+      <div className="flex-[2] bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col items-center justify-center shadow-inner shadow-cyan-900/10">
+         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center z-10 text-center">
+           <div className="w-12 h-12 rounded-full bg-green-950/40 border border-green-500/50 flex items-center justify-center mb-3">
+             <Fingerprint className="w-6 h-6 text-green-400" />
+           </div>
+           <h3 className="text-lg font-bold text-green-400">Context Decoded</h3>
+           <div className="flex gap-4 mt-2">
+              <div className="px-2 py-0.5 bg-slate-900/60 rounded-lg border border-white/5 text-[10px] text-slate-300 font-mono tracking-wide">3 STREAMS</div>
+              <div className="px-2 py-0.5 bg-slate-900/60 rounded-lg border border-white/5 text-[10px] text-slate-300 font-mono tracking-wide">14 DROPS</div>
+           </div>
+         </motion.div>
+      </div>
+
+      {/* Right: Roster Recommendations Summary */}
+      <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group shadow-inner shadow-cyan-900/10">
+        <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+          <UserPlus className="w-4 h-4 text-indigo-400" />
+          <h2 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest text-slate-200">Oracle Alignments</h2>
+        </div>
+        <div className="flex flex-col gap-2">
+          {[
+            { name: 'Sarah', match: 98, color: 'green' },
+            { name: 'Mike', match: 92, color: 'teal' },
+            { name: 'Alex', match: 85, color: 'blue' }
+          ].map((p) => (
+            <div key={p.name} className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5 shadow-inner">
+               <div className={cn("w-6 h-6 rounded-full flex items-center justify-center border font-bold text-[8px] bg-slate-800/40 border-slate-800", `text-${p.color}-300 border-${p.color}-500/30`)}>
+                 {p.name.charAt(0)}
+               </div>
+               <div className="text-[10px] font-bold text-slate-400">{p.name}</div>
+               <div className={cn("text-[8px] font-bold font-mono tracking-wide", `text-${p.color}-400`)}>{p.match}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+   );
+}
+
+function Step3BacklogGeneration({ 
+  onComplete, 
+  genesisState, 
+  setGenesisState 
+}: { 
+  onComplete: () => void, 
+  genesisState: string, 
+  setGenesisState: (s: any) => void 
+}) {
+  const [localProgress, setLocalProgress] = useState(0);
+  const [logs, setLogs] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Start generating automatically when we reach this step
+    setGenesisState('generating');
+  }, []);
+
+  useEffect(() => {
+    if (genesisState !== 'generating') return;
+
+    const logPool = [
+      "Synthesizing stream dependencies...",
+      "Normalizing effort heuristics...",
+      "Levelling swimlanes for Sarah...",
+      "Optimizing database schema Drops...",
+      "Analyzing UX refactors...",
+      "Allocating resource buffers...",
+      "Cross-referencing Jira Epics...",
+      "Validating JWT lifecycle logic...",
+      "Oracle AI: Balancing velocity...",
+      "Finalizing project blueprint..."
+    ];
+
+    let val = 0;
+    const interval = setInterval(() => {
+      val += Math.floor(Math.random() * 5) + 1;
+      if (val >= 100) {
+        val = 100;
+        clearInterval(interval);
+        setGenesisState('launched');
+        setTimeout(onComplete, 800); // Auto-transition to final review
+      }
+      setLocalProgress(val);
+      
+      // Add logs occasionally
+      if (Math.random() > 0.7 && logs.length < 8) {
+         setLogs(prev => {
+            const newLog = logPool[Math.floor(Math.random() * logPool.length)];
+            if (prev.includes(newLog)) return prev;
+            return [...prev, newLog].slice(-5);
+         });
+      }
+    }, 150); // Slightly faster for ~7s simulation
+
+    return () => clearInterval(interval);
+  }, [genesisState, setGenesisState, onComplete]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      className="flex-1 flex flex-col items-center justify-start px-12 py-10 max-w-7xl mx-auto w-full"
+    >
+      <PersistentGenesisSummary />
+
+      <div className="flex flex-col items-center justify-center w-full max-w-4xl text-center">
+        <div className="w-20 h-20 rounded-full bg-cyan-950/20 border border-cyan-500/30 flex items-center justify-center mb-6 relative">
+          <div className="absolute inset-0 rounded-full border-2 border-cyan-500/10 border-t-cyan-400 animate-spin" />
+          <Rocket className={cn("w-8 h-8 text-cyan-400 transition-all duration-1000", genesisState === 'launched' ? "translate-y-[-100px] opacity-0" : "")} />
+        </div>
+
+        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
+          {genesisState === 'launched' ? "Synthesis Complete" : "Generating Backlog"}
+        </h2>
+        <p className="text-sm text-slate-500 mb-8 max-w-md mx-auto">
+          Oracle is deep-linking requirements and generating all constituent Drops across the timeline.
+        </p>
+
+        <div className="w-full max-w-md mb-8">
+          <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-[0.2em]">
+            <span>Backlog Synthesis</span>
+            <span className="text-cyan-400">{localProgress}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5 relative">
+            <motion.div 
+              className="h-full bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.6)]"
+              initial={{ width: 0 }}
+              animate={{ width: `${localProgress}%` }}
+            />
+          </div>
+          
+          {/* Terminal Logs */}
+          <div className="mt-8 bg-black/40 border border-white/5 rounded-2xl p-6 font-mono text-left h-40 overflow-hidden relative">
+             <div className="flex flex-col gap-2">
+               {logs.map((log, i) => (
+                 <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-[10px] text-teal-500/60 leading-relaxed flex gap-3">
+                   <span className="text-slate-700 select-none">[{new Date().toLocaleTimeString([], {hour12: false})}]</span>
+                   <span>{log}</span>
+                 </motion.div>
+               ))}
+               {genesisState === 'generating' && <div className="text-[10px] text-cyan-400 animate-pulse">_</div>}
+             </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function Step4FinalPreview({ onLaunch }: { onLaunch: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+      className="flex-1 flex flex-col p-12 max-w-7xl mx-auto w-full pb-32"
+    >
+       <div className="w-full flex gap-12 items-start mt-4">
+         {/* Left: Final Backlog */}
+         <div className="flex-[2] flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/5 pb-6 mb-2">
+               <div className="flex flex-col gap-1">
+                  <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3 tracking-tight">
+                    <Rocket className="w-6 h-6 text-green-400" />
+                    Final Backlog Preview
+                  </h2>
+                  <p className="text-sm text-slate-500 font-light">The synthesis is complete. Review all Drops before launching the project.</p>
+               </div>
+
+               {/* LAUNCH PROJECT button */}
+               <motion.button 
+                 initial={{ opacity: 0, scale: 0.9 }} 
+                 animate={{ opacity: 1, scale: 1 }} 
+                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                 onClick={onLaunch}
+                 className="group flex items-center gap-3 px-8 py-4 bg-cyan-500 rounded-full text-[#0a192f] font-bold text-sm tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_40px_rgba(34,211,238,0.6)] hover:scale-105 transition-all outline-none uppercase whitespace-nowrap active:scale-95"
+               >
+                 LAUNCH PROJECT
+                 <div className="w-6 h-6 rounded-full bg-[#0a192f]/10 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                   <ChevronRight className="w-4 h-4 text-[#0a192f]" />
+                 </div>
+               </motion.button>
+            </div>
+            
+            <StreamAccordion type="drafted" showDrops={true} />
          </div>
 
-         {/* Right: Roster Alignments (Matching Library Tab) */}
+         {/* Right: Roster Alignments (Detailed) */}
          <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-8 flex flex-col relative overflow-hidden shadow-2xl">
             <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-6">
               <UserPlus className="w-6 h-6 text-indigo-400" />
-              <h2 className="text-sm font-semibold text-slate-200">Oracle Roster Alignments</h2>
+              <h2 className="text-sm font-semibold text-slate-200">Full Roster Matrix</h2>
             </div>
 
             <div className="flex flex-col gap-3">
