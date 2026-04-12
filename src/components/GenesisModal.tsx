@@ -6,18 +6,20 @@ import {
   X, Plus, Zap, Rocket, 
   FileUp, Layers, UserPlus, Database, Fingerprint, Network, UserCheck,
   ChevronDown, ChevronRight,
-  Activity, Target, Briefcase
+  Activity, Target, Briefcase, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGenesis } from '@/context/GenesisContext';
 import { useRouter } from 'next/navigation';
 import { StreamAccordion } from './StreamAccordion';
+import { WizardAssistant, AssistantFocus } from './WizardAssistant';
 
 export function GenesisModal() {
   const { isGenesisOpen, closeGenesis } = useGenesis();
   const [step, setStep] = useState(1);
   const [genesisState, setGenesisState] = useState<'idle' | 'uploading' | 'scanning' | 'complete' | 'generating' | 'launched'>('idle');
   const [progress, setProgress] = useState(0);
+  const [assistantFocus, setAssistantFocus] = useState<AssistantFocus>(null);
   const router = useRouter();
 
   // Reset state when modal closes
@@ -95,41 +97,52 @@ export function GenesisModal() {
             </div>
           </div>
 
-          {/* Wizard Content Area */}
-          <div className="flex-1 relative overflow-y-auto overflow-x-hidden flex flex-col bg-[#020617]">
-            <AnimatePresence mode="wait">
-              {step === 1 && (
-                <Step1ProjectProfile 
-                  key="step1" 
-                  onNext={() => setStep(2)} 
+            <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 overflow-y-auto no-scrollbar relative min-w-0">
+                <AnimatePresence mode="wait">
+                  {step === 1 && (
+                    <Step1ProjectProfile 
+                      key="step1" 
+                      onNext={() => setStep(2)} 
+                    />
+                  )}
+                  {step === 2 && (
+                    <Step2SynthesisWorkspace 
+                      key="step2" 
+                      onConfirm={() => setStep(3)} 
+                      genesisState={genesisState}
+                      setGenesisState={setGenesisState}
+                      progress={progress}
+                      setProgress={setProgress}
+                      onUpdateFocus={setAssistantFocus}
+                    />
+                  )}
+                  {step === 3 && (
+                    <Step3BacklogGeneration 
+                      key="step3"
+                      onComplete={() => setStep(4)}
+                      genesisState={genesisState}
+                      setGenesisState={setGenesisState}
+                    />
+                  )}
+                  {step === 4 && (
+                    <Step4FinalPreview
+                      key="step4"
+                      onLaunch={handleLaunch}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Wizard AI Assistant Panel */}
+              {step > 1 && (
+                <WizardAssistant 
+                  isOpen={true} 
+                  focus={assistantFocus} 
+                  genesisState={genesisState} 
                 />
               )}
-              {step === 2 && (
-                <Step2SynthesisWorkspace 
-                  key="step2" 
-                  onConfirm={() => setStep(3)} 
-                  genesisState={genesisState}
-                  setGenesisState={setGenesisState}
-                  progress={progress}
-                  setProgress={setProgress}
-                />
-              )}
-              {step === 3 && (
-                <Step3BacklogGeneration 
-                  key="step3"
-                  onComplete={() => setStep(4)}
-                  genesisState={genesisState}
-                  setGenesisState={setGenesisState}
-                />
-              )}
-              {step === 4 && (
-                <Step4FinalPreview
-                  key="step4"
-                  onLaunch={handleLaunch}
-                />
-              )}
-            </AnimatePresence>
-          </div>
+            </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -193,13 +206,14 @@ function Step1ProjectProfile({ onNext }: { onNext: () => void }) {
 }
 
 function Step2SynthesisWorkspace({ 
-  onConfirm, genesisState, setGenesisState, progress, setProgress 
+  onConfirm, genesisState, setGenesisState, progress, setProgress, onUpdateFocus
 }: { 
   onConfirm: () => void, 
   genesisState: string,
   setGenesisState: (s: any) => void,
   progress: number,
-  setProgress: (p: number) => void
+  setProgress: (p: number) => void,
+  onUpdateFocus: (focus: AssistantFocus) => void
 }) {
   const handleScan = () => {
     if (genesisState !== 'idle') return;
@@ -231,6 +245,8 @@ function Step2SynthesisWorkspace({
       <div className="w-full flex gap-8">
         {/* Left: Intake Dropzone */}
         <div 
+          onMouseEnter={() => onUpdateFocus('intake')}
+          onMouseLeave={() => onUpdateFocus(null)}
           className={cn(
             "flex-[2] bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-8 flex flex-col items-center justify-center min-h-[320px] transition-all relative overflow-hidden",
             ['idle', 'uploading', 'scanning'].includes(genesisState) ? "border-dashed hover:border-cyan-500/50 hover:bg-cyan-950/10 cursor-pointer group" : "border-solid shadow-inner shadow-cyan-900/10"
@@ -239,8 +255,11 @@ function Step2SynthesisWorkspace({
         >
            {genesisState === 'idle' && (
              <>
-               <div className="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-cyan-500/50 transition-all shadow-lg shadow-black">
-                 <FileUp className="w-8 h-8 text-cyan-400 group-hover:text-cyan-300" />
+               <div className="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-cyan-500/50 transition-all shadow-lg shadow-black relative">
+                  <FileUp className="w-8 h-8 text-cyan-400 group-hover:text-cyan-300" />
+                  <div className="absolute -top-1 -right-1">
+                    <Sparkles className="w-4 h-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+                  </div>
                </div>
                <h3 className="text-lg font-medium text-slate-200">Drag & Drop Requirements</h3>
                <p className="text-sm text-slate-500 mt-2 font-light">Support for Jira Epics, PRDs, and FigJam links.</p>
@@ -288,7 +307,10 @@ function Step2SynthesisWorkspace({
         </div>
 
         {/* Right: Roster Recommendations */}
-        <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group">
+        <div 
+          onMouseEnter={() => onUpdateFocus('roster')}
+          onMouseLeave={() => onUpdateFocus(null)}
+          className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <UserPlus className="w-5 h-5 text-indigo-400" />
             <h2 className="text-sm font-semibold text-slate-200">Oracle Roster Alignments</h2>
@@ -300,19 +322,20 @@ function Step2SynthesisWorkspace({
                 { name: 'Mike', role: 'Database Arch', match: 92, color: 'teal' },
                 { name: 'Alex', role: 'UI / UX', match: 85, color: 'blue' }
               ].map((p, i) => (
-                <div key={p.name} className={cn("flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border shadow-inner transition-all", `border-${p.color}-500/20 shadow-${p.color}-900/10`)}>
+                <div key={p.name} className={cn("flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border shadow-inner transition-all group/card cursor-help", `border-${p.color}-500/20 hover:border-indigo-500/40 shadow-${p.color}-900/10 hover:shadow-indigo-500/5`)}>
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs shadow-lg", `bg-${p.color}-900/40 border-${p.color}-500/30 text-${p.color}-300`)}>
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs shadow-lg relative", `bg-${p.color}-900/40 border-${p.color}-500/30 text-${p.color}-300`)}>
                       {p.name.charAt(0)}
+                      <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-indigo-400 opacity-0 group-hover/card:opacity-100 transition-opacity" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-slate-200">{p.name}</span>
+                      <span className="text-sm font-medium text-slate-200 group-hover/card:text-indigo-200 transition-colors">{p.name}</span>
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest">
                         {p.role}
                       </span>
                     </div>
                   </div>
-                  <div className={cn("text-xs font-bold font-mono tracking-wide", `text-${p.color}-400`)}>{p.match}% MATCH</div>
+                  <div className={cn("text-xs font-bold font-mono tracking-wide", `text-${p.color}-400 group-hover/card:text-indigo-400`)}>{p.match}% MATCH</div>
                 </div>
               ))}
               
@@ -337,6 +360,8 @@ function Step2SynthesisWorkspace({
             key="blueprint-area"
             initial={{ opacity: 0, y: 30 }} 
             animate={{ opacity: 1, y: 0 }}
+            onMouseEnter={() => onUpdateFocus('streams')}
+            onMouseLeave={() => onUpdateFocus(null)}
             className="w-full mt-10 pt-10 border-t border-white/5 flex flex-col gap-6"
           >
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -344,6 +369,10 @@ function Step2SynthesisWorkspace({
                   <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3 tracking-tight">
                     <Layers className="w-6 h-6 text-indigo-400" />
                     Drafted Streams
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 ml-2">
+                       <Sparkles className="w-3 h-3 text-indigo-400" />
+                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI Synthesis</span>
+                    </div>
                   </h2>
                   <p className="text-sm text-slate-500 font-light">Review the AI-generated streams before activating the project in Pulse.</p>
                </div>

@@ -12,10 +12,9 @@ export function BurndownChart() {
         {/* Guideline (Ideal) */}
         <line 
           x1="0" y1="5" x2="100" y2="35" 
-          stroke="currentColor" 
-          strokeWidth="1" 
-          strokeDasharray="2 2" 
-          className="text-slate-700" 
+          stroke="rgba(255, 255, 255, 0.25)" 
+          strokeWidth="1.5" 
+          strokeDasharray="3 3" 
         />
         
         {/* Actual Burndown Path */}

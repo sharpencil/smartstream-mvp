@@ -1,10 +1,13 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Network, Search, AlertTriangle, Blocks } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Network, Search, AlertTriangle, Blocks, ChevronDown, ChevronRight } from 'lucide-react';
 import { GLOBAL_STREAMS, STREAM_COLORS } from '@/lib/streams';
 
 export function DependencyMatrix() {
+  const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null);
+
   // A pipeline left-to-right flow mapping
   // We can group streams by "Layers" to simulate a pipeline
   const pipelineLayers = [
@@ -38,6 +41,16 @@ export function DependencyMatrix() {
    s_comms depends on s_billing
    This naturally flows left to right!
   */
+
+  const CRITICAL_BRIDGES: Record<string, { targetStream: string; sourceDrop: string; targetDrop: string }[]> = {
+    's_auth': [
+      { targetStream: 's_ux', sourceDrop: 'API Routes', targetDrop: 'User Settings' }
+    ],
+    's_infra': [
+      { targetStream: 's_auth', sourceDrop: 'QA Defect Fixes', targetDrop: 'Invoice PDF' },
+      { targetStream: 's_ux', sourceDrop: 'QA Defect Fixes', targetDrop: 'Dashboard Chart' }
+    ]
+  };
 
   return (
     <motion.div
@@ -121,7 +134,7 @@ export function DependencyMatrix() {
                   return (
                     <motion.div
                       key={stream.id}
-                      whileHover={{ scale: 1.05 }}
+                      onClick={() => setSelectedStreamId(prev => prev === stream.id ? null : stream.id)}
                       className="w-full bg-[#0a192f] border border-slate-700/60 rounded-2xl p-5 shadow-xl shadow-black/40 relative group cursor-pointer"
                       style={{ boxShadow: `inset 0 0 20px ${colorHex}15` }}
                     >
@@ -138,6 +151,48 @@ export function DependencyMatrix() {
                       </div>
 
                       <h4 className="text-sm font-semibold text-slate-200 pl-2 leading-tight">{stream.title}</h4>
+
+                      <AnimatePresence>
+                        {selectedStreamId === stream.id && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                            animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                            className="overflow-hidden pl-2"
+                          >
+                            <div className="pt-3 border-t border-slate-700/50">
+                              <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-2 block">Critical Bridges</span>
+                              {CRITICAL_BRIDGES[stream.id] ? (
+                                <div className="flex flex-col gap-3">
+                                  {CRITICAL_BRIDGES[stream.id].map((bridge, bIdx) => {
+                                    const tStream = GLOBAL_STREAMS[bridge.targetStream];
+                                    const tColorHex = tStream ? STREAM_COLORS[tStream.colorKey].hex : '#94a3b8';
+                                    return (
+                                      <div key={bIdx} className="flex flex-col gap-1.5 p-2 bg-black/20 rounded-xl border border-white/5">
+                                        <div className="flex items-center gap-1.5">
+                                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorHex }} />
+                                          <span className="text-[10px] font-semibold text-slate-300">{bridge.sourceDrop}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 pl-1.5">
+                                          <div className="w-px h-3 bg-slate-700 ml-[2px]" />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <div className="w-1.5 h-1.5 rounded-sm" style={{ backgroundColor: tColorHex }} />
+                                          <span className="text-[10px] font-semibold text-slate-400">
+                                            {tStream?.initials}: {bridge.targetDrop}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-slate-500 italic py-2">No cross-stream drops.</div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       {/* Interactive dependency highlight */}
                       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ boxShadow: `0 0 30px ${colorHex}40`, border: `1px solid ${colorHex}80` }} />

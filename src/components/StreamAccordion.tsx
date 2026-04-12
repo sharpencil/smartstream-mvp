@@ -2,7 +2,7 @@
 
 import * as Accordion from '@radix-ui/react-accordion';
 import * as Popover from '@radix-ui/react-popover';
-import { ChevronDown, Link2, Code2, ShieldAlert, Database, Palette, Lock, Network, Map, Activity, CheckCircle2, CircleDashed, AlertTriangle, Anchor } from 'lucide-react';
+import { ChevronDown, Link, Link2, Code2, ShieldAlert, Database, Palette, Lock, Network, Map, Activity, CheckCircle2, CircleDashed, AlertTriangle, Anchor } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GLOBAL_STREAMS, STREAM_COLORS, Reference, DropDef } from '@/lib/streams';
 
@@ -237,6 +237,13 @@ export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?:
                             <div className="px-3 py-1 bg-slate-800/80 rounded-lg border border-slate-700/50">
                               <span className="text-xs font-bold text-slate-400 font-mono">{drop.effort}</span>
                             </div>
+                            
+                            {/* Dependency indicator */}
+                            {drop.references && drop.references.length > 0 && (
+                              <div className="absolute top-1/2 -translate-y-1/2 right-[100px] z-40 p-1 rounded-full border shadow-sm bg-slate-900/80 border-slate-700/50 text-slate-400">
+                                <Link className="w-3 h-3" />
+                              </div>
+                            )}
                           </div>
                         </button>
                       </Popover.Trigger>
