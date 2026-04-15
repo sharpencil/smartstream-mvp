@@ -2,9 +2,15 @@ export type StreamColorKey = 'teal' | 'purple' | 'cyan' | 'blue' | 'indigo' | 'v
 
 export interface StreamDef {
   id: string;
+  workstream_id?: number | string;
   title: string;
+  description?: string;
   initials: string;
   colorKey: StreamColorKey;
+  priority?: string;
+  complexity?: number;
+  estimated_completion_time?: string | number;
+  workstream_hash?: string;
 }
 
 export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> = {
@@ -24,10 +30,16 @@ export interface Reference {
 
 export interface DropDef {
   id: string;
+  drop_id?: string;
   title: string;
+  tasks?: string[];
+  priority?: string;
+  complexity?: number;
+  status?: string;
+  drop_hash?: string;
   skill: string;
   effort: string;
-  icon: any; // Lucide icon
+  icon?: any; // Lucide icon
   state: string;
   references?: Reference[];
 }

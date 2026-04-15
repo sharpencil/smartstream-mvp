@@ -3,12 +3,13 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentPanel, FeedItem } from './AgentPanel';
-import { Drop, DropState } from './Drop';
+import { Drop, DropState, getDropWidth } from './Drop';
 import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
-import { GLOBAL_STREAMS, STREAM_COLORS, Reference } from '@/lib/streams';
-import { Zap, PlayCircle, CheckCircle2 } from 'lucide-react';
+import { STREAM_COLORS, StreamColorKey, Reference } from '@/lib/streams';
+import { Zap, PlayCircle } from 'lucide-react';
 import { BacklogTray } from './BacklogTray';
+import { STAGING_STREAMS, STAGING_DROPS, computeVelocityDelta } from '@/lib/stagingData';
 
 export interface DropData {
   id: string;
@@ -16,6 +17,10 @@ export interface DropData {
   title: string;
   state: DropState;
   effortHours: number;
+  complexity?: number;
+  description?: string;
+  tasks?: string[];
+  status?: string;
   xOffset: number;
   isBlocked?: boolean;
   references?: Reference[];
@@ -29,53 +34,167 @@ interface Milestone {
   xOffset: number; // canvas-space x (pre-zoom)
 }
 
+// ── Staging stream definition map ────────────────────────────────────────────
+const STAGING_STREAM_MAP = Object.fromEntries(
+  STAGING_STREAMS.map((s) => [
+    s.id,
+    { id: s.id, title: s.title, initials: s.initials, colorKey: s.colorKey as StreamColorKey },
+  ])
+);
+
 const TEAM_MEMBERS = [
   { id: '1', name: 'Sarah' },
   { id: '2', name: 'Mike' },
   { id: '3', name: 'Alex' },
   { id: '4', name: 'Elena' },
-  { id: '5', name: 'David' },
 ];
 
 const MILESTONES: Milestone[] = [
-  { id: 'm1', label: 'MVP Demo',        xOffset: 540 },
-  { id: 'm2', label: 'Beta Release',    xOffset: 740 },
-  { id: 'm3', label: 'Production Push', xOffset: 960 },
+  { id: 'm1', label: 'Tracking MVP',  xOffset: 480 },
+  { id: 'm2', label: 'DB Migration',  xOffset: 720 },
+  { id: 'm3', label: 'AI Eval Live',  xOffset: 960 },
 ];
 
-const INITIAL_DROPS: DropData[] = [
-  { id: 'd1',  lane: 0, title: 'Auth Service',       state: 'completed', effortHours: 2.5, xOffset: 20,  streamId: 's_auth' },
-  { id: 'd2',  lane: 0, title: 'API Routes',         state: 'active',    effortHours: 2,   xOffset: 260, streamId: 's_auth',   references: [{ type: 'doc', label: 'API Spec' }], dependsOn: ['d7'] },
-  { id: 'd3',  lane: 0, title: 'Role Based Access',  state: 'ghost',     effortHours: 3,   xOffset: 480, streamId: 's_infra' },
-  { id: 'd3b', lane: 0, title: 'OAuth Providers',    state: 'ghost',     effortHours: 2,   xOffset: 760, streamId: 's_ux' },
+// ── Build initial drops from staging CSV data ─────────────────────────────────
+//  Completed   → left of NOW_LINE_BASE (pre-Now)
+//  Not Started → ghost, right of NOW_LINE_BASE
+//  In Progress → active, near NOW_LINE_BASE
+const NOW_LINE_BASE = 420;
 
-  { id: 'd4',  lane: 1, title: 'DB Migration',       state: 'completed', effortHours: 3,   xOffset: 50,  streamId: 's_infra' },
-  { id: 'd5',  lane: 1, title: 'QA Defect Fixes',    state: 'active',    effortHours: 2,   xOffset: 320, isBlocked: true, streamId: 's_infra', references: [{ type: 'stream', targetId: 's_auth' }], dependsOn: ['d9', 'd13'] },
-  { id: 'd5b', lane: 1, title: 'Performance Testing',state: 'ghost',     effortHours: 2,   xOffset: 550, streamId: 's_comms' },
-  { id: 'd5c', lane: 1, title: 'Release Candidate',  state: 'ghost',     effortHours: 1.5, xOffset: 760, streamId: 's_comms' },
+function buildInitialDrops(): DropData[] {
+  const result: DropData[] = [];
+  const laneTasks: Record<number, { completed: any[], active: any[], pending: any[] }> = {
+    0: { completed: [], active: [], pending: [] },
+    1: { completed: [], active: [], pending: [] },
+    2: { completed: [], active: [], pending: [] },
+    3: { completed: [], active: [], pending: [] }
+  };
 
-  { id: 'd6',  lane: 2, title: 'Onboarding UI',      state: 'completed', effortHours: 4,   xOffset: 0,   streamId: 's_ux' },
-  { id: 'd7',  lane: 2, title: 'User Settings',      state: 'ghost',     effortHours: 3,   xOffset: 450, streamId: 's_ux' },
-  { id: 'd7b', lane: 2, title: 'Profile Editing',    state: 'ghost',     effortHours: 2,   xOffset: 740, streamId: 's_billing' },
+  // Collect all drops and distribute them round-robin to lanes
+  let absoluteDropIdx = 0;
+  STAGING_STREAMS.forEach((stream) => {
+    stream.drops.forEach((drop) => {
+      const lane = absoluteDropIdx % 4;
+      const dropData = { ...drop, streamId: stream.id };
+      
+      if (drop.status === 'Completed') {
+        laneTasks[lane].completed.push(dropData);
+      } else if (drop.status === 'Not Started') {
+        laneTasks[lane].pending.push(dropData);
+      } else {
+        laneTasks[lane].active.push(dropData);
+      }
+      absoluteDropIdx++;
+    });
+  });
 
-  { id: 'd8',  lane: 3, title: 'Payment Gateway',    state: 'active',    effortHours: 4.5, xOffset: 80,  streamId: 's_billing', references: [{ type: 'design', label: 'Figma' }] },
-  { id: 'd9',  lane: 3, title: 'Invoice PDF',        state: 'ghost',     effortHours: 2,   xOffset: 560, streamId: 's_auth' },
-  { id: 'd9b', lane: 3, title: 'Tax Integration',    state: 'ghost',     effortHours: 3,   xOffset: 760, streamId: 's_billing' },
+  // Position drops per lane
+  [0, 1, 2, 3].forEach(lane => {
+    // 1. Position ACTIVE drops at NOW_LINE (usually 0-1 per lane)
+    laneTasks[lane].active.forEach((drop, i) => {
+      const complexity = drop.complexity ?? 4;
+      result.push({
+        id: `staging-${drop.drop_id}`,
+        lane,
+        title: drop.title,
+        description: drop.title,
+        tasks: drop.tasks,
+        status: drop.status,
+        complexity,
+        state: 'active',
+        effortHours: drop.estimated_time || complexity,
+        xOffset: NOW_LINE_BASE - 20 + (i * 20), // slight stagger if multiple
+        streamId: drop.streamId,
+      });
+    });
 
-  { id: 'd10', lane: 4, title: 'Email Templates',    state: 'completed', effortHours: 2,   xOffset: 30,  streamId: 's_comms' },
-  { id: 'd11', lane: 4, title: 'Notification Logs',  state: 'completed', effortHours: 1.5, xOffset: 220, streamId: 's_comms' },
-  { id: 'd12', lane: 4, title: 'Analytics Event',    state: 'active',    effortHours: 1.2, xOffset: 370, streamId: 's_infra' },
-  { id: 'd13', lane: 4, title: 'Dashboard Chart',    state: 'ghost',     effortHours: 2,   xOffset: 530, streamId: 's_ux',   references: [{ type: 'stream', targetId: 's_billing' }] },
-  { id: 'd14', lane: 4, title: 'Export PDF',         state: 'ghost',     effortHours: 1.5, xOffset: 740, streamId: 's_comms' },
-];
+    // 2. Position COMPLETED drops working BACKWARDS from NOW_LINE
+    let currentXCompleted = NOW_LINE_BASE - 100;
+    // Reverse so the "latest" completed is closest to Now line
+    [...laneTasks[lane].completed].reverse().forEach((drop) => {
+      const complexity = drop.complexity ?? 4;
+      const cardWidth = 100 + complexity * 28;
+      currentXCompleted -= (cardWidth + 24);
+      result.push({
+        id: `staging-${drop.drop_id}`,
+        lane,
+        title: drop.title,
+        description: drop.title,
+        tasks: drop.tasks,
+        status: drop.status,
+        complexity,
+        state: 'completed',
+        effortHours: drop.estimated_time || complexity,
+        xOffset: currentXCompleted,
+        streamId: drop.streamId,
+      });
+    });
 
-const NOW_LINE_X = 420;
+    // 3. Position PENDING drops working FORWARDS from NOW_LINE
+    let currentXPending = NOW_LINE_BASE + 80;
+    laneTasks[lane].pending.forEach((drop) => {
+      const complexity = drop.complexity ?? 4;
+      const cardWidth = 100 + complexity * 28;
+      result.push({
+        id: `staging-${drop.drop_id}`,
+        lane,
+        title: drop.title,
+        description: drop.title,
+        tasks: drop.tasks,
+        status: drop.status,
+        complexity,
+        state: 'ghost',
+        effortHours: drop.estimated_time || complexity,
+        xOffset: currentXPending,
+        streamId: drop.streamId,
+      });
+      currentXPending += (cardWidth + 30);
+    });
+  });
+
+  return result;
+}
+
+const INITIAL_DROPS: DropData[] = buildInitialDrops();
+
+// ── Seed velocity from estimated vs. completion time ─────────────────────────
+function buildInitialVelocity(initialDrops: DropData[]): Record<string, number> {
+  const result: Record<string, number> = {};
+  
+  // Calculate average delta for each lane's completed drops
+  for (let lane = 0; lane < 4; lane++) {
+    const laneId = (lane + 1).toString();
+    const laneDrops = initialDrops.filter(d => d.lane === lane && d.state === 'completed');
+    
+    // We need the original StagingDrop data to get completion_time/estimated_time
+    // But we can approximate it or map it back.
+    // Better: compute from STAGING_DROPS filtered by the same logic
+    const originalDrops = STAGING_DROPS.filter((_, idx) => (idx % 4) === lane && _.status === 'Completed');
+    
+    if (originalDrops.length > 0) {
+      const totalDelta = originalDrops.reduce((acc, d) => acc + (d.estimated_time - d.completion_time), 0);
+      result[laneId] = Math.round((totalDelta / originalDrops.length) * 10);
+    } else {
+      result[laneId] = 0;
+    }
+  }
+
+  // Clamp to realistic values
+  Object.keys(result).forEach((k) => {
+    result[k] = Math.max(-25, Math.min(25, result[k]));
+  });
+  return result;
+}
+
+const INITIAL_VELOCITY: Record<string, number> = buildInitialVelocity(INITIAL_DROPS);
+
+const NOW_LINE_X = NOW_LINE_BASE;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Returns the right edge x (canvas space) of a drop */
 function dropRightEdge(drop: DropData, zoomScale: number) {
-  const width = Math.max(120 * zoomScale, drop.effortHours * 80 * zoomScale);
+  const width = getDropWidth(drop, zoomScale);
   return (drop.xOffset * zoomScale) + width;
 }
 
@@ -83,11 +202,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 
 export function PulseDashboard() {
   const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
-  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([
-    { id: 'b1', lane: -1, title: 'GDPR Compliance', state: 'ghost', effortHours: 3, xOffset: 0, streamId: 's_infra' },
-    { id: 'b2', lane: -1, title: 'Telemetry Agent', state: 'ghost', effortHours: 2, xOffset: 0, streamId: 's_infra' },
-    { id: 'b3', lane: -1, title: 'SSO Integration', state: 'ghost', effortHours: 4, xOffset: 0, streamId: 's_auth' }
-  ]);
+  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
   const [zoomScale, setZoomScale] = useState(1);
   
   // Sandbox State
@@ -125,9 +240,7 @@ export function PulseDashboard() {
   const [forecastDismissed, setForecastDismissed] = useState(false);
   const [forecastSlipHours, setForecastSlipHours] = useState(4);
 
-  const [memberVelocity, setMemberVelocity] = useState<Record<string, number>>({
-    '1': 0, '2': -4, '3': 5, '4': 12, '5': -2
-  });
+  const [memberVelocity, setMemberVelocity] = useState<Record<string, number>>(INITIAL_VELOCITY);
 
   const [isAgentOpen, setIsAgentOpen] = useState(true);
   const [isThinking, setIsThinking] = useState(false);
@@ -173,7 +286,7 @@ export function PulseDashboard() {
     drops
       .filter(d => d.state === 'ghost')
       .forEach(drop => {
-        const rightEdge = drop.xOffset + (Math.max(120, drop.effortHours * 80));
+        const rightEdge = drop.xOffset + (getDropWidth(drop, 1));
         MILESTONES.forEach(m => {
           if (drop.xOffset < m.xOffset && rightEdge > m.xOffset) violated.add(m.id);
         });
@@ -186,7 +299,7 @@ export function PulseDashboard() {
     drops
       .filter(d => d.state === 'ghost')
       .forEach(drop => {
-        const rightEdge = drop.xOffset + (Math.max(120, drop.effortHours * 80));
+        const rightEdge = drop.xOffset + (getDropWidth(drop, 1));
         if (MILESTONES.some(m => drop.xOffset < m.xOffset && rightEdge > m.xOffset)) result.add(drop.id);
       });
     return result;
@@ -385,7 +498,7 @@ export function PulseDashboard() {
                 >
                   ALL
                 </button>
-                {Object.values(GLOBAL_STREAMS).map(stream => {
+                {Object.values(STAGING_STREAM_MAP).map(stream => {
                   const colorHex = STREAM_COLORS[stream.colorKey].hex;
                   const isActive = hoveredStreamId === stream.id;
                   return (
@@ -506,7 +619,7 @@ export function PulseDashboard() {
                   const dst = isParent ? drops.find(d => d.id === hoveredDropId)! : targetDrop;
 
                   const getCenter = (d: DropData) => {
-                    const width = Math.max(120 * zoomScale, d.effortHours * 80 * zoomScale);
+                    const width = getDropWidth(d, zoomScale);
                     const isDraftX = isSandboxActive && sandboxSnapshot ? sandboxSnapshot.drops.find(sd => sd.id === d.id)?.xOffset !== d.xOffset : false;
                     const isDraftL = isSandboxActive && sandboxSnapshot ? sandboxSnapshot.drops.find(sd => sd.id === d.id)?.lane !== d.lane : false;
 
@@ -524,7 +637,7 @@ export function PulseDashboard() {
                   const isSimulating = isSandboxActive && (p1.isDraft || p2.isDraft);
                   
                   // Compute target stream color
-                  const targetStreamDef = GLOBAL_STREAMS[dst.streamId || ''];
+                  const targetStreamDef = STAGING_STREAM_MAP[dst.streamId || ''];
                   const traceColor = isSimulating ? '#f59e0b' : targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8';
 
                   const dPath = `M ${p1.x} ${p1.y} C ${p1.x + 100} ${p1.y}, ${p2.x - 100} ${p2.y}, ${p2.x} ${p2.y}`;
@@ -634,7 +747,7 @@ export function PulseDashboard() {
                     <div className="absolute inset-0 flex items-center">
                       <AnimatePresence>
                         {laneDrops.map(drop => {
-                          const streamDef = drop.streamId ? GLOBAL_STREAMS[drop.streamId] : undefined;
+                          const streamDef = drop.streamId ? STAGING_STREAM_MAP[drop.streamId] : undefined;
                           const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : undefined;
                           const isMilestoneViolation = violatingDropIds.has(drop.id);
 
@@ -645,6 +758,9 @@ export function PulseDashboard() {
                               title={drop.title}
                               state={drop.state}
                               effortHours={drop.effortHours}
+                              complexity={drop.complexity}
+                              description={drop.description}
+                              tasks={drop.tasks}
                               xOffset={drop.xOffset}
                               isBlocked={drop.isBlocked}
                               isMilestoneViolation={isMilestoneViolation}

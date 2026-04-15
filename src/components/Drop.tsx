@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, CircleDashed, AlertTriangle, Link } from 'lucide-react';
+import { CheckCircle2, CircleDashed, AlertTriangle, Link, ChevronDown } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { Reference } from '@/lib/streams';
@@ -15,6 +15,9 @@ export interface DropProps {
   state: DropState;
   effortHours: number;
   xOffset: number;
+  complexity?: number; // 1–9: used to drive card width
+  description?: string;
+  tasks?: string[];
   isBlocked?: boolean;
   isMilestoneViolation?: boolean;
   references?: Reference[];
@@ -33,12 +36,27 @@ export interface DropProps {
   onHoverDrop?: (id: string | null) => void;
 }
 
+/** Map complexity 1–9 to a pixel width multiplier for the card. */
+export function complexityToWidth(complexity: number, zoomScale: number = 1): number {
+  // complexity 1 → ~120px, complexity 9 → ~360px (base), then zoomed
+  const base = 100 + (complexity * 28);
+  return Math.round(base * zoomScale);
+}
+
+export function getDropWidth(drop: { effortHours: number, complexity?: number }, zoomScale: number = 1): number {
+  if (drop.complexity) return complexityToWidth(drop.complexity, zoomScale);
+  return Math.max(120 * zoomScale, (drop.effortHours * 80) * zoomScale);
+}
+
 export function Drop({
   id,
   title,
   state,
   effortHours,
   xOffset,
+  complexity,
+  description,
+  tasks,
   isBlocked,
   isMilestoneViolation,
   references,
@@ -63,13 +81,16 @@ export function Drop({
   const [rationale, setRationale] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
-  const width = Math.max(120 * zoomScale, (effortHours * 80) * zoomScale);
+  const width = getDropWidth({ effortHours, complexity }, zoomScale);
   const actualLeft = xOffset * zoomScale;
 
   // Dim-highlight: if any stream is being hovered and it's NOT this drop's stream → dim
   const isStreamHovered = hoveredStreamId != null;
   const isMatchingStream = hoveredStreamId === streamId && streamId != null;
   const isDimmed = isStreamHovered && !isMatchingStream;
+
+  // Complexity badge label
+  const complexityLabel = complexity ? `C${complexity}` : null;
 
   // Compute box shadow
   const getBoxShadow = () => {
@@ -122,7 +143,7 @@ export function Drop({
             dragElastic: 0.2,
             onDragStart: () => setIsDragging(true),
             whileDrag: { zIndex: 100, scale: 1.05, cursor: 'grabbing', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)' },
-            onDragEnd: (event, info) => {
+            onDragEnd: (event: any, info: any) => {
               setIsDragging(false);
               onDragEnd?.(id, info.point.x, info.point.y);
             }
@@ -148,6 +169,16 @@ export function Drop({
             </div>
           )}
 
+          {/* Complexity badge */}
+          {complexityLabel && (
+            <div
+              className="absolute bottom-1.5 right-3 text-[8px] font-bold tracking-[0.15em] opacity-40"
+              style={{ color: streamColorHex || '#94a3b8' }}
+            >
+              {complexityLabel}
+            </div>
+          )}
+
           {/* Milestone violation pulse ring */}
           {isMilestoneViolation && (
             <div className="absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none" />
@@ -157,8 +188,8 @@ export function Drop({
           {hasDependencies && (
             <div className={cn(
               "absolute bottom-0.5 right-6 z-40 p-0.5 rounded-full border shadow-sm transition-colors",
-              isDependencyBlocked 
-                ? "bg-rose-950 border-rose-500/50 text-rose-400 animate-pulse" 
+              isDependencyBlocked
+                ? "bg-rose-950 border-rose-500/50 text-rose-400 animate-pulse"
                 : "bg-slate-900/80 border-slate-700/50 text-slate-400"
             )}>
               <Link className="w-2.5 h-2.5" />
@@ -194,7 +225,6 @@ export function Drop({
             {isActive && !isBlocked && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
             )}
-            {/* Blocked shimmer */}
             {isBlocked && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-400/8 to-transparent w-[200%] animate-[shimmer_3s_infinite]" />
             )}
@@ -212,21 +242,69 @@ export function Drop({
         <Popover.Content
           sideOffset={10}
           side="top"
-          className="w-64 bg-[#0a192f]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.15)] p-4 outline-none z-50 animate-in fade-in zoom-in-95 duration-200"
+          className="w-80 bg-[#0a192f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.15)] outline-none z-50 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[480px]"
         >
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2 mb-1 border-b border-white/10 pb-4 relative">
-              {streamInitials && (
-                <div className="absolute top-0 right-0 text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase" style={{ color: streamColorHex || '#fff' }}>
-                  {streamInitials}
-                </div>
-              )}
-              <h4 className="text-sm font-bold text-cyan-50 pr-12 drop-shadow-sm leading-tight">{title}</h4>
-              {isMilestoneViolation && (
-                <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider">⚠ Milestone Deadline Conflict</p>
+          {/* Header */}
+          <div className="p-4 pb-3 border-b border-white/10 relative flex-shrink-0">
+            {streamInitials && (
+              <div className="absolute top-3 right-3 text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase" style={{ color: streamColorHex || '#fff' }}>
+                {streamInitials}
+              </div>
+            )}
+            <div className="flex items-center gap-2 mb-1">
+              {isCompleted && <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />}
+              {isGhost && <CircleDashed className="w-4 h-4 text-teal-400/60 shrink-0" />}
+              {isActive && <div className="w-4 h-4 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-cyan-400" /></div>}
+              <span className={cn(
+                'text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full',
+                isCompleted ? 'bg-green-950/60 text-green-400 border border-green-500/30'
+                  : isActive ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30'
+                  : 'bg-slate-800/60 text-slate-400 border border-slate-700/30'
+              )}>
+                {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Not Started'}
+              </span>
+              {complexity && (
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800/60 text-slate-400 border border-slate-700/30">
+                  Weight {complexity}/9
+                </span>
               )}
             </div>
+            <h4 className="text-sm font-bold text-cyan-50 leading-snug mt-2 pr-8">{title}</h4>
+            {isMilestoneViolation && (
+              <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider mt-1">⚠ Milestone Deadline Conflict</p>
+            )}
+          </div>
 
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-700/50 scrollbar-track-transparent min-h-0">
+            {/* Description */}
+            {description && (
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Objective</p>
+                <p className="text-xs text-slate-300 leading-relaxed">{description}</p>
+              </div>
+            )}
+
+            {/* Tasks */}
+            {tasks && tasks.length > 0 && (
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Tasks ({tasks.length})</p>
+                <ul className="space-y-1.5">
+                  {tasks.map((task, i) => (
+                    <li key={i} className="flex gap-2 text-xs text-slate-300 leading-relaxed">
+                      <span className="shrink-0 w-4 h-4 rounded-full border border-cyan-500/30 flex items-center justify-center text-[9px] font-bold text-cyan-500/70 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span>{task}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Footer actions */}
+          <div className="p-4 pt-3 border-t border-white/10 flex-shrink-0 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <Popover.Close asChild>
                 <button
@@ -255,11 +333,11 @@ export function Drop({
             </div>
 
             {!isCompleted && (
-              <div className="mt-2 pt-3 border-t border-white/10">
+              <div>
                 <Popover.Close asChild>
                   <button
                     onClick={() => onAction?.(id, 'remove')}
-                    className="w-full bg-transparent hover:bg-red-950/20 text-xs text-red-500/60 hover:text-red-400 py-1.5 rounded-lg transition-all mb-2 font-medium"
+                    className="w-full bg-transparent hover:bg-red-950/20 text-xs text-red-500/60 hover:text-red-400 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Remove Drop
                   </button>
@@ -269,11 +347,12 @@ export function Drop({
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   placeholder="Add rationale... (Why?)"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all font-mono shadow-inner block"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all font-mono shadow-inner block mt-1"
                 />
               </div>
             )}
           </div>
+
           <Popover.Arrow className="fill-[#0a192f] opacity-90 w-4 h-2" />
         </Popover.Content>
       </Popover.Portal>
