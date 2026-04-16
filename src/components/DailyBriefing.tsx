@@ -7,6 +7,16 @@ import { cn } from '@/lib/utils';
 
 interface DailyBriefingProps {
   blockerCount: number;
+  forecastSlipHours: number;
+  forecastSlipStream: string;
+  isAgentOpen?: boolean;
+  onDismissBlocker?: () => void;
+  onDismissForecast?: () => void;
+  onClickBlocker?: () => void;
+  isSandboxActive?: boolean;
+  sandboxDelta?: { date: number, cost: number } | null;
+  onToggleSandbox?: () => void;
+  onCommitSandbox?: () => void;
   blockerResolutionCount?: number;
   onDismissResolution?: () => void;
 }
