@@ -92,22 +92,22 @@ export function LibraryDashboard() {
            Streams
          </h1>
 
-         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20">
+         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 flex-nowrap">
            <button 
              onClick={() => setActiveTab('active')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'active' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none whitespace-nowrap", activeTab === 'active' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Active Streams
            </button>
            <button 
              onClick={() => setActiveTab('dependencies')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'dependencies' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none whitespace-nowrap", activeTab === 'dependencies' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Dependencies
            </button>
            <button 
              onClick={() => setActiveTab('genesis')}
-             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none", activeTab === 'genesis' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
+             className={cn("px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none whitespace-nowrap", activeTab === 'genesis' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-white/5")}
            >
              Stream Genesis
            </button>
@@ -121,8 +121,8 @@ export function LibraryDashboard() {
            className="w-full flex-1 flex flex-col items-center"
          >
            <div className="w-full flex items-center justify-between max-w-4xl mx-auto mb-6">
-             <h2 className="text-xl font-bold text-slate-300 flex items-center gap-2">
-               <Layers className="w-5 h-5 text-indigo-400" />
+             <h2 className="text-xl font-bold text-slate-300 flex items-center gap-2 whitespace-nowrap">
+               <Layers className="w-5 h-5 text-indigo-400 shrink-0" />
                Active Streams
              </h2>
              <span className="text-sm text-slate-500">Atomic drops from these AI streams are executing currently in Pulse.</span>
@@ -207,7 +207,7 @@ export function LibraryDashboard() {
                 <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group">
                   <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                     <UserPlus className="w-5 h-5 text-indigo-400" />
-                    <h2 className="text-sm font-semibold text-slate-200">Oracle Roster Alignments</h2>
+                    <h2 className="text-sm font-semibold text-slate-200 whitespace-nowrap">Oracle Roster Alignments</h2>
                   </div>
 
                   {(genesisState === 'complete' || genesisState === 'approving' || genesisState === 'synthesizing') ? (
@@ -280,8 +280,8 @@ export function LibraryDashboard() {
                    <div className="w-full flex flex-col gap-6">
                      <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between max-w-4xl mx-auto mb-2 gap-4">
                         <div className="flex flex-col gap-1">
-                          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3">
-                            <Layers className="w-6 h-6 text-indigo-400" />
+                          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3 whitespace-nowrap">
+                            <Layers className="w-6 h-6 text-indigo-400 shrink-0" />
                             Drafted Streams
                           </h2>
                           <p className="text-sm text-slate-400">Review the AI-generated streams before activating the project in Pulse.</p>
@@ -308,7 +308,7 @@ export function LibraryDashboard() {
                          <Network className="w-8 h-8 text-cyan-400 animate-pulse" />
                        </div>
                      </div>
-                     <h2 className="text-2xl font-bold text-white mb-4">Synthesizing Backlog</h2>
+                     <h2 className="text-2xl font-bold text-white mb-4 whitespace-nowrap">Synthesizing Backlog</h2>
                      <p className="text-slate-500 mb-8 max-w-md">Oracle is generating individual Drops and levelling swimlanes based on approved stream structures.</p>
                      
                      <div className="w-full max-w-md">
@@ -334,8 +334,8 @@ export function LibraryDashboard() {
                      <div className="flex-[2] flex flex-col gap-6">
                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/5 pb-6 mb-2">
                           <div className="flex flex-col gap-1">
-                             <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3 tracking-tight">
-                               <Rocket className="w-6 h-6 text-green-400" />
+                             <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3 tracking-tight whitespace-nowrap">
+                               <Rocket className="w-6 h-6 text-green-400 shrink-0" />
                                Final Backlog Ready
                              </h2>
                              <p className="text-sm text-slate-500 font-light">The synthesis is complete. Review all Drops before launching the project.</p>
