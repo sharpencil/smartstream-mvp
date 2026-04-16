@@ -1,25 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
-import { AlertTriangle, Zap, TrendingUp, X, Activity, Brain, TrendingDown, Link2 } from 'lucide-react';
+import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2 } from 'lucide-react';
 import { BurndownChart } from './BurndownChart';
 import { cn } from '@/lib/utils';
 
 interface DailyBriefingProps {
   blockerCount: number;
-  idleCount: number;
-  forecastSlipHours: number;
-  forecastSlipStream: string;
-  isAgentOpen?: boolean;
-  onDismissBlocker?: () => void;
-  onDismissIdle?: () => void;
-  onDismissForecast?: () => void;
-  onClickBlocker?: () => void;
-  onClickIdle?: () => void;
-  isSandboxActive?: boolean;
-  sandboxDelta?: { date: number, cost: number } | null;
-  onToggleSandbox?: () => void;
-  onCommitSandbox?: () => void;
   blockerResolutionCount?: number;
   onDismissResolution?: () => void;
 }
@@ -39,7 +26,7 @@ const rowVariants: Variants = {
 const cardVariants: Variants = {
   initial: { opacity: 0, scale: 0.95, y: -6 },
   animate: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, stiffness: 380, damping: 28 } },
-  exit:    { opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.16, ease: 'easeIn' as const } },
+  exit: { opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.16, ease: 'easeIn' as const } },
 };
 
 // ── Shared widget shell ───────────────────────────────────────────────────────
@@ -70,15 +57,12 @@ function Widget({
 
 export function DailyBriefing({
   blockerCount,
-  idleCount,
   forecastSlipHours,
   forecastSlipStream,
   isAgentOpen,
   onDismissBlocker,
-  onDismissIdle,
   onDismissForecast,
   onClickBlocker,
-  onClickIdle,
   isSandboxActive,
   sandboxDelta,
   onToggleSandbox,
@@ -86,19 +70,15 @@ export function DailyBriefing({
   blockerResolutionCount = 0,
   onDismissResolution,
 }: DailyBriefingProps) {
-  const hasAnyException = blockerCount > 0 || idleCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const hasAnyException = blockerCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
 
   return (
     <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
-      {/*
-        Outer padding drives both rows.
-        pr-[392px] = 360px fixed panel + 32px gap → nothing clips behind the agent panel.
-        Both rows inherit this, so alignment is guaranteed to match.
-      */}
       <div
         className={cn(
-          'pt-3.5 pb-3.5 transition-all duration-500',
-          isAgentOpen ? 'pr-[392px]' : 'pr-0'
+          'pt-3.5 pb-3.5 transition-all duration-500 pl-0',
+          isAgentOpen ? 'pr-[392px]' : 'pr-8'
         )}
       >
         {isSandboxActive && (
@@ -121,14 +101,14 @@ export function DailyBriefing({
                       </p>
                       <div className="flex gap-5 bg-black/40 rounded-lg px-4 py-2 border border-white/5">
                         <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.date <= 0 ? "text-green-400" : "text-rose-400")}>
-                          {sandboxDelta.date <= 0 ? "" : "+"}{sandboxDelta.date} Days 
+                          {sandboxDelta.date <= 0 ? "" : "+"}{sandboxDelta.date} Days
                           <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.date <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
                             {sandboxDelta.date <= 0 ? "(Earlier)" : "(Later)"} | Finish Date
                           </span>
                         </span>
                         <div className="w-px h-full bg-white/10" />
                         <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.cost <= 0 ? "text-green-400" : "text-rose-400")}>
-                          {sandboxDelta.cost <= 0 ? "" : "+"}${sandboxDelta.cost} 
+                          {sandboxDelta.cost <= 0 ? "" : "+"}${sandboxDelta.cost}
                           <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.cost <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
                             (Tokens) | Cost
                           </span>
@@ -142,32 +122,8 @@ export function DailyBriefing({
           </div>
         )}
 
-        {/* Label */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <div className={cn(
-            'w-1.5 h-1.5 rounded-full transition-colors duration-500',
-            hasAnyException ? 'bg-rose-500 animate-pulse' : 'bg-green-500'
-          )} />
-          <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-slate-500">
-            Pulse Overview
-          </span>
-          {!hasAnyException && (
-            <motion.span
-              key="nominal"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-[10px] text-green-500/60 font-medium tracking-wide"
-            >
-              — All systems nominal
-            </motion.span>
-          )}
-        </div>
-
         {/* ── Row 1: Status Vitals ─────────────────────────────────────────── */}
-        {/* flex-1 on each card stretches them evenly across the full available width */}
-        <div className="flex gap-2.5">
-
+        <div className="flex gap-2.5 mb-2.5">
           {/* Project Health */}
           <Widget className="flex-1 hover:border-green-500/20 hover:bg-green-950/10 group">
             <div className="w-9 h-9 rounded-full border-2 border-slate-700 relative flex items-center justify-center shrink-0">
@@ -212,8 +168,8 @@ export function DailyBriefing({
           </Widget>
 
           {/* Upstream Health */}
-          <Widget 
-            onClick={() => {}} 
+          <Widget
+            onClick={() => { }}
             className="flex-1 hover:border-purple-500/20 hover:bg-purple-950/10 group"
           >
             <div className="w-9 h-9 rounded-xl bg-purple-950/50 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-shadow">
@@ -226,133 +182,87 @@ export function DailyBriefing({
               </div>
             </div>
           </Widget>
-
         </div>
 
-        {/* ── Row 2: Exception / Intervention Cards ───────────────────────── */}
-        {/* The row itself animates in/out. Individual cards also animate in/out. */}
-        <AnimatePresence initial={false}>
-          {hasAnyException && (
-            <motion.div
-              key="exception-row"
-              variants={rowVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="overflow-hidden"
-            >
-              <div className="flex gap-2.5">
-
-                <AnimatePresence mode="popLayout">
-
-
-                  {/* Idle Capacity */}
-                  {idleCount > 0 && (
-                    <motion.div key="idle" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                      <Widget
-                        onClick={onClickIdle}
-                        className={cn(
-                          'w-full border-cyan-500/25 hover:border-cyan-400/50',
-                          'shadow-[0_0_20px_rgba(6,182,212,0.10)] hover:shadow-[0_0_28px_rgba(6,182,212,0.22)]',
-                          'before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:rounded-t-2xl',
-                          'before:bg-gradient-to-r before:from-cyan-600/0 before:via-cyan-400/80 before:to-cyan-600/0',
-                        )}
-                      >
-                        <div className="relative shrink-0">
-                          <div className="absolute inset-0 rounded-full bg-cyan-400/15 animate-[ping_2s_ease-out_infinite]" />
-                          <div className="w-9 h-9 rounded-full bg-cyan-950/60 border border-cyan-400/40 flex items-center justify-center relative z-10">
-                            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest leading-none mb-1">
-                            Idle Capacity
-                          </p>
-                          <p className="text-xs text-slate-300 leading-snug truncate">
-                            {idleCount === 1 ? '1 Drop' : `${idleCount} Drops`} ready.{' '}
-                            <span className="text-cyan-400 font-medium">Assign now →</span>
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onDismissIdle?.(); }}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-cyan-700/50 hover:text-cyan-300 hover:bg-cyan-900/40 transition-all shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Widget>
-                    </motion.div>
-                  )}
-
-                  {/* Forecast Slip */}
-                  {forecastSlipHours > 0 && (
-                    <motion.div key="forecast" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                      <Widget
-                        className={cn(
-                          'w-full border-amber-500/25 hover:border-amber-500/50',
-                          'shadow-[0_0_20px_rgba(245,158,11,0.08)] hover:shadow-[0_0_28px_rgba(245,158,11,0.18)]',
-                          'before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:rounded-t-2xl',
-                          'before:bg-gradient-to-r before:from-amber-600/0 before:via-amber-400/80 before:to-amber-600/0',
-                        )}
-                      >
-                        <div className="w-9 h-9 rounded-full bg-amber-950/60 border border-amber-500/30 flex items-center justify-center shrink-0">
-                          <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest leading-none mb-1">
-                            Forecast Slip +{forecastSlipHours}h
-                          </p>
-                          <p className="text-xs text-slate-300 leading-snug truncate">
-                            Due to <span className="text-amber-400 font-semibold">{forecastSlipStream}</span> complexity.
-                          </p>
-                        </div>
-                        <button
-                          onClick={onDismissForecast}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-amber-700/50 hover:text-amber-300 hover:bg-amber-900/40 transition-all shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Widget>
-                    </motion.div>
-                  )}
-
-                  {/* Blocker Resolution */}
-                  {blockerResolutionCount > 0 && (
-                    <motion.div key="resolution" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                      <Widget
-                        className={cn(
-                          'w-full border-rose-500/25 hover:border-rose-500/50',
-                          'shadow-[0_0_20px_rgba(225,29,72,0.08)] hover:shadow-[0_0_28px_rgba(225,29,72,0.18)]',
-                          'before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:rounded-t-2xl',
-                          'before:bg-gradient-to-r before:from-rose-600/0 before:via-rose-400/80 before:to-rose-600/0',
-                        )}
-                      >
-                        <div className="w-9 h-9 rounded-full bg-rose-950/60 border border-rose-500/30 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest leading-none mb-1">
-                            Blocker Resolution
-                          </p>
-                          <p className="text-xs text-slate-300 leading-snug truncate">
-                            <span className="text-rose-400 font-semibold">{blockerResolutionCount} resolution{blockerResolutionCount !== 1 ? 's' : ''}</span> required.
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onDismissResolution?.(); }}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-rose-700/50 hover:text-rose-300 hover:bg-rose-900/40 transition-all shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Widget>
-                    </motion.div>
-                  )}
-
-                </AnimatePresence>
-              </div>
+        {/* ── Row 2: Human Intervention Requests ───────────────────────── */}
+        <div className="flex gap-2.5">
+          <AnimatePresence mode="popLayout">
+            {/* Blocker Resolution */}
+            <motion.div key="resolution" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
+              <Widget
+                className={cn(
+                  'w-full transition-all duration-300',
+                  blockerResolutionCount > 0 
+                    ? 'border-rose-500/25 hover:border-rose-500/50 shadow-[0_0_20px_rgba(225,29,72,0.08)]' 
+                    : 'opacity-40 grayscale-[0.5] border-white/5'
+                )}
+              >
+                <div className={cn(
+                  "w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors",
+                  blockerResolutionCount > 0 ? "bg-rose-950/60 border-rose-500/30" : "bg-slate-900/40 border-slate-800"
+                )}>
+                  <AlertTriangle className={cn("w-3.5 h-3.5", blockerResolutionCount > 0 ? "text-rose-400" : "text-slate-600")} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-[9px] font-bold uppercase tracking-widest leading-none mb-1", blockerResolutionCount > 0 ? "text-rose-400" : "text-slate-500")}>
+                    Blockers
+                  </p>
+                  <p className="text-xs text-slate-300 leading-snug truncate">
+                    {blockerResolutionCount > 0 
+                      ? <span className="text-rose-400 font-semibold">{blockerResolutionCount} required</span>
+                      : 'No active blockers'}
+                  </p>
+                </div>
+                {blockerResolutionCount > 0 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDismissResolution?.(); }}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-rose-700/50 hover:text-rose-300 hover:bg-rose-900/40 transition-all shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </Widget>
             </motion.div>
-          )}
-        </AnimatePresence>
 
+
+            {/* Forecast Slip */}
+            <motion.div key="forecast" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
+              <Widget
+                className={cn(
+                  'w-full transition-all duration-300',
+                  forecastSlipHours > 0
+                    ? 'border-amber-500/25 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.08)]'
+                    : 'opacity-40 grayscale-[0.5] border-white/5'
+                )}
+              >
+                <div className={cn(
+                  "w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors",
+                  forecastSlipHours > 0 ? "bg-amber-950/60 border-amber-500/30" : "bg-slate-900/40 border-slate-800"
+                )}>
+                  <TrendingUp className={cn("w-3.5 h-3.5", forecastSlipHours > 0 ? "text-amber-400" : "text-slate-600")} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-[9px] font-bold uppercase tracking-widest leading-none mb-1", forecastSlipHours > 0 ? "text-amber-400" : "text-slate-500")}>
+                    Forecast Slip
+                  </p>
+                  <p className="text-xs text-slate-300 leading-snug truncate">
+                    {forecastSlipHours > 0 
+                      ? <><span className="text-amber-400 font-semibold">+{forecastSlipHours}h</span> slip</>
+                      : 'On schedule'}
+                  </p>
+                </div>
+                {forecastSlipHours > 0 && (
+                  <button
+                    onClick={onDismissForecast}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-amber-700/50 hover:text-amber-300 hover:bg-amber-900/40 transition-all shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </Widget>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

@@ -80,8 +80,9 @@ function buildInitialDrops(): DropData[] {
       if (drop.status === 'Completed') {
         laneTasks[lane].completed.push(dropData);
       } else if (drop.status === 'Not Started') {
-        // Force the first "Not Started" drop of EACH lane to be ACTIVE for demo realism
-        if (laneTasks[lane].active.length === 0) {
+        // Force the first "Not Started" drop of MOST lanes to be ACTIVE for demo realism
+        // We leave lane 2 (Sam Taylor) idle to demonstrate "Idle Capacity" intervention
+        if (laneTasks[lane].active.length === 0 && lane !== 2) {
           laneTasks[lane].active.push({
             ...dropData,
             isBlocked: lane === 0, // Keep Sarah's blocker for the demo
@@ -91,7 +92,12 @@ function buildInitialDrops(): DropData[] {
           laneTasks[lane].pending.push(dropData);
         }
       } else {
-        laneTasks[lane].active.push(dropData);
+        // Respect explicit in-progress status unless it's Lane 2 (Sam)
+        if (lane === 2) {
+          laneTasks[lane].completed.push(dropData); // Demote to completed to keep him idle
+        } else {
+          laneTasks[lane].active.push(dropData);
+        }
       }
       absoluteDropIdx++;
     });
@@ -232,7 +238,7 @@ export function PulseDashboard() {
 
   // Dynamic Sidebar widths to ensure Now Line and Milestones align in both views
   const SIDEBAR_DETAILED = 240; // w-60
-  const SIDEBAR_OVERVIEW = 384; // w-96
+  const SIDEBAR_OVERVIEW = 300; 
   const currentSidebarWidth = viewLevel === 'detailed' ? SIDEBAR_DETAILED : SIDEBAR_OVERVIEW;
 
   const toggleStreamExpand = (id: string) => {
@@ -567,12 +573,12 @@ export function PulseDashboard() {
       <div className="flex-1 flex relative overflow-hidden">
         {/* Scrollable Flow Area */}
         <div className={cn(
-          'flex-1 flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500',
+          'flex-1 flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
           isAgentOpen ? 'pr-[392px]' : 'pr-8'
         )}>
 
           {/* Top toolbar */}
-          <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center mb-10 pointer-events-none pl-10 pr-8">
+          <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center mb-10 pointer-events-none pr-8">
 
             {/* Highlight Stream selector */}
             <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
@@ -837,6 +843,7 @@ export function PulseDashboard() {
                               onDragEnd={handleDragEnd}
                               zoomScale={zoomScale}
                               onHoverStream={setHoveredStreamId}
+                              hoveredStreamId={hoveredStreamId}
                               onHoverDrop={setHoveredDropId}
                               variant="full"
                             />
@@ -865,60 +872,61 @@ export function PulseDashboard() {
                     {/* Stream Header Row */}
                     <div className="flex items-center relative group">
                       {/* Stream Sidebar */}
-                      <div className="w-[480px] shrink-0 flex items-center gap-6 py-6 px-10 sticky left-0 z-30 border-r border-[#0a192f]/50 bg-[#020617] shadow-[20px_0_40px_rgba(0,0,0,0.6)]">
-                        {/* Stream Name Section - Fixed Width for alignment */}
-                        <div className="w-[180px] shrink-0 flex items-center gap-4">
-                          <div
-                            className="h-10 w-14 shrink-0 rounded-xl flex items-center justify-center font-black text-[10px] shadow-sm border relative"
-                            style={{
-                              backgroundColor: `${streamColor.hex}15`,
-                              borderColor: `${streamColor.hex}40`,
-                              color: streamColor.hex
-                            }}
-                          >
-                            {stream.initials}
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="font-bold text-slate-100 group-hover:text-white transition-colors text-sm leading-snug line-clamp-2">
+                      <div 
+                        className="shrink-0 flex items-center gap-4 py-4 px-8 sticky left-0 z-30 border-r border-[#0a192f]/50 bg-[#020617] shadow-[15px_0_30px_rgba(0,0,0,0.4)]"
+                        style={{ width: SIDEBAR_OVERVIEW }}
+                      >
+                        {/* Stream Content Stack */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+                          {/* Top Line: Name and Blocker */}
+                          <div className="flex items-center gap-2">
+                            <h3 className="flex-1 font-bold text-slate-100 group-hover:text-white transition-colors text-sm truncate tracking-tight">
                               {stream.title}
                             </h3>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                              {stream.workstream_id}
-                            </p>
+                            {stats.hasBlocker && (
+                              <div className="shrink-0 animate-pulse">
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 drop-shadow-[0_0_8px_rgba(225,29,72,0.4)]" />
+                              </div>
+                            )}
                           </div>
-                          {stats.hasBlocker && (
-                            <div className="shrink-0 animate-pulse ml-auto">
-                              <AlertTriangle className="w-4 h-4 text-rose-500 drop-shadow-[0_0_8px_rgba(225,29,72,0.4)]" />
+
+                          {/* Bottom Line: Avatar + Progress Bar + % */}
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="h-6 w-9 shrink-0 rounded-md flex items-center justify-center font-black text-[8px] shadow-sm border relative"
+                              style={{
+                                backgroundColor: `${streamColor.hex}15`,
+                                borderColor: `${streamColor.hex}40`,
+                                color: streamColor.hex
+                              }}
+                            >
+                              {stream.initials}
                             </div>
-                          )}
+                            
+                            <div className="flex-1 flex items-center gap-2.5">
+                              <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${stats.percent}%` }}
+                                  className="h-full rounded-full"
+                                  style={{ backgroundColor: streamColor.hex, boxShadow: `0 0 10px ${streamColor.hex}50` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-black text-slate-400 tabular-nums">{stats.percent}%</span>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Progress Section - Consistent placement */}
-                        <div className="flex-1 flex items-center gap-6 min-w-0">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1.5 px-0.5">
-                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Progress</span>
-                              <span className="text-[10px] font-black text-slate-300">{stats.percent}%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${stats.percent}%` }}
-                                className="h-full rounded-full"
-                                style={{ backgroundColor: streamColor.hex, boxShadow: `0 0 10px ${streamColor.hex}50` }}
-                              />
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => toggleStreamExpand(stream.id)}
-                            className={cn(
-                              'shrink-0 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center transition-all hover:bg-white/5',
-                              isExpanded ? 'bg-cyan-500 text-[#020617] border-cyan-400' : 'text-slate-500'
-                            )}
-                          >
-                            <ChevronDown className={cn('w-4 h-4 transition-transform duration-300', isExpanded && 'rotate-180')} />
-                          </button>
-                        </div>
+                        {/* Expand button on the far right of sidebar */}
+                        <button
+                          onClick={() => toggleStreamExpand(stream.id)}
+                          className={cn(
+                            'shrink-0 w-7 h-7 rounded-lg border border-white/10 flex items-center justify-center transition-all hover:bg-white/5',
+                            isExpanded ? 'bg-cyan-500 text-[#020617] border-cyan-400' : 'text-slate-500'
+                          )}
+                        >
+                          <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-300', isExpanded && 'rotate-180')} />
+                        </button>
                       </div>
 
                       {/* Timeline Area (Collapsed View) */}
@@ -957,6 +965,7 @@ export function PulseDashboard() {
                                   onDragEnd={handleDragEnd}
                                   zoomScale={zoomScale}
                                   onHoverStream={setHoveredStreamId}
+                                  hoveredStreamId={hoveredStreamId}
                                   onHoverDrop={setHoveredDropId}
                                   hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                   isDependencyBlocked={drop.isBlocked}
@@ -1016,6 +1025,7 @@ export function PulseDashboard() {
                                           onDragEnd={handleDragEnd}
                                           zoomScale={zoomScale}
                                           onHoverStream={setHoveredStreamId}
+                                  hoveredStreamId={hoveredStreamId}
                                           onHoverDrop={setHoveredDropId}
                                           hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                           isDependencyBlocked={drop.isBlocked}
