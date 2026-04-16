@@ -37,7 +37,7 @@ export function DependencyMatrix() {
   STAGING_STREAMS.forEach(stream => {
     stream.drops.forEach(drop => {
       if (drop.dependsOn) {
-        drop.dependsOn.forEach(depId => {
+        drop.dependsOn.forEach((depId: string) => {
           const parentDrop = STAGING_DROPS.find(sd => sd.drop_id === depId);
           if (parentDrop && parentDrop.streamId !== stream.id) {
             // This is a cross-stream dependency!

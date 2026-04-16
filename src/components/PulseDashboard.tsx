@@ -124,7 +124,7 @@ function buildInitialDrops(): DropData[] {
         xOffset,
         streamId: drop.streamId,
         isBlocked: drop.isBlocked,
-        dependsOn: drop.dependsOn?.map(d => `staging-${d}`),
+        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
       });
     });
 
@@ -151,7 +151,7 @@ function buildInitialDrops(): DropData[] {
         effortHours: drop.estimated_time || complexity,
         xOffset: currentXCompleted,
         streamId: drop.streamId,
-        dependsOn: drop.dependsOn?.map(d => `staging-${d}`),
+        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
       });
     });
 
@@ -172,7 +172,7 @@ function buildInitialDrops(): DropData[] {
         effortHours: drop.estimated_time || complexity,
         xOffset: currentXPending,
         streamId: drop.streamId,
-        dependsOn: drop.dependsOn?.map(d => `staging-${d}`),
+        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
       });
       currentXPending += (cardWidth + 30);
     });
