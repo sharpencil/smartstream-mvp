@@ -20,6 +20,8 @@ interface DailyBriefingProps {
   sandboxDelta?: { date: number, cost: number } | null;
   onToggleSandbox?: () => void;
   onCommitSandbox?: () => void;
+  blockerResolutionCount?: number;
+  onDismissResolution?: () => void;
 }
 
 const rowVariants: Variants = {
@@ -81,8 +83,10 @@ export function DailyBriefing({
   sandboxDelta,
   onToggleSandbox,
   onCommitSandbox,
+  blockerResolutionCount = 0,
+  onDismissResolution,
 }: DailyBriefingProps) {
-  const hasAnyException = blockerCount > 0 || idleCount > 0 || forecastSlipHours > 0;
+  const hasAnyException = blockerCount > 0 || idleCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
 
   return (
     <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
@@ -93,12 +97,12 @@ export function DailyBriefing({
       */}
       <div
         className={cn(
-          'px-8 pt-3.5 pb-3.5 transition-all duration-500',
-          isAgentOpen ? 'pr-[392px]' : 'pr-8'
+          'pt-3.5 pb-3.5 transition-all duration-500',
+          isAgentOpen ? 'pr-[392px]' : 'pr-0'
         )}
       >
         {isSandboxActive && (
-          <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-8 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)]">
+          <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)]">
             <div className="flex items-center gap-8 w-full justify-between">
               <div className="flex items-center gap-8">
                 <div>
@@ -241,42 +245,6 @@ export function DailyBriefing({
 
                 <AnimatePresence mode="popLayout">
 
-                  {/* Blockers */}
-                  {blockerCount > 0 && (
-                    <motion.div key="blocker" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                      <Widget
-                        onClick={onClickBlocker}
-                        className={cn(
-                          'w-full border-rose-500/30 hover:border-rose-500/60',
-                          'shadow-[0_0_20px_rgba(225,29,72,0.12)] hover:shadow-[0_0_28px_rgba(225,29,72,0.25)]',
-                          'before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:rounded-t-2xl',
-                          'before:bg-gradient-to-r before:from-rose-600/0 before:via-rose-500/80 before:to-rose-600/0',
-                        )}
-                      >
-                        <div className="relative shrink-0">
-                          <div className="absolute inset-0 rounded-full bg-rose-500/20 animate-ping" />
-                          <div className="w-9 h-9 rounded-full bg-rose-950/60 border border-rose-500/40 flex items-center justify-center relative z-10">
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest leading-none mb-1">
-                            {blockerCount} Blocker{blockerCount !== 1 ? 's' : ''}
-                          </p>
-                          <p className="text-xs text-slate-300 leading-snug truncate">
-                            {blockerCount === 1 ? '1 Drop blocked.' : `${blockerCount} Drops blocked.`}{' '}
-                            <span className="text-rose-400 font-medium">Reassign →</span>
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onDismissBlocker?.(); }}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-rose-700/50 hover:text-rose-300 hover:bg-rose-900/40 transition-all shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Widget>
-                    </motion.div>
-                  )}
 
                   {/* Idle Capacity */}
                   {idleCount > 0 && (
@@ -340,6 +308,38 @@ export function DailyBriefing({
                         <button
                           onClick={onDismissForecast}
                           className="w-5 h-5 rounded-full flex items-center justify-center text-amber-700/50 hover:text-amber-300 hover:bg-amber-900/40 transition-all shrink-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Widget>
+                    </motion.div>
+                  )}
+
+                  {/* Blocker Resolution */}
+                  {blockerResolutionCount > 0 && (
+                    <motion.div key="resolution" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
+                      <Widget
+                        className={cn(
+                          'w-full border-rose-500/25 hover:border-rose-500/50',
+                          'shadow-[0_0_20px_rgba(225,29,72,0.08)] hover:shadow-[0_0_28px_rgba(225,29,72,0.18)]',
+                          'before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:rounded-t-2xl',
+                          'before:bg-gradient-to-r before:from-rose-600/0 before:via-rose-400/80 before:to-rose-600/0',
+                        )}
+                      >
+                        <div className="w-9 h-9 rounded-full bg-rose-950/60 border border-rose-500/30 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest leading-none mb-1">
+                            Blocker Resolution
+                          </p>
+                          <p className="text-xs text-slate-300 leading-snug truncate">
+                            <span className="text-rose-400 font-semibold">{blockerResolutionCount} resolution{blockerResolutionCount !== 1 ? 's' : ''}</span> required.
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDismissResolution?.(); }}
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-rose-700/50 hover:text-rose-300 hover:bg-rose-900/40 transition-all shrink-0"
                         >
                           <X className="w-3 h-3" />
                         </button>

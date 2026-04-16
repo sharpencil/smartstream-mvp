@@ -34,6 +34,9 @@ export interface DropProps {
   hasDependencies?: boolean;
   isDependencyBlocked?: boolean;
   onHoverDrop?: (id: string | null) => void;
+  variant?: 'full' | 'minimal';
+  ownerName?: string;
+  intensity?: number;
 }
 
 /** Map complexity 1–9 to a pixel width multiplier for the card. */
@@ -73,6 +76,9 @@ export function Drop({
   hasDependencies,
   isDependencyBlocked,
   onHoverDrop,
+  variant = 'full',
+  ownerName,
+  intensity = 1,
 }: DropProps) {
   const isGhost = state === 'ghost';
   const isDraggable = !!onDragEnd;
@@ -80,6 +86,7 @@ export function Drop({
   const isActive = state === 'active';
   const [rationale, setRationale] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const width = getDropWidth({ effortHours, complexity }, zoomScale);
   const actualLeft = xOffset * zoomScale;
@@ -94,6 +101,7 @@ export function Drop({
 
   // Compute box shadow
   const getBoxShadow = () => {
+    if (variant === 'minimal') return 'none';
     if (isMilestoneViolation) return '0 0 20px rgba(225,29,72,0.5), inset 0 0 12px rgba(225,29,72,0.1)';
     if (isMatchingStream && streamColorHex) return `0 0 20px ${streamColorHex}80, inset 0 0 10px ${streamColorHex}20`;
     if (isCompleted) return '0 4px 6px -1px rgb(0 0 0 / 0.1)';
@@ -102,141 +110,198 @@ export function Drop({
     return 'none';
   };
 
+  // Flow Intensity Height (for Liquid Tube)
+  const tubeHeight = Math.min(24, 6 + (intensity * 4));
+
   return (
     <Popover.Root>
-      <Popover.Trigger asChild>
-        <motion.button
-          layout
-          data-id={id}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: isDimmed ? 0.18 : 1,
-            scale: isMatchingStream ? 1.05 : 1,
-            boxShadow: getBoxShadow(),
-            width,
-            left: actualLeft,
+      <div className="relative" style={{ position: 'absolute', left: actualLeft }}>
+        {/* Smart Tooltip (Minimal Only) */}
+        {variant === 'minimal' && isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-[999] w-64 p-3 bg-[#030b1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] pointer-events-none origin-bottom"
+          >
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className={cn(
+                  'text-[8px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-sm',
+                  isCompleted ? 'bg-green-500/20 text-green-400'
+                    : isActive ? 'bg-cyan-500/20 text-cyan-400'
+                    : 'bg-slate-500/20 text-slate-400'
+                )}>
+                  {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'}
+                </span>
+                <span className="text-[10px] font-bold text-slate-500">{ownerName}</span>
+              </div>
+              <h5 className="text-[11px] font-bold text-slate-100 line-clamp-2 leading-tight">
+                {title}
+              </h5>
+              {isBlocked && (
+                <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-rose-400 uppercase tracking-wider animate-pulse">
+                  <AlertTriangle className="w-3 h-3" />
+                  Blocked by Upstream
+                </div>
+              )}
+            </div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#030b1a]/95" />
+          </motion.div>
+        )}
+
+        <Popover.Trigger asChild>
+          <motion.button
+            layout
+            data-id={id}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{
+              opacity: isDimmed ? 0.18 : (variant === 'minimal' ? Math.min(1, 0.2 + (intensity * 0.2)) : 1),
+              scale: variant === 'full' && isMatchingStream ? 1.05 : 1,
+              boxShadow: getBoxShadow(),
+              width,
+              height: variant === 'minimal' ? tubeHeight : undefined,
+              filter: variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined
+            }}
+          whileHover={{ 
+            scale: variant === 'minimal' ? 1.1 : (isDimmed ? 0.99 : 1.02), 
+            filter: 'brightness(1.2) saturate(1.2)',
+            zIndex: 50
           }}
-          whileHover={{ scale: isDimmed ? 0.99 : 1.02, filter: 'brightness(1.1)' }}
           onMouseEnter={() => {
             if (streamId) onHoverStream?.(streamId);
             onHoverDrop?.(id);
+            setIsHovered(true);
           }}
           onMouseLeave={() => {
             onHoverStream?.(null);
             onHoverDrop?.(null);
+            setIsHovered(false);
           }}
           transition={{ type: 'spring', stiffness: 300, damping: isMatchingStream ? 15 : 30 }}
           style={{
-            position: 'absolute',
             backgroundImage: isBlocked
               ? 'repeating-linear-gradient(45deg, rgba(225,29,72,0.12) 0px, rgba(225,29,72,0.12) 4px, transparent 4px, transparent 12px)'
               : undefined,
-            ...(isMatchingStream && streamColorHex ? {
+            ...(variant === 'full' && isMatchingStream && streamColorHex ? {
               borderColor: streamColorHex,
               borderWidth: '2px',
             } : {}),
-            ...(isDraft ? { borderStyle: 'dashed' } : {})
+            ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
+            backgroundColor: variant === 'minimal' ? (isBlocked ? '#fb718588' : (streamColorHex ? `${streamColorHex}55` : undefined)) : undefined
           }}
-          {...(isDraggable ? {
-            drag: true,
-            dragSnapToOrigin: true,
-            dragElastic: 0.2,
-            onDragStart: () => setIsDragging(true),
-            whileDrag: { zIndex: 100, scale: 1.05, cursor: 'grabbing', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)' },
-            onDragEnd: (event: any, info: any) => {
-              setIsDragging(false);
-              onDragEnd?.(id, info.point.x, info.point.y);
-            }
-          } : {})}
-          className={cn(
-            'h-16 rounded-full flex items-center pl-6 pr-4 cursor-pointer backdrop-blur-md border relative group transition-all duration-300 z-20 outline-none',
-            isCompleted && 'bg-green-950/20 border-green-500/30 hover:bg-green-900/30',
-            isActive && !isBlocked && 'bg-gradient-to-r from-blue-900/60 to-cyan-900/40 border-cyan-500/50 hover:border-cyan-400',
-            isActive && isBlocked && 'bg-rose-950/40 border-rose-500/70 hover:border-rose-400',
-            isGhost && !isBlocked && !isMilestoneViolation && 'bg-teal-900/20 border-teal-500/30 border-dashed hover:border-teal-500/50 hover:bg-teal-900/30',
-            isGhost && isMilestoneViolation && 'bg-amber-950/20 border-amber-500/50 border-dashed hover:border-amber-400/70',
-            isGhost && isBlocked && 'bg-rose-900/20 border-rose-500/30 border-dashed hover:border-rose-500/50 hover:bg-rose-900/30',
-            isMatchingStream && streamColorHex && 'z-30',
-          )}
-        >
-          {/* Stream tag */}
-          {streamInitials && (
-            <div
-              className="absolute top-1.5 right-3 text-[8px] font-bold tracking-[0.2em] opacity-50 mix-blend-plus-lighter"
-              style={{ color: streamColorHex || '#fff' }}
-            >
-              {streamInitials}
-            </div>
-          )}
-
-          {/* Complexity badge */}
-          {complexityLabel && (
-            <div
-              className="absolute bottom-1.5 right-3 text-[8px] font-bold tracking-[0.15em] opacity-40"
-              style={{ color: streamColorHex || '#94a3b8' }}
-            >
-              {complexityLabel}
-            </div>
-          )}
-
-          {/* Milestone violation pulse ring */}
-          {isMilestoneViolation && (
-            <div className="absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none" />
-          )}
-
-          {/* Dependency indicator */}
-          {hasDependencies && (
-            <div className={cn(
-              "absolute bottom-0.5 right-6 z-40 p-0.5 rounded-full border shadow-sm transition-colors",
-              isDependencyBlocked
-                ? "bg-rose-950 border-rose-500/50 text-rose-400 animate-pulse"
-                : "bg-slate-900/80 border-slate-700/50 text-slate-400"
-            )}>
-              <Link className="w-2.5 h-2.5" />
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 w-full">
-            {isBlocked ? (
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-            ) : isCompleted ? (
-              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-            ) : isActive ? (
-              <div className="w-5 h-5 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
-                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+            {...(isDraggable ? {
+              drag: true,
+              dragSnapToOrigin: true,
+              dragElastic: 0.2,
+              onDragStart: () => setIsDragging(true),
+              whileDrag: { zIndex: 100, scale: 1.05, cursor: 'grabbing', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)' },
+              onDragEnd: (event: any, info: any) => {
+                setIsDragging(false);
+                onDragEnd?.(id, info.point.x, info.point.y);
+              }
+            } : {})}
+            className={cn(
+              variant === 'full' ? 'h-16 rounded-full pl-6 pr-4' : 'rounded-full px-2',
+              'flex items-center cursor-pointer backdrop-blur-md border border-white/10 relative group transition-all duration-300 z-20 outline-none -ml-1',
+              isCompleted && variant === 'full' && 'bg-green-950/20 border-green-500/30 hover:bg-green-900/30',
+              isActive && !isBlocked && variant === 'full' && 'bg-gradient-to-r from-blue-900/60 to-cyan-900/40 border-cyan-500/50 hover:border-cyan-400',
+              isActive && isBlocked && variant === 'full' && 'bg-rose-950/40 border-rose-500/70 hover:border-rose-400',
+              isGhost && !isBlocked && !isMilestoneViolation && variant === 'full' && 'bg-teal-900/20 border-teal-500/30 border-dashed hover:border-teal-500/50 hover:bg-teal-900/30',
+              isGhost && isMilestoneViolation && variant === 'full' && 'bg-amber-950/20 border-amber-500/50 border-dashed hover:border-amber-400/70',
+              isGhost && isBlocked && variant === 'full' && 'bg-rose-900/20 border-rose-500/30 border-dashed hover:border-rose-500/50 hover:bg-rose-900/30',
+              variant === 'minimal' && 'border-white/20 hover:border-white/40 shadow-[0_0_10px_rgba(34,211,238,0.1)]',
+              isMatchingStream && streamColorHex && 'z-30',
+            )}
+          >
+            {/* Stream tag */}
+            {variant === 'full' && streamInitials && (
+              <div
+                className="absolute top-1.5 right-3 text-[8px] font-bold tracking-[0.2em] opacity-50 mix-blend-plus-lighter"
+                style={{ color: streamColorHex || '#fff' }}
+              >
+                {streamInitials}
               </div>
-            ) : (
-              <CircleDashed className={cn('w-5 h-5 shrink-0', isMilestoneViolation ? 'text-amber-500/60' : 'text-teal-500/50')} />
             )}
 
-            <span className={cn(
-              'text-sm font-medium truncate pointer-events-none',
-              isCompleted ? 'text-green-100'
-                : isActive ? 'text-cyan-50'
-                : isMilestoneViolation ? 'text-amber-200/80'
-                : 'text-teal-200/70',
-            )}>
-              {title}
-            </span>
-          </div>
-
-          {/* Active shimmer */}
-          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none -z-10">
-            {isActive && !isBlocked && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
+            {/* Complexity badge */}
+            {variant === 'full' && complexityLabel && (
+              <div
+                className="absolute bottom-1.5 right-3 text-[8px] font-bold tracking-[0.15em] opacity-40"
+                style={{ color: streamColorHex || '#94a3b8' }}
+              >
+                {complexityLabel}
+              </div>
             )}
-            {isBlocked && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-400/8 to-transparent w-[200%] animate-[shimmer_3s_infinite]" />
-            )}
-          </div>
 
-          {isDragging && dragTooltip && (
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-lg pointer-events-none drop-shadow-md z-50">
-              {dragTooltip}
+            {/* Milestone violation pulse ring */}
+            {isMilestoneViolation && (
+              <div className={cn("absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none", variant === 'minimal' && 'border-amber-500/60')} />
+            )}
+
+            {/* Dependency indicator */}
+            {hasDependencies && variant === 'full' && (
+              <div className={cn(
+                "absolute bottom-0.5 right-6 z-40 p-0.5 rounded-full border shadow-sm transition-colors",
+                isDependencyBlocked
+                  ? "bg-rose-950 border-rose-500/50 text-rose-400 animate-pulse"
+                  : "bg-slate-900/80 border-slate-700/50 text-slate-400"
+              )}>
+                <Link className="w-2.5 h-2.5" />
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 w-full">
+              {variant === 'full' && (
+                <>
+                  {isBlocked ? (
+                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                  ) : isCompleted ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                  ) : isActive ? (
+                    <div className="w-5 h-5 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
+                      <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                    </div>
+                  ) : (
+                    <CircleDashed className={cn('w-5 h-5 shrink-0', isMilestoneViolation ? 'text-amber-500/60' : 'text-teal-500/50')} />
+                  )}
+
+                  <span className={cn(
+                    'text-sm font-medium truncate pointer-events-none',
+                    isCompleted ? 'text-green-100'
+                      : isActive ? 'text-cyan-50'
+                      : isMilestoneViolation ? 'text-amber-200/80'
+                      : 'text-teal-200/70',
+                  )}>
+                    {title}
+                  </span>
+                </>
+              )}
+
+              {variant === 'minimal' && isBlocked && (
+                <div className="flex items-center justify-center w-full animate-pulse">
+                  <AlertTriangle className="w-3.5 h-3.5 text-white shrink-0" />
+                </div>
+              )}
             </div>
-          )}
-        </motion.button>
-      </Popover.Trigger>
+
+            {/* Active shimmer */}
+            <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none -z-10">
+              {isActive && !isBlocked && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
+              )}
+              {isBlocked && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-400/8 to-transparent w-[200%] animate-[shimmer_3s_infinite]" />
+              )}
+            </div>
+
+            {isDragging && dragTooltip && (
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-lg pointer-events-none drop-shadow-md z-50">
+                {dragTooltip}
+              </div>
+            )}
+          </motion.button>
+        </Popover.Trigger>
+      </div>
 
       <Popover.Portal>
         <Popover.Content

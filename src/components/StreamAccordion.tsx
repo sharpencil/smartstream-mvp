@@ -1,7 +1,7 @@
 'use client';
 
 import * as Accordion from '@radix-ui/react-accordion';
-import { ChevronDown, CheckCircle2, CircleDashed, Activity, ListChecks, Info, Zap } from 'lucide-react';
+import { ChevronDown, CheckCircle2, CircleDashed, Activity, ListChecks, Info, Zap, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STREAM_COLORS } from '@/lib/streams';
 import { STAGING_STREAMS, StagingStream, StagingDrop } from '@/lib/stagingData';
@@ -57,6 +57,12 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
 
         {/* Meta badges */}
         <div className="flex items-center gap-2 shrink-0">
+          {drop.dependsOn && drop.dependsOn.length > 0 && (
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-950/30 text-amber-500 border border-amber-500/30">
+              <Link2 className="w-2.5 h-2.5" />
+              Dep: {drop.dependsOn.length}
+            </span>
+          )}
           <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/50"
             style={{ color: streamColorHex }}>
             C{drop.complexity}
@@ -112,10 +118,8 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
 
 export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?: 'drafted' | 'active'; showDrops?: boolean }) {
   // Use staging streams for both modes — 'drafted' shows all, 'active' shows ones with completed drops
-  const streams: StagingStream[] =
-    type === 'active'
-      ? STAGING_STREAMS.filter((s) => s.drops.some((d) => d.status === 'Completed'))
-      : STAGING_STREAMS;
+  // Both modes show the STAGING_STREAMS in this project view
+  const streams = STAGING_STREAMS;
 
   return (
     <Accordion.Root
