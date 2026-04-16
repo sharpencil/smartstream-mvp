@@ -502,13 +502,16 @@ export function PulseDashboard() {
     )}>
 
       {/* Header Controls */}
-      <div className="flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative pl-10 pr-8">
-        <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100">
+      <div className={cn(
+        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative pl-10 transition-all duration-500",
+        isAgentOpen ? 'pr-[392px]' : 'pr-8'
+      )}>
+        <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 whitespace-nowrap">
           Pulse
         </h1>
 
-        {/* View Level Toggle - Centered */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md">
+        {/* View Level Toggle - Centered relative to visible area */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md">
           <button
             onClick={() => setViewLevel('overview')}
             className={cn(
@@ -566,9 +569,9 @@ export function PulseDashboard() {
             <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
 
             {/* Highlight Stream selector */}
-            <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-              <Zap className="w-4 h-4 ml-2 text-teal-400" />
-              <span className="text-xs font-bold text-slate-300 mr-2 tracking-wide uppercase">Highlight Stream</span>
+            <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto flex-nowrap">
+              <Zap className="w-4 h-4 ml-2 text-teal-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-300 mr-2 tracking-wide uppercase whitespace-nowrap">Highlight Stream</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => setHoveredStreamId(null)}
@@ -626,9 +629,9 @@ export function PulseDashboard() {
               {!isSandboxActive && (
                 <button
                   onClick={toggleSandbox}
-                  className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+                  className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
                 >
-                  <PlayCircle className="w-4 h-4" />
+                  <PlayCircle className="w-4 h-4 shrink-0" />
                   Run Simulation
                 </button>
               )}

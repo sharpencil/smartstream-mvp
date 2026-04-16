@@ -87,12 +87,15 @@ export function DailyBriefing({
     <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
       <div
         className={cn(
-          'pt-5 pb-5 transition-all duration-500 pl-0',
+          'pt-5 pb-5 transition-all duration-500 pl-0 relative',
           isAgentOpen ? 'pr-[392px]' : 'pr-8'
         )}
       >
         {isSandboxActive && (
-          <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)]">
+          <div className={cn(
+            "absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500",
+            isAgentOpen ? 'pr-[392px]' : 'pr-8'
+          )}>
             <div className="flex items-center gap-8 w-full justify-between">
               <div className="flex items-center gap-8">
                 <div>
@@ -141,7 +144,7 @@ export function DailyBriefing({
               <Activity className="w-3.5 h-3.5 text-green-500" />
             </div>
             <div>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Project Health</p>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Health</p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[15px] font-bold text-slate-100 group-hover:text-green-50 transition-colors leading-none">88%</span>
                 <span className="text-[9px] text-green-500/70 font-bold uppercase tracking-wide">On Track</span>
@@ -155,7 +158,7 @@ export function DailyBriefing({
               <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
             </div>
             <div>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Project Burndown</p>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Burndown</p>
               <div className="flex items-center gap-2.5">
                 <span className="text-[15px] font-bold text-slate-100 group-hover:text-teal-50 transition-colors leading-none">72%</span>
                 <BurndownChart />
@@ -169,7 +172,7 @@ export function DailyBriefing({
               <Brain className="w-3.5 h-3.5 text-indigo-400" />
             </div>
             <div>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Completion Forecast</p>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Completion Forecast</p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[15px] font-bold text-slate-100 group-hover:text-indigo-50 transition-colors leading-none">Jun 12</span>
                 <span className="text-[9px] text-green-500/70 font-bold tracking-widest uppercase">92% Conf</span>
@@ -186,7 +189,7 @@ export function DailyBriefing({
               <Link2 className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <div>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1">Upstream Health</p>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Upstream Health</p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[13px] font-bold text-slate-100 group-hover:text-purple-100 transition-colors leading-tight">Blocked by API</span>
               </div>
