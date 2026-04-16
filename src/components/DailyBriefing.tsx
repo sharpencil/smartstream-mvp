@@ -234,7 +234,6 @@ export function DailyBriefing({
               </Widget>
             </motion.div>
 
-
             {/* Forecast Slip */}
             <motion.div key="forecast" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
               <Widget

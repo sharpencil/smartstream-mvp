@@ -530,36 +530,40 @@ export function PulseDashboard() {
         </div>
       </div>
 
-      <div className="pl-10">
-        <DailyBriefing
-          blockerCount={blockerDismissed ? 0 : blockerCount}
-          forecastSlipHours={forecastDismissed ? 0 : forecastSlipHours}
-          forecastSlipStream="Identity & Auth Hub"
-          isAgentOpen={isAgentOpen}
-          isSandboxActive={isSandboxActive}
-          sandboxDelta={sandboxDelta}
-          onToggleSandbox={toggleSandbox}
-          onCommitSandbox={commitSandbox}
-          onDismissBlocker={() => setBlockerDismissed(true)}
-          onDismissForecast={() => setForecastDismissed(true)}
-          blockerResolutionCount={resolutionDismissed ? 0 : 1}
-          onDismissResolution={() => setResolutionDismissed(true)}
-          onClickBlocker={() => {
-            // Scroll to first blocked drop (future: auto-scroll)
-            setHoveredStreamId(null);
-          }}
-        />
-      </div>
+      {/* ── Main Scroll Context (Vertical) ── */}
+      <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+        {/* Daily Briefing (Scrollable) */}
+        <div className="pl-10">
+          <DailyBriefing
+            blockerCount={blockerDismissed ? 0 : blockerCount}
+            forecastSlipHours={forecastDismissed ? 0 : forecastSlipHours}
+            forecastSlipStream="Identity & Auth Hub"
+            isAgentOpen={isAgentOpen}
+            isSandboxActive={isSandboxActive}
+            sandboxDelta={sandboxDelta}
+            onToggleSandbox={toggleSandbox}
+            onCommitSandbox={commitSandbox}
+            onDismissBlocker={() => setBlockerDismissed(true)}
+            onDismissForecast={() => setForecastDismissed(true)}
+            blockerResolutionCount={resolutionDismissed ? 0 : 1}
+            onDismissResolution={() => setResolutionDismissed(true)}
+            onClickBlocker={() => {
+              // Scroll to first blocked drop (future: auto-scroll)
+              setHoveredStreamId(null);
+            }}
+          />
+        </div>
 
-      <div className="flex-1 flex relative overflow-hidden">
-        {/* Scrollable Flow Area */}
-        <div className={cn(
-          'flex-1 flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
-          isAgentOpen ? 'pr-[392px]' : 'pr-8'
-        )}>
+        {/* Timeline Section */}
+        <div className="flex-1 flex relative overflow-hidden">
+          {/* Scrollable Flow Area (Horizontal) */}
+          <div className={cn(
+            'flex-1 flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
+            isAgentOpen ? 'pr-[392px]' : 'pr-8'
+          )}>
 
-          {/* Top toolbar */}
-          <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center mb-10 pointer-events-none pr-8">
+            {/* Top toolbar (Sticky within the vertical scroll container) */}
+            <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center mb-8 pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-4 rounded-b-2xl border-b border-white/5 shadow-2xl">
 
             {/* Highlight Stream selector */}
             <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
@@ -1028,16 +1032,18 @@ export function PulseDashboard() {
             )}
           </div>
         </div>
-
-        {/* Agent Panel */}
-        <AgentPanel
-          feed={feed}
-          briefing="Exception mode active. Oracle is monitoring 2 blocked drops and tracking 3 milestone proximity alerts."
-          isThinking={isThinking}
-          isOpen={isAgentOpen}
-          onToggle={setIsAgentOpen}
-        />
       </div>
+    </div>
+  </div>
+
+      {/* Agent Panel */}
+      <AgentPanel
+        feed={feed}
+        briefing="Exception mode active. Oracle is monitoring 2 blocked drops and tracking 3 milestone proximity alerts."
+        isThinking={isThinking}
+        isOpen={isAgentOpen}
+        onToggle={setIsAgentOpen}
+      />
 
       <BacklogTray unassignedDrops={unassignedDrops} onDragEnd={handleDragEnd} isSandboxActive={isSandboxActive} />
     </div>
