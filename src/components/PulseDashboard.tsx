@@ -555,10 +555,10 @@ export function PulseDashboard() {
         </div>
 
         {/* Timeline Section */}
-        <div className="flex-1 flex relative overflow-hidden">
+        <div className="relative">
           {/* Scrollable Flow Area (Horizontal) */}
           <div className={cn(
-            'flex-1 flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
+            'flex flex-col pt-8 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
             isAgentOpen ? 'pr-[392px]' : 'pr-8'
           )}>
 
