@@ -30,7 +30,7 @@ export function BacklogTray({ unassignedDrops, onDragEnd, isSandboxActive }: Bac
           className="w-full flex items-center justify-center gap-2 py-3 hover:bg-white/5 transition-colors rounded-t-2xl text-slate-400 hover:text-slate-200"
         >
           <ListTodo className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
             The Reservoir | Unassigned Drops 
             <span className="bg-slate-800 text-slate-300 px-2 rounded-full py-0.5">{unassignedDrops.length}</span>
           </span>

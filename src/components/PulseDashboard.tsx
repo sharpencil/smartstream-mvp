@@ -512,7 +512,7 @@ export function PulseDashboard() {
           <button
             onClick={() => setViewLevel('overview')}
             className={cn(
-              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative',
+              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
               viewLevel === 'overview' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
             )}
           >
@@ -521,7 +521,7 @@ export function PulseDashboard() {
           <button
             onClick={() => setViewLevel('detailed')}
             className={cn(
-              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative',
+              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
               viewLevel === 'detailed' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
             )}
           >
@@ -800,7 +800,7 @@ export function PulseDashboard() {
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-950 to-[#0a192f] border border-cyan-800/30 flex items-center justify-center shadow-lg group-hover:border-cyan-400/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all">
                           <span className="text-cyan-200 font-bold text-lg">{member.name.charAt(0)}</span>
                         </div>
-                        <span className="font-semibold text-slate-300 group-hover:text-white transition-colors">{member.name}</span>
+                        <span className="font-semibold text-slate-300 group-hover:text-white transition-colors whitespace-nowrap">{member.name}</span>
                       </div>
                       <div className={cn(
                         'text-[10px] font-bold px-2 py-1 rounded-md transition-all duration-500',
@@ -990,7 +990,7 @@ export function PulseDashboard() {
                                     <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700/50 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover/sublane:border-cyan-500/50 transition-colors">
                                       {member.name.charAt(0)}
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-400 group-hover/sublane:text-white transition-colors">
+                                    <span className="text-xs font-semibold text-slate-400 group-hover/sublane:text-white transition-colors whitespace-nowrap">
                                       {member.name}
                                     </span>
                                   </div>
