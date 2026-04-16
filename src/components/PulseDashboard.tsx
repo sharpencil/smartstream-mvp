@@ -1019,22 +1019,20 @@ export function PulseDashboard() {
                                       ))}
                                     </div>
                                   </div>
-                                </div>
-                              );
+                                )
                             })}
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </motion.div>
-                );
+                )
               })
             )}
           </div>
         </div>
       </div>
     </div>
-  </div>
 
       {/* Agent Panel */}
       <AgentPanel
