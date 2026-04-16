@@ -502,7 +502,7 @@ export function PulseDashboard() {
     )}>
 
       {/* Header Controls */}
-      <div className="flex items-center justify-between pb-10 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative pl-10 pr-8">
+      <div className="flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative pl-10 pr-8">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100">
           Pulse
         </h1>
@@ -558,7 +558,7 @@ export function PulseDashboard() {
         <div className="relative">
           {/* Scrollable Flow Area (Horizontal) */}
           <div className={cn(
-            'flex flex-col pt-10 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
+            'flex flex-col pt-5 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
             isAgentOpen ? 'pr-[392px]' : 'pr-8'
           )}>
 

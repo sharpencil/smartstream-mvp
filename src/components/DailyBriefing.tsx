@@ -87,7 +87,7 @@ export function DailyBriefing({
     <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
       <div
         className={cn(
-          'pt-10 pb-10 transition-all duration-500 pl-0',
+          'pt-5 pb-5 transition-all duration-500 pl-0',
           isAgentOpen ? 'pr-[392px]' : 'pr-8'
         )}
       >
