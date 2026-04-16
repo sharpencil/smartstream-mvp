@@ -285,7 +285,6 @@ export function PulseDashboard() {
 
   // Briefing dismissal state (independent of data — PM can snooze)
   const [blockerDismissed, setBlockerDismissed] = useState(false);
-  const [idleDismissed, setIdleDismissed] = useState(false);
   const [forecastDismissed, setForecastDismissed] = useState(false);
   const [resolutionDismissed, setResolutionDismissed] = useState(false);
   const [forecastSlipHours, setForecastSlipHours] = useState(4);
@@ -311,21 +310,6 @@ export function PulseDashboard() {
   // ── Derived Briefing State ───────────────────────────────────────────────
 
   const blockerCount = useMemo(() => drops.filter(d => d.isBlocked).length, [drops]);
-
-  const idleLanes = useMemo<number[]>(() => {
-    // A lane is 'idle' if its last active drop is completed and there's no subsequent active drop
-    const result: number[] = [];
-    TEAM_MEMBERS.forEach((_, laneIdx) => {
-      const lane = drops.filter(d => d.lane === laneIdx);
-      const hasActive = lane.some(d => d.state === 'active');
-      const hasGhost = lane.some(d => d.state === 'ghost');
-      const allDoneOrGhost = lane.every(d => d.state === 'completed' || d.state === 'ghost');
-      if (!hasActive && allDoneOrGhost && hasGhost) result.push(laneIdx);
-    });
-    return result;
-  }, [drops]);
-
-  const idleCount = idleLanes.length;
 
   const streamStats = useMemo(() => {
     return STAGING_STREAMS.map(s => {
@@ -549,7 +533,6 @@ export function PulseDashboard() {
       <div className="pl-10">
         <DailyBriefing
           blockerCount={blockerDismissed ? 0 : blockerCount}
-          idleCount={idleDismissed ? 0 : idleCount}
           forecastSlipHours={forecastDismissed ? 0 : forecastSlipHours}
           forecastSlipStream="Identity & Auth Hub"
           isAgentOpen={isAgentOpen}
@@ -558,7 +541,6 @@ export function PulseDashboard() {
           onToggleSandbox={toggleSandbox}
           onCommitSandbox={commitSandbox}
           onDismissBlocker={() => setBlockerDismissed(true)}
-          onDismissIdle={() => setIdleDismissed(true)}
           onDismissForecast={() => setForecastDismissed(true)}
           blockerResolutionCount={resolutionDismissed ? 0 : 1}
           onDismissResolution={() => setResolutionDismissed(true)}
@@ -566,7 +548,6 @@ export function PulseDashboard() {
             // Scroll to first blocked drop (future: auto-scroll)
             setHoveredStreamId(null);
           }}
-          onClickIdle={() => setIdleDismissed(false)}
         />
       </div>
 
