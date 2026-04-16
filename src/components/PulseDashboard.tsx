@@ -1010,7 +1010,7 @@ export function PulseDashboard() {
                                           onDragEnd={handleDragEnd}
                                           zoomScale={zoomScale}
                                           onHoverStream={setHoveredStreamId}
-                                  hoveredStreamId={hoveredStreamId}
+                                          hoveredStreamId={hoveredStreamId}
                                           onHoverDrop={setHoveredDropId}
                                           hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                           isDependencyBlocked={drop.isBlocked}
@@ -1019,14 +1019,15 @@ export function PulseDashboard() {
                                       ))}
                                     </div>
                                   </div>
-                                )
+                                </div>
+                              );
                             })}
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </motion.div>
-                )
+                );
               })
             )}
           </div>
