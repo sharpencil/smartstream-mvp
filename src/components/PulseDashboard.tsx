@@ -558,12 +558,12 @@ export function PulseDashboard() {
         <div className="relative">
           {/* Scrollable Flow Area (Horizontal) */}
           <div className={cn(
-            'flex flex-col pt-5 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
+            'flex flex-col pt-0 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
             isAgentOpen ? 'pr-[392px]' : 'pr-8'
           )}>
 
             {/* Top toolbar (Sticky within the vertical scroll container) */}
-            <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center mb-8 pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-4 rounded-b-2xl border-b border-white/5 shadow-2xl">
+            <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
 
             {/* Highlight Stream selector */}
             <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
@@ -673,7 +673,7 @@ export function PulseDashboard() {
           />
 
           {/* Swimlanes container */}
-          <div className="flex flex-col gap-0 mt-2 relative">
+          <div className="flex flex-col gap-0 mt-5 relative">
 
             {/* Dependency Traces SVG Layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
