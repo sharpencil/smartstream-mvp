@@ -33,10 +33,15 @@ export interface DropProps {
   dragTooltip?: string;
   hasDependencies?: boolean;
   isDependencyBlocked?: boolean;
+  hoveredDropId?: string | null;
   onHoverDrop?: (id: string | null) => void;
+  selectedDropId?: string | null;
+  onSelectDrop?: (id: string | null) => void;
   variant?: 'full' | 'minimal';
   ownerName?: string;
   intensity?: number;
+  forceDimmed?: boolean;
+  isCriticalPath?: boolean;
 }
 
 /** Map complexity 1–9 to a pixel width multiplier for the card. */
@@ -75,10 +80,15 @@ export function Drop({
   dragTooltip,
   hasDependencies,
   isDependencyBlocked,
+  hoveredDropId,
   onHoverDrop,
+  selectedDropId,
+  onSelectDrop,
   variant = 'full',
   ownerName,
   intensity = 1,
+  forceDimmed = false,
+  isCriticalPath = false,
 }: DropProps) {
   const isGhost = state === 'ghost';
   const isDraggable = !!onDragEnd;
@@ -91,10 +101,13 @@ export function Drop({
   const width = getDropWidth({ effortHours, complexity }, zoomScale);
   const actualLeft = xOffset * zoomScale;
 
-  // Dim-highlight: if any stream is being hovered and it's NOT this drop's stream → dim
+  // Dim-highlight: if any stream or drop is being hovered, or if forceDimmed is applied
   const isStreamHovered = hoveredStreamId != null;
   const isMatchingStream = hoveredStreamId === streamId && streamId != null;
-  const isDimmed = isStreamHovered && !isMatchingStream;
+  const isDimmed = 
+    (hoveredStreamId && hoveredStreamId !== streamId) || 
+    ((hoveredDropId || selectedDropId) && hoveredDropId !== id && selectedDropId !== id && !hasDependencies) || 
+    forceDimmed;
 
   // Complexity badge label
   const complexityLabel = complexity ? `C${complexity}` : null;
@@ -153,15 +166,18 @@ export function Drop({
           <motion.button
             layout
             data-id={id}
+            onClick={() => onSelectDrop?.(selectedDropId === id ? null : id)}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{
-              opacity: isDimmed ? 0.18 : 1, // Enforce solid opacity (no blending) for health-bar precedence
-              scale: variant === 'full' && isMatchingStream ? 1.05 : 1,
-              boxShadow: getBoxShadow(),
+              opacity: isDimmed ? 0.10 : 1, // Enforce solid opacity unless dimmed 
+              scale: (variant === 'full' && isMatchingStream) || isCriticalPath ? 1.05 : 1,
+              boxShadow: isCriticalPath ? `0 0 15px 5px ${streamColorHex}40` : getBoxShadow(),
               width,
               height: variant === 'minimal' ? tubeHeight : undefined,
-              filter: variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined,
-              zIndex: isBlocked ? 40 : 20 // Enforce visual Z-index priority for blockages
+              filter: isCriticalPath 
+                ? 'brightness(1.5) saturate(1.5)' 
+                : (variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined),
+              zIndex: isBlocked || isCriticalPath ? 40 : 20 // Enforce visual Z-index priority 
             }}
           whileHover={{ 
             scale: variant === 'minimal' ? 1.1 : (isDimmed ? 0.99 : 1.02), 

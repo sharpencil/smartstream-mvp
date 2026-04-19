@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentPanel, FeedItem } from './AgentPanel';
 import { Drop, DropState, getDropWidth } from './Drop';
 import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STREAM_COLORS, StreamColorKey, Reference } from '@/lib/streams';
-import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus } from 'lucide-react';
+import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link } from 'lucide-react';
 import { BacklogTray } from './BacklogTray';
 import { STAGING_STREAMS, STAGING_DROPS, computeVelocityDelta } from '@/lib/stagingData';
 
@@ -50,9 +50,11 @@ const TEAM_MEMBERS = [
 ];
 
 const MILESTONES: Milestone[] = [
-  { id: 'm1', label: 'Tracking MVP', xOffset: 480 },
-  { id: 'm2', label: 'DB Migration', xOffset: 720 },
-  { id: 'm3', label: 'AI Eval Live', xOffset: 960 },
+  { id: 'm1', label: 'Tracking MVP', xOffset: 600 },
+  { id: 'm2', label: 'DB Migration', xOffset: 1100 },
+  { id: 'm3', label: 'AI Eval Live', xOffset: 1600 },
+  { id: 'm4', label: 'Beta Release', xOffset: 2200 },
+  { id: 'm5', label: 'GA Launch', xOffset: 3000 },
 ];
 
 // ── Build initial drops from staging CSV data ─────────────────────────────────
@@ -241,13 +243,14 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
-  const [viewLevel, setViewLevel] = useState<'overview' | 'detailed'>('overview');
+  const [viewLevel, setViewLevel] = useState<'streams' | 'people' | 'deadlines'>('streams');
   const [expandedStreamIds, setExpandedStreamIds] = useState<Set<string>>(new Set());
+  const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
 
   // Dynamic Sidebar widths to ensure Now Line and Milestones align in both views
   const SIDEBAR_DETAILED = 240; // w-60
   const SIDEBAR_OVERVIEW = 300; 
-  const currentSidebarWidth = viewLevel === 'detailed' ? SIDEBAR_DETAILED : SIDEBAR_OVERVIEW;
+  const currentSidebarWidth = viewLevel === 'people' ? SIDEBAR_DETAILED : SIDEBAR_OVERVIEW;
 
   const toggleStreamExpand = (id: string) => {
     setExpandedStreamIds(prev => {
@@ -261,6 +264,31 @@ export function PulseDashboard() {
   const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
   const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
   const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
+
+  // Compute Critical Path Drops recursively
+  const criticalPathDropIds = useMemo(() => {
+    const dropEnds = drops.map(d => ({ id: d.id, end: d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1) }));
+    if (dropEnds.length === 0) return new Set<string>();
+    const latestDrop = dropEnds.reduce((max, d) => (d.end > max.end ? d : max), dropEnds[0]);
+    
+    const paths = new Set<string>();
+    const stack = [latestDrop.id];
+    while (stack.length > 0) {
+      const currentId = stack.pop()!;
+      if (!paths.has(currentId)) {
+        paths.add(currentId);
+        const currentDrop = drops.find(d => d.id === currentId);
+        if (currentDrop && currentDrop.dependsOn) {
+          // Track staging and non-staging formats
+          const dependencies = currentDrop.dependsOn
+            .map(did => drops.find(d => d.id === did || d.id === `staging-${did}`)?.id)
+            .filter(Boolean) as string[];
+          stack.push(...dependencies);
+        }
+      }
+    }
+    return paths;
+  }, [drops]);
 
   // Sandbox State
   const [isSandboxActive, setIsSandboxActive] = useState(false);
@@ -290,6 +318,44 @@ export function PulseDashboard() {
 
   const [hoveredStreamId, setHoveredStreamId] = useState<string | null>(null);
   const [hoveredDropId, setHoveredDropId] = useState<string | null>(null);
+  const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
+  const [selectedStreamDependencyId, setSelectedStreamDependencyId] = useState<string | null>(null);
+  const [nodeYs, setNodeYs] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const updatePositions = () => {
+      const svgEl = document.getElementById('svg-overlay-container');
+      if (!svgEl) return;
+      const svgRect = svgEl.getBoundingClientRect();
+      const newPositions: Record<string, number> = {};
+
+      document.querySelectorAll('[data-stream-id]').forEach(el => {
+        const id = el.getAttribute('data-stream-id')!;
+        const rect = el.getBoundingClientRect();
+        newPositions[`stream-${id}`] = (rect.top - svgRect.top) + (rect.height / 2);
+      });
+
+      document.querySelectorAll('[data-id]').forEach(el => {
+        const id = el.getAttribute('data-id')!;
+        const rect = el.getBoundingClientRect();
+        newPositions[`drop-${id}`] = (rect.top - svgRect.top) + (rect.height / 2);
+      });
+
+      setNodeYs(prev => {
+         const keys = Object.keys(newPositions);
+         if (keys.length !== Object.keys(prev).length) return newPositions;
+         for (const k of keys) {
+           if (Math.abs(newPositions[k] - prev[k]) > 1) return newPositions;
+         }
+         return prev; // unchanged
+      });
+    };
+
+    // Delay slight processing for layout animations to settle
+    const to1 = setTimeout(updatePositions, 50);
+    const to2 = setTimeout(updatePositions, 500);
+    return () => { clearTimeout(to1); clearTimeout(to2); };
+  }, [viewLevel, expandedStreamIds, drops, activeMilestoneId, hoveredDropId, selectedDropId, selectedStreamDependencyId]);
 
   // Briefing dismissal state (independent of data — PM can snooze)
   const [blockerDismissed, setBlockerDismissed] = useState(false);
@@ -359,6 +425,41 @@ export function PulseDashboard() {
       });
     return result;
   }, [drops]);
+
+  // Find stream dependencies if a stream link is triggered
+  const activeStreamDependencyPaths = useMemo(() => {
+    if (!selectedStreamDependencyId) return [];
+    const paths: { srcStreamId: string, dstStreamId: string, isParent: boolean }[] = [];
+    
+    const baseDrops = drops.filter(d => d.streamId === selectedStreamDependencyId);
+    baseDrops.forEach(baseDrop => {
+      // Upstream (Parents)
+      if (baseDrop.dependsOn) {
+        baseDrop.dependsOn.forEach(depId => {
+          const parentDrop = drops.find(d => d.id === depId || d.id === `staging-${depId}`);
+          if (parentDrop && parentDrop.streamId && parentDrop.streamId !== selectedStreamDependencyId) {
+            paths.push({ srcStreamId: parentDrop.streamId, dstStreamId: selectedStreamDependencyId, isParent: true });
+          }
+        });
+      }
+      // Downstream (Children)
+      const children = drops.filter(d => d.dependsOn?.includes(baseDrop.id) || d.dependsOn?.includes(baseDrop.id.replace('staging-', '')));
+      children.forEach(childDrop => {
+        if (childDrop.streamId && childDrop.streamId !== selectedStreamDependencyId) {
+          paths.push({ srcStreamId: selectedStreamDependencyId, dstStreamId: childDrop.streamId, isParent: false });
+        }
+      });
+    });
+    
+    // Dedup
+    const unique = new Set<string>();
+    return paths.filter(p => {
+      const key = `${p.srcStreamId}-${p.dstStreamId}`;
+      if(unique.has(key)) return false;
+      unique.add(key);
+      return true;
+    });
+  }, [selectedStreamDependencyId, drops]);
 
   // ── Drop Actions ────────────────────────────────────────────────────────
 
@@ -505,13 +606,15 @@ export function PulseDashboard() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("relative w-full h-full flex flex-col pt-8 pb-8 pr-8 pl-0 transition-all duration-500 ease-in-out bg-[#020617] text-slate-50",
+    <div className={cn("relative w-full h-full flex flex-col pt-8 pb-8 pr-8 pl-0 transition-all duration-500 ease-in-out text-slate-50",
+      viewLevel === 'deadlines' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
       isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
     )}>
 
       {/* Header Controls */}
       <div className={cn(
-        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative pl-10 transition-all duration-500",
+        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative pl-10 transition-all duration-500",
+        viewLevel === 'deadlines' ? 'bg-black/80' : 'bg-[#020617]/90',
         isAgentOpen ? 'pr-[392px]' : 'pr-8'
       )}>
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 whitespace-nowrap">
@@ -552,27 +655,36 @@ export function PulseDashboard() {
           )}>
 
             {/* Top toolbar (Sticky within the vertical scroll container) */}
-            <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
+            <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
 
             {/* View Level Toggle - Centered relative to visible area */}
             <div className="absolute left-1/2 -translate-x-1/2 flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md pointer-events-auto">
               <button
-                onClick={() => setViewLevel('overview')}
+                onClick={() => setViewLevel('streams')}
                 className={cn(
                   'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                  viewLevel === 'overview' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                  viewLevel === 'streams' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
                 )}
               >
-                Overview
+                Streams
               </button>
               <button
-                onClick={() => setViewLevel('detailed')}
+                onClick={() => setViewLevel('people')}
                 className={cn(
                   'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                  viewLevel === 'detailed' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                  viewLevel === 'people' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
                 )}
               >
-                Detailed
+                People
+              </button>
+              <button
+                onClick={() => { setViewLevel('deadlines'); setActiveMilestoneId(null); }}
+                className={cn(
+                  'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                  viewLevel === 'deadlines' ? 'bg-rose-950/80 text-rose-400 shadow-inner shadow-rose-500/20 border border-rose-500/20' : 'text-slate-500 hover:text-slate-300'
+                )}
+              >
+                Deadlines
               </button>
             </div>
 
@@ -648,37 +760,72 @@ export function PulseDashboard() {
           <div className="flex flex-col gap-0 mt-5 relative">
 
             {/* Dependency Traces SVG Layer */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
+            <svg id="svg-overlay-container" className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
               <defs>
                 <filter id="underwater-blur">
-                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feGaussianBlur stdDeviation="3" result="blur" />
                   <feMerge>
+                    <feMergeNode in="blur" />
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
               </defs>
               <AnimatePresence>
-                {hoveredDropId && drops.map(targetDrop => {
-                  if (targetDrop.id === hoveredDropId) return null;
+                {/* 1. Stream Dependency Arcs */}
+                {activeStreamDependencyPaths.map(path => {
+                  const srcY = nodeYs[`stream-${path.srcStreamId}`];
+                  const dstY = nodeYs[`stream-${path.dstStreamId}`];
+                  if (!srcY || !dstY) return null;
 
-                  const isParent = drops.find(d => d.id === hoveredDropId)?.dependsOn?.includes(targetDrop.id);
-                  const isChild = targetDrop.dependsOn?.includes(hoveredDropId);
+                  const targetStreamDef = STAGING_STREAM_MAP[path.srcStreamId];
+                  const traceColor = targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8';
+
+                  const startX = currentSidebarWidth - 20; 
+                  const midX = startX + 50; 
+                  const dPath = `M ${startX} ${srcY} C ${midX} ${srcY}, ${midX} ${dstY}, ${startX} ${dstY}`;
+
+                  return (
+                    <motion.path
+                      key={`stream-${path.srcStreamId}-${path.dstStreamId}`}
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 0.8 }}
+                      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                      transition={{ duration: 0.6, ease: "easeInOut" }}
+                      d={dPath}
+                      fill="none"
+                      stroke={traceColor}
+                      strokeWidth="3"
+                      filter="url(#underwater-blur)"
+                    />
+                  );
+                })}
+
+                {/* 2. Drop Dependency Traces */}
+                {(hoveredDropId || selectedDropId) && drops.map(targetDrop => {
+                  const activeDropId = hoveredDropId || selectedDropId;
+                  if (targetDrop.id === activeDropId) return null;
+
+                  const isParent = drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id) || drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id.replace('staging-', ''));
+                  const isChild = targetDrop.dependsOn?.includes(activeDropId) || targetDrop.dependsOn?.includes(activeDropId?.replace('staging-', '') || '');
 
                   if (!isParent && !isChild) return null;
 
-                  const src = isParent ? targetDrop : drops.find(d => d.id === hoveredDropId)!;
-                  const dst = isParent ? drops.find(d => d.id === hoveredDropId)! : targetDrop;
+                  const src = isParent ? targetDrop : drops.find(d => d.id === activeDropId)!;
+                  const dst = isParent ? drops.find(d => d.id === activeDropId)! : targetDrop;
 
                   const getCenter = (d: DropData) => {
                     const width = getDropWidth(d, zoomScale);
                     const isDraftX = isSandboxActive && sandboxSnapshot ? sandboxSnapshot.drops.find(sd => sd.id === d.id)?.xOffset !== d.xOffset : false;
                     const isDraftL = isSandboxActive && sandboxSnapshot ? sandboxSnapshot.drops.find(sd => sd.id === d.id)?.lane !== d.lane : false;
 
-                    const effectiveLane = d.lane; // We use current manipulated values
+                    const storedY = nodeYs[`drop-${d.id}`];
+                    // Fallback to literal calculation if layout not parsed (e.g. initial view constraint)
+                    const y = storedY ?? ((d.lane * 100) + 50);
+
                     return {
                       x: currentSidebarWidth + (d.xOffset * zoomScale) + width / 2,
-                      y: (effectiveLane * 100) + 50,
+                      y,
                       isDraft: isDraftX || isDraftL
                     };
                   };
@@ -688,7 +835,6 @@ export function PulseDashboard() {
 
                   const isSimulating = isSandboxActive && (p1.isDraft || p2.isDraft);
 
-                  // Compute target stream color
                   const targetStreamDef = STAGING_STREAM_MAP[dst.streamId || ''];
                   const traceColor = isSimulating ? '#f59e0b' : targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8';
 
@@ -696,15 +842,15 @@ export function PulseDashboard() {
 
                   return (
                     <motion.path
-                      key={`${src.id}-${dst.id}`}
+                      key={`drop-${src.id}-${dst.id}`}
                       initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 0.6 }}
+                      animate={{ pathLength: 1, opacity: 0.8 }}
                       exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
                       d={dPath}
                       fill="none"
                       stroke={traceColor}
-                      strokeWidth="1.5"
+                      strokeWidth={selectedDropId ? "3" : "1.5"}
                       filter="url(#underwater-blur)"
                     />
                   );
@@ -718,36 +864,51 @@ export function PulseDashboard() {
             {MILESTONES.map(m => {
               const violated = violatedMilestoneIds.has(m.id);
               const lineX = (m.xOffset * zoomScale) + 4; // +4 for sidebar offset tweak
+              
+              const isDeadlinesView = viewLevel === 'deadlines';
+              const isSelected = activeMilestoneId === m.id;
+              
+              const diffToNow = m.xOffset - NOW_LINE_X;
+              const daysToNow = Math.round(diffToNow / 80); // 80px nominal day
+              const tMinusText = daysToNow >= 0 ? `T-Minus ${daysToNow} Days` : `T+ ${Math.abs(daysToNow)} Days`;
 
               return (
                 <div
                   key={m.id}
-                  className="absolute top-0 bottom-0 z-30 pointer-events-none"
+                  className={cn("absolute top-0 bottom-0 z-30 transition-all", isDeadlinesView ? "pointer-events-auto cursor-pointer group/mline" : "pointer-events-none")}
                   style={{ left: currentSidebarWidth + lineX }}
+                  onClick={() => isDeadlinesView && setActiveMilestoneId(activeMilestoneId === m.id ? null : m.id)}
                 >
                   {/* Dashed vertical line */}
                   <div
                     className={cn(
-                      'absolute top-0 bottom-0 w-px border-l border-dashed transition-colors duration-300',
-                      violated ? 'border-amber-500/60' : 'border-slate-600/50'
+                      'absolute top-0 bottom-0 w-px border-l transition-colors duration-300',
+                      violated ? 'border-amber-500/60 border-dashed' : 
+                      (isSelected ? 'border-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.8)]' : 'border-slate-600/50 border-dashed group-hover/mline:border-slate-400')
                     )}
                   />
                   {/* Label chip */}
                   <div className={cn(
                     'absolute -top-1 left-2 flex items-center gap-1 px-2 py-0.5 rounded-md border text-[9px] font-bold tracking-widest uppercase whitespace-nowrap transition-all duration-300',
+                    isSelected ? 'bg-teal-950/80 border-teal-400 text-teal-300 shadow-[0_0_15px_rgba(45,212,191,0.3)] scale-110 origin-bottom-left z-50 -top-3' : 
                     violated
                       ? 'bg-amber-950/60 border-amber-500/40 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                      : 'bg-slate-900/70 border-slate-700/50 text-slate-500'
+                      : 'bg-slate-900/70 border-slate-700/50 text-slate-500 group-hover/mline:text-slate-300'
                   )}>
-                    {violated && <span className="text-amber-500">⚠</span>}
-                    {m.label}
+                    {(violated && !isSelected) && <span className="text-amber-500">⚠</span>}
+                    {isDeadlinesView ? (
+                      <div className="flex flex-col">
+                        <span className="text-[7.5px] opacity-70 mb-[1px] leading-none">{m.label}</span>
+                        <span className="leading-none">{tMinusText}</span>
+                      </div>
+                    ) : m.label}
                   </div>
                 </div>
               );
             })}
 
             {/* ── Swimlane Rows ── */}
-            {viewLevel === 'detailed' ? (
+            {viewLevel === 'people' ? (
               TEAM_MEMBERS.map((member, laneIndex) => {
                 const laneDrops = drops.filter(d => d.lane === laneIndex);
                 return (
@@ -792,6 +953,8 @@ export function PulseDashboard() {
                               onHoverStream={setHoveredStreamId}
                               hoveredStreamId={hoveredStreamId}
                               onHoverDrop={setHoveredDropId}
+                              selectedDropId={selectedDropId}
+                              onSelectDrop={setSelectedDropId}
                               variant="full"
                             />
                           ))}
@@ -802,16 +965,39 @@ export function PulseDashboard() {
                 );
               })
             ) : (
-              // ── OVERVIEW (STREAM-FIRST) VIEW ──
-              [...STAGING_STREAMS].sort((a, b) => {
-                const minA = Math.min(...drops.filter(d => d.streamId === a.id).map(d => d.xOffset), Infinity);
-                const minB = Math.min(...drops.filter(d => d.streamId === b.id).map(d => d.xOffset), Infinity);
-                return minA - minB;
+              // ── OVERVIEW (STREAM-FIRST) OR DEADLINES VIEW ──
+              [...STAGING_STREAMS].filter(stream => {
+                  if (viewLevel !== 'deadlines' || !activeMilestoneId) return true;
+                  const streamDrops = drops.filter(d => d.streamId === stream.id);
+                  if (streamDrops.length === 0) return true;
+                  const end = Math.max(...streamDrops.map(d => dropRightEdge(d, 1)), 0);
+                  const mAfter = MILESTONES.find(m => m.xOffset >= end) || MILESTONES[MILESTONES.length - 1];
+                  return mAfter && mAfter.id === activeMilestoneId;
+              }).sort((a, b) => {
+                if (viewLevel === 'deadlines') {
+                  const endA = Math.max(...drops.filter(d => d.streamId === a.id).map(d => dropRightEdge(d, 1)), 0);
+                  const endB = Math.max(...drops.filter(d => d.streamId === b.id).map(d => dropRightEdge(d, 1)), 0);
+                  const mAfterA = MILESTONES.find(m => m.xOffset >= endA) || MILESTONES[MILESTONES.length - 1];
+                  const mAfterB = MILESTONES.find(m => m.xOffset >= endB) || MILESTONES[MILESTONES.length - 1];
+                  const gapA = mAfterA ? mAfterA.xOffset - endA : Infinity;
+                  const gapB = mAfterB ? mAfterB.xOffset - endB : Infinity;
+                  return gapA - gapB; // Smallest gap (or highly negative collisions) bubble up.
+                } else {
+                  const minA = Math.min(...drops.filter(d => d.streamId === a.id).map(d => d.xOffset), Infinity);
+                  const minB = Math.min(...drops.filter(d => d.streamId === b.id).map(d => d.xOffset), Infinity);
+                  return minA - minB;
+                }
               }).map((stream) => {
                 const stats = streamStats.find(s => s.id === stream.id)!;
                 const isExpanded = expandedStreamIds.has(stream.id);
                 const streamColor = STREAM_COLORS[stream.colorKey as StreamColorKey];
-
+                
+                // Deadlines properties calculation per stream
+                const streamDrops = drops.filter(d => d.streamId === stream.id);
+                const streamEnd = Math.max(...streamDrops.map(d => dropRightEdge(d, 1)), 0);
+                const nearestM = MILESTONES.find(m => m.xOffset >= streamEnd) || MILESTONES[MILESTONES.length - 1];
+                const gapToNearestM = nearestM ? nearestM.xOffset - streamEnd : 0;
+                
                 return (
                   <motion.div
                     key={stream.id}
@@ -819,6 +1005,7 @@ export function PulseDashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
+                    data-stream-id={stream.id}
                   >
                     {/* Stream Header Row */}
                     <div className="flex items-center relative group">
@@ -830,12 +1017,19 @@ export function PulseDashboard() {
                         {/* Stream Content Stack */}
                         <div className="flex-1 min-w-0 flex flex-col gap-2.5">
                           {/* Top Line: Name and Blocker */}
-                          <div className="flex items-center gap-2">
-                            <h3 className="flex-1 font-bold text-slate-100 group-hover:text-white transition-colors text-sm truncate tracking-tight">
+                          <div className="flex items-center gap-2 group/title cursor-pointer p-0.5 -mx-0.5 rounded transition-colors hover:bg-white/5">
+                            <h3 className="flex-1 font-bold text-slate-100 group-hover/title:text-white transition-colors text-sm truncate tracking-tight">
                               {stream.title}
                             </h3>
+                            <button
+                               onClick={() => setSelectedStreamDependencyId(selectedStreamDependencyId === stream.id ? null : stream.id)}
+                               className={cn("p-1 rounded-md opacity-0 group-hover/title:opacity-100 transition-all ml-1",
+                               selectedStreamDependencyId === stream.id ? "opacity-100 bg-sky-900/40 text-cyan-400" : "text-slate-500 hover:text-slate-300 hover:bg-slate-800")}
+                            >
+                               <Link className="w-3.5 h-3.5" />
+                            </button>
                             {stats.hasBlocker && (
-                              <div className="shrink-0 animate-pulse">
+                              <div className="shrink-0 animate-pulse ml-2">
                                 <AlertTriangle className="w-3.5 h-3.5 text-rose-500 drop-shadow-[0_0_8px_rgba(225,29,72,0.4)]" />
                               </div>
                             )}
@@ -883,6 +1077,31 @@ export function PulseDashboard() {
                       {/* Timeline Area (Collapsed View) */}
                       <div className="flex-1 h-full relative border-l border-slate-800/30 overflow-visible">
                         <div className="absolute inset-0 flex items-center">
+                          {viewLevel === 'deadlines' && (
+                            <>
+                              {/* Safety Bridge */}
+                              <div 
+                                className={cn(
+                                  "absolute h-1.5 top-1/2 -translate-y-1/2 rounded-full transition-all duration-500",
+                                  gapToNearestM < 0 ? "bg-rose-500 shadow-[0_0_15px_rgba(243,24,72,0.8)] z-40" :
+                                  gapToNearestM <= 80 ? "bg-amber-500/50" : "bg-green-500/20"
+                                )}
+                                style={{ 
+                                  left: gapToNearestM < 0 ? nearestM.xOffset * zoomScale : streamEnd * zoomScale, 
+                                  width: Math.abs(gapToNearestM) * zoomScale 
+                                }}
+                              />
+                              {/* Collision Alert Label */}
+                              {gapToNearestM < 0 && (
+                                <div 
+                                  className="absolute top-1/2 -translate-y-1/2 -mt-6 rounded px-2 py-0.5 bg-rose-950 border border-rose-500 text-[9px] font-bold text-rose-400 uppercase tracking-widest whitespace-nowrap animate-pulse z-50 shadow-[0_0_20px_rgba(225,29,72,0.5)]"
+                                  style={{ left: (streamEnd * zoomScale) + 10 }}
+                                >
+                                  Late {Math.round(Math.abs(gapToNearestM)/80)} Days
+                                </div>
+                              )}
+                            </>
+                          )}
                           <AnimatePresence>
                             {!isExpanded && stats.drops.map(drop => {
                               // Calculate Overlap Intensity
@@ -918,8 +1137,12 @@ export function PulseDashboard() {
                                   onHoverStream={setHoveredStreamId}
                                   hoveredStreamId={hoveredStreamId}
                                   onHoverDrop={setHoveredDropId}
+                                  selectedDropId={selectedDropId}
+                                  onSelectDrop={setSelectedDropId}
                                   hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                   isDependencyBlocked={drop.isBlocked}
+                                  forceDimmed={viewLevel === 'deadlines' && !criticalPathDropIds.has(drop.id)}
+                                  isCriticalPath={viewLevel === 'deadlines' && criticalPathDropIds.has(drop.id)}
                                   variant="minimal"
                                 />
                               );
@@ -978,6 +1201,8 @@ export function PulseDashboard() {
                                           onHoverStream={setHoveredStreamId}
                                           hoveredStreamId={hoveredStreamId}
                                           onHoverDrop={setHoveredDropId}
+                                          selectedDropId={selectedDropId}
+                                          onSelectDrop={setSelectedDropId}
                                           hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                           isDependencyBlocked={drop.isBlocked}
                                           variant="full"
