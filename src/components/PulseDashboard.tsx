@@ -804,10 +804,10 @@ export function PulseDashboard() {
                 {/* 2. Drop Dependency Traces */}
                 {(hoveredDropId || selectedDropId) && drops.map(targetDrop => {
                   const activeDropId = hoveredDropId || selectedDropId;
-                  if (targetDrop.id === activeDropId) return null;
+                  if (!activeDropId || targetDrop.id === activeDropId) return null;
 
                   const isParent = drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id) || drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id.replace('staging-', ''));
-                  const isChild = targetDrop.dependsOn?.includes(activeDropId) || targetDrop.dependsOn?.includes(activeDropId?.replace('staging-', '') || '');
+                  const isChild = targetDrop.dependsOn?.includes(activeDropId) || targetDrop.dependsOn?.includes(activeDropId.replace('staging-', ''));
 
                   if (!isParent && !isChild) return null;
 
