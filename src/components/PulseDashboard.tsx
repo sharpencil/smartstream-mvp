@@ -1004,7 +1004,7 @@ export function PulseDashboard() {
                     layout
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
+                    className="mb-2"
                     data-stream-id={stream.id}
                   >
                     {/* Stream Header Row */}
@@ -1030,7 +1030,7 @@ export function PulseDashboard() {
                             </button>
                             {stats.hasBlocker && (
                               <div className="shrink-0 animate-pulse ml-2">
-                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 drop-shadow-[0_0_8px_rgba(225,29,72,0.4)]" />
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
                               </div>
                             )}
                           </div>
@@ -1094,7 +1094,7 @@ export function PulseDashboard() {
                               {/* Collision Alert Label */}
                               {gapToNearestM < 0 && (
                                 <div 
-                                  className="absolute top-1/2 -translate-y-1/2 -mt-6 rounded px-2 py-0.5 bg-rose-950 border border-rose-500 text-[9px] font-bold text-rose-400 uppercase tracking-widest whitespace-nowrap animate-pulse z-50 shadow-[0_0_20px_rgba(225,29,72,0.5)]"
+                                  className="absolute top-1/2 -translate-y-1/2 -mt-6 rounded px-2 py-0.5 bg-rose-950 border border-rose-500 text-[9px] font-bold text-rose-400 uppercase tracking-widest whitespace-nowrap animate-pulse z-50 shadow-[0_0_20px_rgba(244,63,94,0.5)]"
                                   style={{ left: (streamEnd * zoomScale) + 10 }}
                                 >
                                   Late {Math.round(Math.abs(gapToNearestM)/80)} Days

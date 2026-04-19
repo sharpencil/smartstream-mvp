@@ -115,11 +115,11 @@ export function Drop({
   // Compute box shadow
   const getBoxShadow = () => {
     if (variant === 'minimal') return 'none';
-    if (isMilestoneViolation) return '0 0 20px rgba(225,29,72,0.5), inset 0 0 12px rgba(225,29,72,0.1)';
+    if (isMilestoneViolation) return '0 0 20px rgba(244,63,94,0.5), inset 0 0 12px rgba(244,63,94,0.1)';
     if (isMatchingStream && streamColorHex) return `0 0 20px ${streamColorHex}80, inset 0 0 10px ${streamColorHex}20`;
     if (isCompleted) return '0 4px 6px -1px rgb(0 0 0 / 0.1)';
     if (isActive && !isBlocked) return '0 0 15px rgba(6,182,212,0.3)';
-    if (isActive && isBlocked) return '0 0 20px rgba(225,29,72,0.4)';
+    if (isActive && isBlocked) return '0 0 20px rgba(244,63,94,0.4)';
     return 'none';
   };
 
@@ -197,14 +197,14 @@ export function Drop({
           transition={{ type: 'spring', stiffness: 300, damping: isMatchingStream ? 15 : 30 }}
           style={{
             backgroundImage: isBlocked
-              ? (variant === 'minimal' ? undefined : 'repeating-linear-gradient(45deg, rgba(225,29,72,0.12) 0px, rgba(225,29,72,0.12) 4px, transparent 4px, transparent 12px)')
+              ? (variant === 'minimal' ? undefined : 'repeating-linear-gradient(45deg, rgba(244,63,94,0.12) 0px, rgba(244,63,94,0.12) 4px, transparent 4px, transparent 12px)')
               : undefined,
             ...(variant === 'full' && isMatchingStream && streamColorHex ? {
               borderColor: streamColorHex,
               borderWidth: '2px',
             } : {}),
             ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
-            backgroundColor: variant === 'minimal' ? (isBlocked ? '#e11d48' : streamColorHex) : undefined
+            backgroundColor: variant === 'minimal' ? (isBlocked ? '#f43f5e' : streamColorHex) : undefined
           }}
             {...(isDraggable ? {
               drag: true,
