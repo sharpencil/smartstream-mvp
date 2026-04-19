@@ -7,7 +7,7 @@ import { Drop, DropState, getDropWidth } from './Drop';
 import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STREAM_COLORS, StreamColorKey, Reference } from '@/lib/streams';
-import { Zap, PlayCircle, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus } from 'lucide-react';
 import { BacklogTray } from './BacklogTray';
 import { STAGING_STREAMS, STAGING_DROPS, computeVelocityDelta } from '@/lib/stagingData';
 
@@ -189,6 +189,14 @@ function buildInitialDrops(): DropData[] {
 
 const INITIAL_DROPS: DropData[] = buildInitialDrops();
 
+const RAW_MIN_X = Math.min(...INITIAL_DROPS.map(d => d.xOffset));
+const X_SHIFT = -RAW_MIN_X + 24;
+INITIAL_DROPS.forEach(d => { d.xOffset += X_SHIFT; });
+MILESTONES.forEach(m => { m.xOffset += X_SHIFT; });
+
+const INITIAL_MAX_X = Math.max(...INITIAL_DROPS.map(d => d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1)));
+const INITIAL_ZOOM = Math.min(1, 1000 / Math.max(INITIAL_MAX_X, 100));
+
 // ── Seed velocity from estimated vs. completion time ─────────────────────────
 function buildInitialVelocity(initialDrops: DropData[]): Record<string, number> {
   const result: Record<string, number> = {};
@@ -220,7 +228,7 @@ function buildInitialVelocity(initialDrops: DropData[]): Record<string, number> 
 
 const INITIAL_VELOCITY: Record<string, number> = buildInitialVelocity(INITIAL_DROPS);
 
-const NOW_LINE_X = NOW_LINE_BASE;
+const NOW_LINE_X = NOW_LINE_BASE + X_SHIFT;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -252,7 +260,7 @@ export function PulseDashboard() {
 
   const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
   const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
-  const [zoomScale, setZoomScale] = useState(1);
+  const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
 
   // Sandbox State
   const [isSandboxActive, setIsSandboxActive] = useState(false);
@@ -509,28 +517,6 @@ export function PulseDashboard() {
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 whitespace-nowrap">
           Pulse
         </h1>
-
-        {/* View Level Toggle - Centered relative to visible area */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md">
-          <button
-            onClick={() => setViewLevel('overview')}
-            className={cn(
-              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-              viewLevel === 'overview' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
-            )}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setViewLevel('detailed')}
-            className={cn(
-              'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-              viewLevel === 'detailed' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
-            )}
-          >
-            Detailed
-          </button>
-        </div>
       </div>
 
       {/* ── Main Scroll Context (Vertical) ── */}
@@ -568,60 +554,43 @@ export function PulseDashboard() {
             {/* Top toolbar (Sticky within the vertical scroll container) */}
             <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none pr-8 bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
 
-            {/* Highlight Stream selector */}
-            <div className="inline-flex items-center gap-2 bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1.5 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto flex-nowrap">
-              <Zap className="w-4 h-4 ml-2 text-teal-400 shrink-0" />
-              <span className="text-xs font-bold text-slate-300 mr-2 tracking-wide uppercase whitespace-nowrap">Highlight Stream</span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setHoveredStreamId(null)}
-                  className={cn('px-3 py-1 rounded-[10px] text-[10px] font-bold tracking-widest transition-all',
-                    !hoveredStreamId ? 'bg-slate-800 text-slate-200' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                  )}
-                >
-                  ALL
-                </button>
-                {Object.values(STAGING_STREAM_MAP).map(stream => {
-                  const colorHex = STREAM_COLORS[stream.colorKey].hex;
-                  const isActive = hoveredStreamId === stream.id;
-                  return (
-                    <button
-                      key={stream.id}
-                      onClick={() => setHoveredStreamId(prev => prev === stream.id ? null : stream.id)}
-                      className="px-3 py-1 rounded-[10px] text-[10px] font-bold tracking-widest transition-all"
-                      style={{
-                        backgroundColor: isActive ? `${colorHex}30` : 'transparent',
-                        color: isActive ? colorHex : '#64748b',
-                        boxShadow: isActive ? `inset 0 0 10px ${colorHex}20` : 'none',
-                      }}
-                    >
-                      {stream.initials}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* View Level Toggle - Centered relative to visible area */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md pointer-events-auto">
+              <button
+                onClick={() => setViewLevel('overview')}
+                className={cn(
+                  'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                  viewLevel === 'overview' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                )}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setViewLevel('detailed')}
+                className={cn(
+                  'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                  viewLevel === 'detailed' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                )}
+              >
+                Detailed
+              </button>
             </div>
 
-            {/* Zoom Scale */}
-            <div className="inline-flex bg-[#0a192f]/80 backdrop-blur-md rounded-[14px] p-1 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-              {([
-                [1, '8h'],
-                [0.6, '24h'],
-                [0.25, '1w'],
-              ] as [number, string][]).map(([scale, label]) => (
-                <button
-                  key={scale}
-                  onClick={() => setZoomScale(scale)}
-                  className={cn(
-                    'px-4 py-1.5 rounded-[10px] text-xs font-bold tracking-wide transition-all',
-                    zoomScale === scale
-                      ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
+            {/* Zoom Scale Controls */}
+            <div className="inline-flex items-center bg-[#0a192f]/80 backdrop-blur-md rounded-xl p-1 h-10 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
+              <button
+                onClick={() => setZoomScale(prev => Math.max(0.1, prev - 0.15))}
+                className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <div className="w-px h-4 bg-white/10 mx-1" />
+              <button
+                onClick={() => setZoomScale(prev => Math.min(2, prev + 0.15))}
+                className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Simulation Toggle and Actions */}
@@ -629,7 +598,7 @@ export function PulseDashboard() {
               {!isSandboxActive && (
                 <button
                   onClick={toggleSandbox}
-                  className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
+                  className="flex items-center justify-center gap-2 px-6 h-10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
                 >
                   <PlayCircle className="w-4 h-4 shrink-0" />
                   Run Simulation
@@ -647,13 +616,13 @@ export function PulseDashboard() {
                   >
                     <button
                       onClick={commitSandbox}
-                      className="px-5 py-2 bg-cyan-500 text-cyan-950 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-lg"
+                      className="px-5 h-10 flex items-center justify-center bg-cyan-500 text-cyan-950 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-lg"
                     >
                       Apply to Live
                     </button>
                     <button
                       onClick={discardSandbox}
-                      className="px-5 py-2 bg-transparent text-rose-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500/10 transition-colors"
+                      className="px-5 h-10 flex items-center justify-center bg-transparent text-rose-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500/10 transition-colors"
                     >
                       Discard
                     </button>
@@ -743,17 +712,7 @@ export function PulseDashboard() {
               </AnimatePresence>
             </svg>
 
-            {/* Ideal Flow Line Background SVG */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ minWidth: 2000 }}>
-              <defs>
-                <linearGradient id="idealFlow" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="rgba(34,211,238,0.2)" />
-                  <stop offset="100%" stopColor="rgba(45,212,191,0.0)" />
-                </linearGradient>
-              </defs>
-              <polygon points={`${currentSidebarWidth},0 ${currentSidebarWidth + NOW_LINE_X * zoomScale},0 2000,500 ${currentSidebarWidth},500`} fill="url(#idealFlow)" opacity="0.3" />
-              <line x1={currentSidebarWidth + 50} y1="0" x2={(currentSidebarWidth + 800) * zoomScale} y2="500" stroke="rgba(34,211,238,0.3)" strokeWidth="2" strokeDasharray="10 10" />
-            </svg>
+
 
             {/* ── Milestone Lines ── */}
             {MILESTONES.map(m => {
@@ -844,7 +803,11 @@ export function PulseDashboard() {
               })
             ) : (
               // ── OVERVIEW (STREAM-FIRST) VIEW ──
-              STAGING_STREAMS.map((stream) => {
+              [...STAGING_STREAMS].sort((a, b) => {
+                const minA = Math.min(...drops.filter(d => d.streamId === a.id).map(d => d.xOffset), Infinity);
+                const minB = Math.min(...drops.filter(d => d.streamId === b.id).map(d => d.xOffset), Infinity);
+                return minA - minB;
+              }).map((stream) => {
                 const stats = streamStats.find(s => s.id === stream.id)!;
                 const isExpanded = expandedStreamIds.has(stream.id);
                 const streamColor = STREAM_COLORS[stream.colorKey as StreamColorKey];

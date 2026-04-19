@@ -155,12 +155,13 @@ export function Drop({
             data-id={id}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{
-              opacity: isDimmed ? 0.18 : (variant === 'minimal' ? Math.min(1, 0.2 + (intensity * 0.2)) : 1),
+              opacity: isDimmed ? 0.18 : 1, // Enforce solid opacity (no blending) for health-bar precedence
               scale: variant === 'full' && isMatchingStream ? 1.05 : 1,
               boxShadow: getBoxShadow(),
               width,
               height: variant === 'minimal' ? tubeHeight : undefined,
-              filter: variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined
+              filter: variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined,
+              zIndex: isBlocked ? 40 : 20 // Enforce visual Z-index priority for blockages
             }}
           whileHover={{ 
             scale: variant === 'minimal' ? 1.1 : (isDimmed ? 0.99 : 1.02), 
@@ -180,14 +181,14 @@ export function Drop({
           transition={{ type: 'spring', stiffness: 300, damping: isMatchingStream ? 15 : 30 }}
           style={{
             backgroundImage: isBlocked
-              ? 'repeating-linear-gradient(45deg, rgba(225,29,72,0.12) 0px, rgba(225,29,72,0.12) 4px, transparent 4px, transparent 12px)'
+              ? (variant === 'minimal' ? undefined : 'repeating-linear-gradient(45deg, rgba(225,29,72,0.12) 0px, rgba(225,29,72,0.12) 4px, transparent 4px, transparent 12px)')
               : undefined,
             ...(variant === 'full' && isMatchingStream && streamColorHex ? {
               borderColor: streamColorHex,
               borderWidth: '2px',
             } : {}),
             ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
-            backgroundColor: variant === 'minimal' ? (isBlocked ? '#fb718588' : (streamColorHex ? `${streamColorHex}55` : undefined)) : undefined
+            backgroundColor: variant === 'minimal' ? (isBlocked ? '#e11d48' : streamColorHex) : undefined
           }}
             {...(isDraggable ? {
               drag: true,
