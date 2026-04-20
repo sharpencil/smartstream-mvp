@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentPanel, FeedItem } from './AgentPanel';
 import { Drop, DropState, getDropWidth } from './Drop';
@@ -26,6 +26,7 @@ export interface DropData {
   references?: Reference[];
   streamId?: string;
   dependsOn?: string[];
+  isReady?: boolean;
 }
 
 interface Milestone {
@@ -42,148 +43,162 @@ const STAGING_STREAM_MAP = Object.fromEntries(
   ])
 );
 
-const TEAM_MEMBERS = [
-  { id: '1', name: 'Sarah' },
-  { id: '2', name: 'Mike' },
-  { id: '3', name: 'Alex' },
-  { id: '4', name: 'Elena' },
-];
+const PREDEFINED_NAMES = ['Sarah', 'Mike', 'Alex', 'Elena', 'Sam', 'David', 'Laura', 'Chris'];
+const uniqueOwnerIds = Array.from(new Set(STAGING_DROPS.map(d => d.owner_id).filter(Boolean)));
+export const TEAM_MEMBERS = uniqueOwnerIds.map((id, index) => ({
+  id,
+  name: PREDEFINED_NAMES[index % PREDEFINED_NAMES.length] || `Member ${index + 1}`
+}));
+if (TEAM_MEMBERS.length === 0) {
+  TEAM_MEMBERS.push({ id: '1', name: 'Sarah' });
+}
 
 const MILESTONES: Milestone[] = [
-  { id: 'm1', label: 'Tracking MVP', xOffset: 600 },
-  { id: 'm2', label: 'DB Migration', xOffset: 1100 },
-  { id: 'm3', label: 'AI Eval Live', xOffset: 1600 },
-  { id: 'm4', label: 'Beta Release', xOffset: 2200 },
-  { id: 'm5', label: 'GA Launch', xOffset: 3000 },
+  { id: 'm1', label: 'Tracking MVP', xOffset: 1400 },
+  { id: 'm2', label: 'DB Migration', xOffset: 2800 },
+  { id: 'm3', label: 'AI Eval Live', xOffset: 4500 },
+  { id: 'm4', label: 'Beta Release', xOffset: 6500 },
+  { id: 'm5', label: 'GA Launch', xOffset: 8500 },
 ];
 
-// ── Build initial drops from staging CSV data ─────────────────────────────────
 //  Completed   → left of NOW_LINE_BASE (pre-Now)
 //  Not Started → ghost, right of NOW_LINE_BASE
 //  In Progress → active, near NOW_LINE_BASE
-const NOW_LINE_BASE = 420;
+let NOW_LINE_BASE = 420;
 
 function buildInitialDrops(): DropData[] {
-  const result: DropData[] = [];
-  const laneTasks: Record<number, { completed: any[], active: any[], pending: any[] }> = {
-    0: { completed: [], active: [], pending: [] },
-    1: { completed: [], active: [], pending: [] },
-    2: { completed: [], active: [], pending: [] },
-    3: { completed: [], active: [], pending: [] }
-  };
+  const dropsMap = new Map<string, DropData>();
 
-  // Collect all drops and distribute them round-robin to lanes
-  let absoluteDropIdx = 0;
   STAGING_STREAMS.forEach((stream) => {
     stream.drops.forEach((drop) => {
-      const lane = absoluteDropIdx % 4;
-      const dropData = { ...drop, streamId: stream.id };
+      let lane = 0;
+      const tIdx = TEAM_MEMBERS.findIndex(m => m.id === drop.owner_id);
+      if (tIdx > -1) lane = tIdx;
 
-      if (drop.status === 'Completed') {
-        laneTasks[lane].completed.push(dropData);
-      } else if (drop.status === 'Not Started') {
-        // Force the first "Not Started" drop of MOST lanes to be ACTIVE for demo realism
-        // We leave lane 2 (Sam Taylor) idle to demonstrate "Idle Capacity" intervention
-        if (laneTasks[lane].active.length === 0 && lane !== 2) {
-          laneTasks[lane].active.push({
-            ...dropData,
-            isBlocked: lane === 0, // Keep Sarah's blocker for the demo
-            status: 'Active'
-          });
-        } else {
-          laneTasks[lane].pending.push(dropData);
-        }
-      } else {
-        // Respect explicit in-progress status unless it's Lane 2 (Sam)
-        if (lane === 2) {
-          laneTasks[lane].completed.push(dropData); // Demote to completed to keep him idle
-        } else {
-          laneTasks[lane].active.push(dropData);
-        }
-      }
-      absoluteDropIdx++;
+      let state: 'ghost' | 'active' | 'completed' = 'ghost';
+      if (drop.status === 'Completed') state = 'completed';
+      else if (drop.status === 'Active' || drop.status === 'In Progress') state = 'active';
+
+      // Mark blocked / red trace if missing completion date and past due date
+      const isBroken = Boolean(!drop.completion_date && drop.due_date && new Date() > new Date(drop.due_date));
+
+      dropsMap.set(`staging-${drop.drop_id}`, {
+        id: `staging-${drop.drop_id}`,
+        lane,
+        title: drop.title,
+        description: drop.title,
+        tasks: drop.tasks,
+        status: drop.status,
+        complexity: drop.complexity || 4,
+        state,
+        effortHours: drop.estimated_time || drop.complexity || 4,
+        xOffset: 0,
+        streamId: stream.id,
+        isBlocked: isBroken,
+        dependsOn: (drop.dependsOn || []).map((d: string) => `staging-${d}`),
+      });
     });
   });
 
-  // Position drops per lane
-  [0, 1, 2, 3].forEach(lane => {
-    let lastActiveEnd = NOW_LINE_BASE + 20;
+  const result = Array.from(dropsMap.values());
 
-    // 1. Position ACTIVE drops at NOW_LINE (overlapping)
-    laneTasks[lane].active.forEach((drop, i) => {
-      const complexity = drop.complexity ?? 4;
-      const cardWidth = 100 + complexity * 28;
-      // Stagger the overlap so they start well before the line (e.g., 100-150px before)
-      const staggerX = (lane * 35) % 90;
-      const xOffset = NOW_LINE_BASE - 140 + staggerX + (i * 20);
-
-      lastActiveEnd = Math.max(lastActiveEnd, xOffset + cardWidth);
-
-      result.push({
-        id: `staging-${drop.drop_id}`,
-        lane,
-        title: drop.title,
-        description: drop.title,
-        tasks: drop.tasks,
-        status: drop.status,
-        complexity,
-        state: 'active',
-        effortHours: drop.estimated_time || complexity,
-        xOffset,
-        streamId: drop.streamId,
-        isBlocked: drop.isBlocked,
-        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
+  const getTopologicalOrder = (drops: DropData[]): string[] => {
+    const inDegree = new Map<string, number>();
+    const graph = new Map<string, string[]>();
+    drops.forEach(d => {
+      inDegree.set(d.id, 0);
+      if (!graph.has(d.id)) graph.set(d.id, []);
+    });
+    
+    // Reverse dependency graph (A depends on B -> B to A edge)
+    drops.forEach(d => {
+      (d.dependsOn || []).forEach(depId => {
+        if (graph.has(depId)) {
+          graph.get(depId)!.push(d.id);
+          inDegree.set(d.id, (inDegree.get(d.id) || 0) + 1);
+        }
       });
     });
 
-    // 2. Position COMPLETED drops working BACKWARDS from ACTIVE drops
-    let earliestActiveX = NOW_LINE_BASE - 140;
-    if (laneTasks[lane].active.length > 0) {
-      earliestActiveX = Math.min(...result.filter(d => d.lane === lane && d.state === 'active').map(d => d.xOffset));
+    const queue: string[] = [];
+    inDegree.forEach((count, id) => { if (count === 0) queue.push(id); });
+    
+    const order: string[] = [];
+    while(queue.length > 0) {
+      const u = queue.shift()!;
+      order.push(u);
+      graph.get(u)!.forEach(v => {
+        inDegree.set(v, inDegree.get(v)! - 1);
+        if (inDegree.get(v) === 0) queue.push(v);
+      });
     }
-    let currentXCompleted = earliestActiveX - 40;
 
-    [...laneTasks[lane].completed].reverse().forEach((drop) => {
-      const complexity = drop.complexity ?? 4;
-      const cardWidth = 100 + complexity * 28;
-      currentXCompleted -= (cardWidth + 24);
-      result.push({
-        id: `staging-${drop.drop_id}`,
-        lane,
-        title: drop.title,
-        description: drop.title,
-        tasks: drop.tasks,
-        status: drop.status,
-        complexity,
-        state: 'completed',
-        effortHours: drop.estimated_time || complexity,
-        xOffset: currentXCompleted,
-        streamId: drop.streamId,
-        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
-      });
-    });
+    drops.forEach(d => { if (!order.includes(d.id)) order.push(d.id); });
+    return order;
+  };
 
-    // 3. Position PENDING drops working FORWARDS from the END of ACTIVE work
-    let currentXPending = Math.max(NOW_LINE_BASE + 80, lastActiveEnd + 40);
-    laneTasks[lane].pending.forEach((drop) => {
-      const complexity = drop.complexity ?? 4;
-      const cardWidth = 100 + complexity * 28;
-      result.push({
-        id: `staging-${drop.drop_id}`,
-        lane,
-        title: drop.title,
-        description: drop.title,
-        tasks: drop.tasks,
-        status: drop.status,
-        complexity,
-        state: 'ghost',
-        effortHours: drop.estimated_time || complexity,
-        xOffset: currentXPending,
-        streamId: drop.streamId,
-        dependsOn: drop.dependsOn?.map((d: string) => `staging-${d}`),
+  let INITIAL_MAX_X = 420;
+
+  const order = getTopologicalOrder(result);
+  const laneEndTimes: Record<number, number> = {};
+
+  order.forEach(id => {
+    const d = dropsMap.get(id);
+    if (!d) return;
+
+    let baseStart = 400; // Large logical padding to ensure visibility behind sidebar shadow at max zoom-out
+    let isParentBlocked = false;
+
+    if (d.dependsOn) {
+      d.dependsOn.forEach(depId => {
+        const p = dropsMap.get(depId);
+        if (p) {
+          const pEnd = p.xOffset + getDropWidth({ effortHours: p.effortHours, complexity: p.complexity }, 1) + 20;
+          if (pEnd > baseStart) baseStart = pEnd;
+          if (p.isBlocked) isParentBlocked = true;
+        }
       });
-      currentXPending += (cardWidth + 30);
-    });
+    }
+
+    if (isParentBlocked) d.isBlocked = true;
+
+    const lEnd = laneEndTimes[d.lane] || 0;
+    const actualStart = Math.max(baseStart, lEnd + 15);
+    d.xOffset = actualStart;
+    
+    const nodeEnd = actualStart + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1);
+    laneEndTimes[d.lane] = nodeEnd;
+
+    if (nodeEnd > INITIAL_MAX_X) {
+      INITIAL_MAX_X = nodeEnd;
+    }
+  });
+
+  // Calculate NOW_LINE_BASE at 25% of the total project duration
+  NOW_LINE_BASE = INITIAL_MAX_X * 0.25;
+
+  // Adjust drop visualizations (states) based strictly on their physical relation to the 25% NOW mark
+  result.forEach(d => {
+     const nodeRightEdge = d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1);
+     if (nodeRightEdge <= NOW_LINE_BASE + 20) {
+       d.state = 'completed';
+       d.isReady = false;
+     } else if (d.xOffset < NOW_LINE_BASE + 20 && nodeRightEdge > NOW_LINE_BASE) {
+       d.state = 'active';
+       d.isReady = false;
+     } else {
+       d.state = 'ghost';
+       
+       // Calculate `isReady` visually if child is pending but parent is completed
+       let parentCompleted = false;
+       if (d.dependsOn) {
+         d.dependsOn.forEach(depId => {
+           const p = dropsMap.get(depId);
+           if (p && p.state === 'completed') parentCompleted = true;
+         });
+       }
+       if (parentCompleted) d.isReady = true;
+     }
   });
 
   return result;
@@ -247,10 +262,26 @@ export function PulseDashboard() {
   const [expandedStreamIds, setExpandedStreamIds] = useState<Set<string>>(new Set());
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // Dynamic Sidebar widths to ensure Now Line and Milestones align in both views
   const SIDEBAR_DETAILED = 240; // w-60
   const SIDEBAR_OVERVIEW = 300; 
   const currentSidebarWidth = viewLevel === 'people' ? SIDEBAR_DETAILED : SIDEBAR_OVERVIEW;
+
+  const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
+  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
+
+  const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
+
+  // Auto-scroll to keep the NOW line centered when zooming
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const targetScrollLeft = (NOW_LINE_X * zoomScale) + currentSidebarWidth - (containerWidth / 2);
+      scrollContainerRef.current.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' });
+    }
+  }, [zoomScale, currentSidebarWidth]);
 
   const toggleStreamExpand = (id: string) => {
     setExpandedStreamIds(prev => {
@@ -260,10 +291,6 @@ export function PulseDashboard() {
       return next;
     });
   };
-
-  const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
-  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
-  const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
 
   // Compute Critical Path Drops recursively
   const criticalPathDropIds = useMemo(() => {
@@ -503,12 +530,12 @@ export function PulseDashboard() {
         }
 
         const processShift = (dropId: string, shiftVal: number) => {
-          const targetItem = newDrops.find(d => d.id === dropId);
-          const deps = targetItem?.dependsOn || [];
-          deps.forEach(depId => {
-            const depIdx = newDrops.findIndex(d => d.id === depId);
-            if (depIdx > -1) {
-              newDrops[depIdx] = { ...newDrops[depIdx], xOffset: newDrops[depIdx].xOffset + shiftVal };
+          const children = newDrops.filter(d => d.dependsOn?.includes(dropId));
+          children.forEach(c => {
+            const cIdx = newDrops.findIndex(x => x.id === c.id);
+            if (cIdx > -1) {
+              newDrops[cIdx] = { ...newDrops[cIdx], xOffset: newDrops[cIdx].xOffset + shiftVal };
+              processShift(c.id, shiftVal);
             }
           });
         };
@@ -554,17 +581,37 @@ export function PulseDashboard() {
       let newXOffset = Math.max(0, (clientX - 320) / zoomScale); // 320 for sidebar offset
 
       setDrops(prev => {
-        const existing = prev.find(d => d.id === id);
-        if (existing) {
-          return prev.map(d => d.id === id ? { ...d, lane: laneIdx, xOffset: newXOffset } : d);
+        let newDrops = [...prev];
+        const existingIdx = prev.findIndex(d => d.id === id);
+        let shiftVal = 0;
+
+        if (existingIdx > -1) {
+          shiftVal = newXOffset - prev[existingIdx].xOffset;
+          newDrops[existingIdx] = { ...prev[existingIdx], lane: laneIdx, xOffset: newXOffset };
         } else {
           const backlog = unassignedDrops.find(d => d.id === id);
           if (backlog) {
             setUnassignedDrops(u => u.filter(d => d.id !== id));
-            return [...prev, { ...backlog, lane: laneIdx, xOffset: Math.max(NOW_LINE_X, newXOffset) }];
+            const clampedX = Math.max(NOW_LINE_X, newXOffset);
+            shiftVal = 0; // initial drop
+            newDrops.push({ ...backlog, lane: laneIdx, xOffset: clampedX });
           }
         }
-        return prev;
+
+        const shiftChildren = (parentId: string, amount: number) => {
+          if (amount === 0) return;
+          const children = newDrops.filter(d => d.dependsOn?.includes(parentId));
+          children.forEach(c => {
+            const cIdx = newDrops.findIndex(x => x.id === c.id);
+            if (cIdx > -1) {
+              newDrops[cIdx] = { ...newDrops[cIdx], xOffset: newDrops[cIdx].xOffset + amount };
+              shiftChildren(c.id, amount);
+            }
+          });
+        };
+
+        shiftChildren(id, shiftVal);
+        return newDrops;
       });
 
       setFeed(prev => [
@@ -649,10 +696,15 @@ export function PulseDashboard() {
         {/* Timeline Section */}
         <div className="relative">
           {/* Scrollable Flow Area (Horizontal) */}
-          <div className={cn(
-            'flex flex-col pt-0 pb-32 overflow-x-auto no-scrollbar relative min-w-0 transition-all duration-500 pl-10',
+          <div 
+            ref={scrollContainerRef}
+            className={cn(
+            'flex flex-col pt-0 pb-32 overflow-x-auto custom-scrollbar relative min-w-0 transition-all duration-500 pl-10',
             isAgentOpen ? 'pr-[392px]' : 'pr-8'
           )}>
+            
+            {/* Invisible Scroll Width Spacer */}
+            <div style={{ minWidth: INITIAL_MAX_X * zoomScale + 1200, height: 1 }} className="shrink-0 pointer-events-none" />
 
             {/* Top toolbar (Sticky within the vertical scroll container) */}
             <div className="sticky left-0 right-0 top-0 z-40 flex justify-between items-center pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
@@ -681,7 +733,7 @@ export function PulseDashboard() {
                 onClick={() => { setViewLevel('deadlines'); setActiveMilestoneId(null); }}
                 className={cn(
                   'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                  viewLevel === 'deadlines' ? 'bg-rose-950/80 text-rose-400 shadow-inner shadow-rose-500/20 border border-rose-500/20' : 'text-slate-500 hover:text-slate-300'
+                  viewLevel === 'deadlines' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
                 )}
               >
                 Deadlines
@@ -834,9 +886,10 @@ export function PulseDashboard() {
                   const p2 = getCenter(dst);
 
                   const isSimulating = isSandboxActive && (p1.isDraft || p2.isDraft);
+                  const isBroken = dst.isBlocked;
 
                   const targetStreamDef = STAGING_STREAM_MAP[dst.streamId || ''];
-                  const traceColor = isSimulating ? '#f59e0b' : targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8';
+                  const traceColor = isSimulating ? '#f59e0b' : (isBroken ? '#f43f5e' : (targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8'));
 
                   const dPath = `M ${p1.x} ${p1.y} C ${p1.x + 100} ${p1.y}, ${p2.x - 100} ${p2.y}, ${p2.x} ${p2.y}`;
 
@@ -850,7 +903,8 @@ export function PulseDashboard() {
                       d={dPath}
                       fill="none"
                       stroke={traceColor}
-                      strokeWidth={selectedDropId ? "3" : "1.5"}
+                      strokeWidth={selectedDropId || isBroken ? "3" : "1.5"}
+                      className={cn(isBroken && !isSimulating && 'animate-pulse')}
                       filter="url(#underwater-blur)"
                     />
                   );
@@ -975,6 +1029,10 @@ export function PulseDashboard() {
                   return mAfter && mAfter.id === activeMilestoneId;
               }).sort((a, b) => {
                 if (viewLevel === 'deadlines') {
+                  const blockCountA = drops.filter(d => d.streamId === a.id && d.isBlocked).length;
+                  const blockCountB = drops.filter(d => d.streamId === b.id && d.isBlocked).length;
+                  if (blockCountA !== blockCountB) return blockCountB - blockCountA;
+
                   const endA = Math.max(...drops.filter(d => d.streamId === a.id).map(d => dropRightEdge(d, 1)), 0);
                   const endB = Math.max(...drops.filter(d => d.streamId === b.id).map(d => dropRightEdge(d, 1)), 0);
                   const mAfterA = MILESTONES.find(m => m.xOffset >= endA) || MILESTONES[MILESTONES.length - 1];
@@ -1143,6 +1201,7 @@ export function PulseDashboard() {
                                   isDependencyBlocked={drop.isBlocked}
                                   forceDimmed={viewLevel === 'deadlines' && !criticalPathDropIds.has(drop.id)}
                                   isCriticalPath={viewLevel === 'deadlines' && criticalPathDropIds.has(drop.id)}
+                                  isReady={drop.isReady}
                                   variant="minimal"
                                 />
                               );

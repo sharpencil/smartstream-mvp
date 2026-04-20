@@ -42,6 +42,7 @@ export interface DropProps {
   intensity?: number;
   forceDimmed?: boolean;
   isCriticalPath?: boolean;
+  isReady?: boolean;
 }
 
 /** Map complexity 1–9 to a pixel width multiplier for the card. */
@@ -89,6 +90,7 @@ export function Drop({
   intensity = 1,
   forceDimmed = false,
   isCriticalPath = false,
+  isReady = false,
 }: DropProps) {
   const isGhost = state === 'ghost';
   const isDraggable = !!onDragEnd;
@@ -204,7 +206,7 @@ export function Drop({
               borderWidth: '2px',
             } : {}),
             ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
-            backgroundColor: variant === 'minimal' ? (isBlocked ? '#f43f5e' : streamColorHex) : undefined
+            backgroundColor: variant === 'minimal' ? (isBlocked ? '#f43f5e' : (isGhost ? (isReady ? '#06b6d4' : '#64748b') : streamColorHex)) : undefined
           }}
             {...(isDraggable ? {
               drag: true,
