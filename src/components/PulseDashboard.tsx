@@ -147,7 +147,6 @@ function buildInitialDrops(): DropData[] {
     if (!d) return;
 
     let baseStart = 400; // Large logical padding to ensure visibility behind sidebar shadow at max zoom-out
-    let isParentBlocked = false;
 
     if (d.dependsOn) {
       d.dependsOn.forEach(depId => {
@@ -155,12 +154,9 @@ function buildInitialDrops(): DropData[] {
         if (p) {
           const pEnd = p.xOffset + getDropWidth({ effortHours: p.effortHours, complexity: p.complexity }, 1) + 20;
           if (pEnd > baseStart) baseStart = pEnd;
-          if (p.isBlocked) isParentBlocked = true;
         }
       });
     }
-
-    if (isParentBlocked) d.isBlocked = true;
 
     const lEnd = laneEndTimes[d.lane] || 0;
     const actualStart = Math.max(baseStart, lEnd + 15);
@@ -177,13 +173,25 @@ function buildInitialDrops(): DropData[] {
   // Calculate NOW_LINE_BASE at 25% of the total project duration
   NOW_LINE_BASE = INITIAL_MAX_X * 0.25;
 
+  let didAssignBlocker = false;
+
   // Adjust drop visualizations (states) based strictly on their physical relation to the 25% NOW mark
   result.forEach(d => {
      const nodeRightEdge = d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1);
-     if (nodeRightEdge <= NOW_LINE_BASE + 20) {
+     const isOverlapping = d.xOffset < NOW_LINE_BASE + 20 && nodeRightEdge > NOW_LINE_BASE;
+
+     if (isOverlapping && !didAssignBlocker) {
+       d.isBlocked = true;
+       didAssignBlocker = true;
+     }
+
+     if (d.isBlocked) {
+       d.state = 'active';
+       d.isReady = false;
+     } else if (nodeRightEdge <= NOW_LINE_BASE + 20) {
        d.state = 'completed';
        d.isReady = false;
-     } else if (d.xOffset < NOW_LINE_BASE + 20 && nodeRightEdge > NOW_LINE_BASE) {
+     } else if (isOverlapping) {
        d.state = 'active';
        d.isReady = false;
      } else {
@@ -684,7 +692,7 @@ export function PulseDashboard() {
             onCommitSandbox={commitSandbox}
             onDismissBlocker={() => setBlockerDismissed(true)}
             onDismissForecast={() => setForecastDismissed(true)}
-            blockerResolutionCount={resolutionDismissed ? 0 : 1}
+            blockerResolutionCount={resolutionDismissed ? 0 : blockerCount}
             onDismissResolution={() => setResolutionDismissed(true)}
             onClickBlocker={() => {
               // Scroll to first blocked drop (future: auto-scroll)

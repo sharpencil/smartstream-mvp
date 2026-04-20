@@ -296,11 +296,7 @@ export function Drop({
                 </>
               )}
 
-              {variant === 'minimal' && isBlocked && (
-                <div className="flex items-center justify-center w-full animate-pulse">
-                  <AlertTriangle className="w-3.5 h-3.5 text-white shrink-0" />
-                </div>
-              )}
+
             </div>
 
             {/* Active shimmer */}
