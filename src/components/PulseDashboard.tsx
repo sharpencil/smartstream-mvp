@@ -71,7 +71,7 @@ function buildInitialData(): { drops: DropData[], unassigned: DropData[] } {
   const unassigned: DropData[] = [];
   
   // Specific drops to move to the 'Reservoir' (Backlog)
-  const BACKLOG_DROP_IDS = ['8999', '9000', '9057', '9058'];
+  const BACKLOG_DROP_IDS = ['8999', '9000'];
 
   STAGING_STREAMS.forEach((stream) => {
     stream.drops.forEach((drop) => {
