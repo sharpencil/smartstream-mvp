@@ -101,9 +101,9 @@ export function DailyBriefing({
                 <div>
                   <h3 className="text-amber-500 font-bold tracking-widest uppercase text-[10px] mb-1 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Simulation Mode Active
+                    What-If Mode Active
                   </h3>
-                  <p className="text-amber-100/70 text-xs font-medium">Evaluating what-if scenarios.</p>
+                  <p className="text-amber-100/70 text-xs font-medium">Evaluating draft scenarios.</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <AnimatePresence>

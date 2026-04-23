@@ -66,8 +66,12 @@ const MILESTONES: Milestone[] = [
 //  In Progress → active, near NOW_LINE_BASE
 let NOW_LINE_BASE = 420;
 
-function buildInitialDrops(): DropData[] {
+function buildInitialData(): { drops: DropData[], unassigned: DropData[] } {
   const dropsMap = new Map<string, DropData>();
+  const unassigned: DropData[] = [];
+  
+  // Specific drops to move to the 'Reservoir' (Backlog)
+  const BACKLOG_DROP_IDS = ['8999', '9000', '9057', '9058'];
 
   STAGING_STREAMS.forEach((stream) => {
     stream.drops.forEach((drop) => {
@@ -82,8 +86,9 @@ function buildInitialDrops(): DropData[] {
       // Mark blocked / red trace if missing completion date and past due date
       const isBroken = Boolean(!drop.completion_date && drop.due_date && new Date() > new Date(drop.due_date));
 
-      dropsMap.set(`staging-${drop.drop_id}`, {
-        id: `staging-${drop.drop_id}`,
+      const dropId = `staging-${drop.drop_id}`;
+      const dropData: DropData = {
+        id: dropId,
         lane,
         title: drop.title,
         description: drop.title,
@@ -96,22 +101,28 @@ function buildInitialDrops(): DropData[] {
         streamId: stream.id,
         isBlocked: isBroken,
         dependsOn: (drop.dependsOn || []).map((d: string) => `staging-${d}`),
-      });
+      };
+
+      if (BACKLOG_DROP_IDS.includes(drop.drop_id)) {
+        unassigned.push(dropData);
+      } else {
+        dropsMap.set(dropId, dropData);
+      }
     });
   });
 
-  const result = Array.from(dropsMap.values());
+  const allDrops = Array.from(dropsMap.values());
 
-  const getTopologicalOrder = (drops: DropData[]): string[] => {
+  const getTopologicalOrder = (nodes: DropData[]): string[] => {
     const inDegree = new Map<string, number>();
     const graph = new Map<string, string[]>();
-    drops.forEach(d => {
+    nodes.forEach(d => {
       inDegree.set(d.id, 0);
       if (!graph.has(d.id)) graph.set(d.id, []);
     });
     
     // Reverse dependency graph (A depends on B -> B to A edge)
-    drops.forEach(d => {
+    nodes.forEach(d => {
       (d.dependsOn || []).forEach(depId => {
         if (graph.has(depId)) {
           graph.get(depId)!.push(d.id);
@@ -133,13 +144,13 @@ function buildInitialDrops(): DropData[] {
       });
     }
 
-    drops.forEach(d => { if (!order.includes(d.id)) order.push(d.id); });
+    nodes.forEach(d => { if (!order.includes(d.id)) order.push(d.id); });
     return order;
   };
 
   let INITIAL_MAX_X = 420;
 
-  const order = getTopologicalOrder(result);
+  const order = getTopologicalOrder(allDrops);
   const laneEndTimes: Record<number, number> = {};
 
   order.forEach(id => {
@@ -176,7 +187,7 @@ function buildInitialDrops(): DropData[] {
   let didAssignBlocker = false;
 
   // Adjust drop visualizations (states) based strictly on their physical relation to the 25% NOW mark
-  result.forEach(d => {
+  allDrops.forEach(d => {
      const nodeRightEdge = d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1);
      const isOverlapping = d.xOffset < NOW_LINE_BASE + 20 && nodeRightEdge > NOW_LINE_BASE;
 
@@ -197,22 +208,22 @@ function buildInitialDrops(): DropData[] {
      } else {
        d.state = 'ghost';
        
-       // Calculate `isReady` visually if child is pending but parent is completed
-       let parentCompleted = false;
-       if (d.dependsOn) {
-         d.dependsOn.forEach(depId => {
-           const p = dropsMap.get(depId);
-           if (p && p.state === 'completed') parentCompleted = true;
-         });
-       }
-       if (parentCompleted) d.isReady = true;
-     }
-  });
+        // Calculate `isReady` visually if child is pending but parent is completed
+        let parentCompleted = false;
+        if (d.dependsOn) {
+          d.dependsOn.forEach(depId => {
+            const p = dropsMap.get(depId);
+            if (p && p.state === 'completed') parentCompleted = true;
+          });
+        }
+        if (parentCompleted) d.isReady = true;
+      }
+   });
 
-  return result;
+  return { drops: allDrops, unassigned };
 }
 
-const INITIAL_DROPS: DropData[] = buildInitialDrops();
+const { drops: INITIAL_DROPS, unassigned: INITIAL_UNASSIGNED_DROPS } = buildInitialData();
 
 const RAW_MIN_X = Math.min(...INITIAL_DROPS.map(d => d.xOffset));
 const X_SHIFT = -RAW_MIN_X + 24;
@@ -278,7 +289,7 @@ export function PulseDashboard() {
   const currentSidebarWidth = viewLevel === 'people' ? SIDEBAR_DETAILED : SIDEBAR_OVERVIEW;
 
   const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
-  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>([]);
+  const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>(INITIAL_UNASSIGNED_DROPS);
 
   const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
 
@@ -635,7 +646,7 @@ export function PulseDashboard() {
     if (!isSandboxActive) {
       setSandboxSnapshot({ drops, unassigned: unassignedDrops });
       setIsSandboxActive(true);
-      setFeed(prev => [{ id: Date.now().toString(), type: 'alert', text: <span><span className="text-amber-400 font-medium">Simulation Mode:</span> Now projecting what-if drafts.</span> }, ...prev]);
+      setFeed(prev => [{ id: Date.now().toString(), type: 'alert', text: <span><span className="text-amber-400 font-medium">What-If Mode:</span> Now projecting draft changes.</span> }, ...prev]);
     } else {
       setIsSandboxActive(false);
       setSandboxSnapshot(null);
@@ -655,7 +666,7 @@ export function PulseDashboard() {
     }
     setIsSandboxActive(false);
     setSandboxSnapshot(null);
-    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-slate-400 font-medium">Discarded:</span> Simulation changes reverted.</span> }, ...prev]);
+    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-slate-400 font-medium">Discarded:</span> What-If changes reverted.</span> }, ...prev]);
   };
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -773,7 +784,7 @@ export function PulseDashboard() {
                   className="flex items-center justify-center gap-2 px-6 h-10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
                 >
                   <PlayCircle className="w-4 h-4 shrink-0" />
-                  Run Simulation
+                  What-If
                 </button>
               )}
 
