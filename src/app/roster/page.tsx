@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Users, Globe, Search, Filter, SlidersHorizontal, Plus } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Users, Globe, Search, Filter, SlidersHorizontal, Plus, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { TalentCard } from '@/components/TalentCard';
 import { AISkillsBanner } from '@/components/AISkillsBanner';
 import { PerformanceModal } from '@/components/PerformanceModal';
+import { OnboardingModal } from '@/components/OnboardingModal';
 import { AgentPanel, type FeedItem } from '@/components/AgentPanel';
-import { mockEmployees, Employee } from '@/lib/mockRoster';
+import { mockEmployees as initialEmployees, Employee } from '@/lib/mockRoster';
 import { cn } from '@/lib/utils';
 
 export default function RosterPage() {
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [activeTab, setActiveTab] = useState('crew');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('All Skills');
@@ -20,7 +22,14 @@ export default function RosterPage() {
   const [highlightedIds, setHighlightedIds] = useState<string[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(true);
+  
+  // Fly-to-bench animation state
+  const [flyingCard, setFlyingCard] = useState<{ employee: Employee, startX: number, startY: number } | null>(null);
+  const [ripplePos, setRipplePos] = useState<{ x: number, y: number } | null>(null);
+  const benchTabRef = useRef<HTMLButtonElement>(null);
+
   const [feed, setFeed] = useState<FeedItem[]>([
     {
       id: 'r1',
@@ -32,13 +41,13 @@ export default function RosterPage() {
   // Get unique skills for filter
   const allSkills = useMemo(() => {
     const skills = new Set<string>();
-    mockEmployees.forEach(emp => emp.skills.forEach(skill => skills.add(skill)));
+    employees.forEach(emp => emp.skills.forEach(skill => skills.add(skill)));
     return ['All Skills', ...Array.from(skills)];
-  }, []);
+  }, [employees]);
 
   // Filter Logic
   const filteredEmployees = useMemo(() => {
-    return mockEmployees.filter(emp => {
+    return employees.filter(emp => {
       const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.role.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSkill = selectedSkill === 'All Skills' || emp.skills.includes(selectedSkill);
@@ -47,13 +56,13 @@ export default function RosterPage() {
 
       return matchesSearch && matchesSkill && matchesStatus && matchesTab;
     });
-  }, [searchQuery, selectedSkill, selectedStatus, activeTab]);
+  }, [searchQuery, selectedSkill, selectedStatus, activeTab, employees]);
 
   const handleRecommend = () => {
     setIsRecommending(true);
     // Simulate AI scanning
     setTimeout(() => {
-      const matches = mockEmployees
+      const matches = employees
         .filter(emp => emp.skills.includes('Cloud Infrastructure'))
         .map(emp => ({ ...emp, matchScore: emp.reliability > 95 ? 98 : 92 }));
 
@@ -68,10 +77,92 @@ export default function RosterPage() {
     setIsModalOpen(true);
   };
 
+  const handleOnboardComplete = (newEmployee: Employee, rect: DOMRect) => {
+    setIsOnboardingOpen(false);
+    
+    // Start fly animation
+    setFlyingCard({
+      employee: newEmployee,
+      startX: rect.left,
+      startY: rect.top
+    });
+
+    // After animation finishes
+    setTimeout(() => {
+      setEmployees(prev => [...prev, newEmployee]);
+      setFlyingCard(null);
+      
+      // Trigger ripple at bench tab
+      if (benchTabRef.current) {
+        const benchRect = benchTabRef.current.getBoundingClientRect();
+        setRipplePos({
+          x: benchRect.left + benchRect.width / 2,
+          y: benchRect.top + benchRect.height / 2
+        });
+        setTimeout(() => setRipplePos(null), 1000);
+      }
+      
+      // Switch to bench
+      setActiveTab('bench');
+      
+      // Add to feed
+      setFeed(prev => [
+        {
+          id: Date.now().toString(),
+          type: 'update',
+          text: <span><span className="text-cyan-400 font-bold">{newEmployee.name}</span> has joined the Bench. Oracle predicts high synergy with active Streams.</span>
+        },
+        ...prev
+      ]);
+    }, 1000);
+  };
+
   return (
     <div
       className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32", isAgentOpen ? "pr-[392px]" : "pr-8")}
     >
+      {/* Ripple Effect */}
+      {ripplePos && (
+        <div 
+          className="fixed z-[300] pointer-events-none"
+          style={{ left: ripplePos.x, top: ripplePos.y }}
+        >
+          <div className="w-4 h-4 bg-cyan-400 rounded-full animate-ripple absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_20px_rgba(34,211,238,0.8)]" />
+          <div className="w-4 h-4 bg-teal-400 rounded-full animate-ripple absolute -translate-x-1/2 -translate-y-1/2 delay-100 shadow-[0_0_20px_rgba(13,148,136,0.8)]" />
+        </div>
+      )}
+
+      {/* Flying Talent Card Pebble */}
+      <AnimatePresence>
+        {flyingCard && (
+          <motion.div
+            initial={{ 
+              x: flyingCard.startX, 
+              y: flyingCard.startY, 
+              scale: 0.8,
+              opacity: 1,
+              borderRadius: '24px'
+            }}
+            animate={{ 
+              x: benchTabRef.current ? benchTabRef.current.getBoundingClientRect().left : 0, 
+              y: benchTabRef.current ? benchTabRef.current.getBoundingClientRect().top : 0,
+              scale: 0.1,
+              opacity: 0,
+              borderRadius: '50%'
+            }}
+            transition={{ duration: 1, ease: [0.34, 1.56, 0.64, 1] }}
+            className="fixed z-[250] w-64 h-32 bg-cyan-500 shadow-[0_0_40px_rgba(34,211,238,0.6)] flex items-center justify-center pointer-events-none"
+          >
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-full bg-[#020617] flex items-center justify-center font-bold text-cyan-400">
+                 {flyingCard.employee.avatar}
+               </div>
+               <span className="text-sm font-bold text-[#020617]">{flyingCard.employee.name}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="w-full flex flex-col">
 
         {/* Identical Header (Matches Streams/LibraryDashboard) */}
@@ -91,6 +182,7 @@ export default function RosterPage() {
               The Crew
             </button>
             <button
+              ref={benchTabRef}
               onClick={() => setActiveTab('bench')}
               className={cn(
                 "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
@@ -102,7 +194,10 @@ export default function RosterPage() {
           </div>
 
           <div className="flex items-center gap-4 pr-4">
-            <button className="px-5 py-2.5 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-sm font-bold uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all flex items-center gap-2 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95">
+            <button 
+              onClick={() => setIsOnboardingOpen(true)}
+              className="px-5 py-2.5 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-sm font-bold uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all flex items-center gap-2 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95"
+            >
               <Plus className="w-4 h-4" />
               ONBOARD
             </button>
@@ -157,7 +252,7 @@ export default function RosterPage() {
 
           <div className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold font-mono tracking-wider text-slate-400 uppercase">
              <span className="text-slate-500 opacity-80">Capacity:</span>
-             <span>{filteredEmployees.length} <span className="text-slate-700 mx-1">/</span> {mockEmployees.length}</span>
+             <span>{filteredEmployees.length} <span className="text-slate-700 mx-1">/</span> {employees.length}</span>
           </div>
         </div>
 
@@ -200,6 +295,12 @@ export default function RosterPage() {
         employee={selectedEmployee}
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
+      />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onAdd={handleOnboardComplete}
       />
 
       <AgentPanel feed={feed} isOpen={isAgentOpen} onToggle={setIsAgentOpen} />
