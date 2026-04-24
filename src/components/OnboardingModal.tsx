@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, UserPlus, FileSearch, CheckCircle, 
   Upload, Sparkles, Zap, Target, 
-  Plus, Trash2, ChevronRight, User
+  Plus, Trash2, ChevronRight, User,
+  Mail, Phone, MessageSquare, Award, Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Employee } from '@/lib/mockRoster';
@@ -19,7 +20,21 @@ interface OnboardingModalProps {
 export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps) {
   const [step, setStep] = useState<'mode' | 'manual' | 'ai-dropzone' | 'ai-scanning' | 'review'>('mode');
   const [ingestionMode, setIngestionMode] = useState<'manual' | 'ai' | null>(null);
-  const [manualData, setManualData] = useState({ name: '', email: '', role: '' });
+  const [manualData, setManualData] = useState({ 
+    name: '', 
+    email: '', 
+    role: '',
+    availability: 'available' as Employee['availability'],
+    experienceYears: 0,
+    phoneNumber: '',
+    messagingPlatform: '',
+    messagingPlatformId: '',
+    skills: [] as string[],
+    certificates: [] as string[],
+    adaptabilityNote: ''
+  });
+  const [tempSkill, setTempSkill] = useState('');
+  const [tempCert, setTempCert] = useState('');
   const [scanProgress, setScanProgress] = useState(0);
   const [scanLogs, setScanLogs] = useState<string[]>([]);
   const [draftProfile, setDraftProfile] = useState<Employee | null>(null);
@@ -30,7 +45,19 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
     if (isOpen) {
       setStep('mode');
       setIngestionMode(null);
-      setManualData({ name: '', email: '', role: '' });
+      setManualData({ 
+        name: '', 
+        email: '', 
+        role: '',
+        availability: 'available',
+        experienceYears: 0,
+        phoneNumber: '',
+        messagingPlatform: '',
+        messagingPlatformId: '',
+        skills: [],
+        certificates: [],
+        adaptabilityNote: ''
+      });
       setScanProgress(0);
       setScanLogs([]);
       setDraftProfile(null);
@@ -103,6 +130,68 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
     setDraftProfile({
       ...draftProfile,
       skills: draftProfile.skills.filter(s => s !== skillToRemove)
+    });
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const draft: Employee = {
+      id: `new-${Math.random().toString(36).substr(2, 9)}`,
+      name: manualData.name,
+      role: manualData.role,
+      avatar: manualData.name.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
+      skills: manualData.skills.length > 0 ? manualData.skills : ['New Resource'],
+      velocity: 80, // Default for manual
+      avgVelocity: 80,
+      availability: manualData.availability,
+      reliability: 100,
+      history: [],
+      projectHistory: [],
+      isAssigned: false,
+      experienceYears: manualData.experienceYears,
+      phoneNumber: manualData.phoneNumber,
+      messagingPlatform: manualData.messagingPlatform,
+      messagingPlatformId: manualData.messagingPlatformId,
+      certificates: manualData.certificates,
+      adaptabilityNote: manualData.adaptabilityNote
+    };
+    
+    setDraftProfile(draft);
+    setStep('review');
+  };
+
+  const handleAddSkill = () => {
+    if (tempSkill.trim() && !manualData.skills.includes(tempSkill.trim())) {
+      setManualData({
+        ...manualData,
+        skills: [...manualData.skills, tempSkill.trim()]
+      });
+      setTempSkill('');
+    }
+  };
+
+  const handleRemoveManualSkill = (skill: string) => {
+    setManualData({
+      ...manualData,
+      skills: manualData.skills.filter(s => s !== skill)
+    });
+  };
+
+  const handleAddCert = () => {
+    if (tempCert.trim() && !manualData.certificates.includes(tempCert.trim())) {
+      setManualData({
+        ...manualData,
+        certificates: [...manualData.certificates, tempCert.trim()]
+      });
+      setTempCert('');
+    }
+  };
+
+  const handleRemoveCert = (cert: string) => {
+    setManualData({
+      ...manualData,
+      certificates: manualData.certificates.filter(c => c !== cert)
     });
   };
 
@@ -229,6 +318,227 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                     >
                       Go Back
                     </button>
+                  </motion.div>
+                )}
+
+                {/* Step: Manual Entry */}
+                {step === 'manual' && (
+                  <motion.div 
+                    key="manual"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="max-h-[65vh] overflow-y-auto pr-4 custom-scrollbar"
+                  >
+                    <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      {/* Section 1: Basic Info */}
+                      <div className="space-y-6">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2">
+                          <User className="w-3 h-3 text-indigo-400" />
+                          Basic Information
+                        </label>
+                        
+                        <div className="space-y-4">
+                          <div className="group relative">
+                            <input 
+                              required
+                              type="text" 
+                              placeholder="Member Name"
+                              value={manualData.name}
+                              onChange={e => setManualData({...manualData, name: e.target.value})}
+                              className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                            />
+                          </div>
+
+                          <div className="group relative">
+                            <input 
+                              required
+                              type="email" 
+                              placeholder="Member Email"
+                              value={manualData.email}
+                              onChange={e => setManualData({...manualData, email: e.target.value})}
+                              className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="group relative">
+                              <input 
+                                required
+                                type="text" 
+                                placeholder="Member Role"
+                                value={manualData.role}
+                                onChange={e => setManualData({...manualData, role: e.target.value})}
+                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                              />
+                            </div>
+                            <div className="group relative">
+                              <input 
+                                type="number" 
+                                placeholder="Years of Exp"
+                                value={manualData.experienceYears || ''}
+                                onChange={e => setManualData({...manualData, experienceYears: parseInt(e.target.value) || 0})}
+                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="group relative">
+                            <select 
+                              value={manualData.availability}
+                              onChange={e => setManualData({...manualData, availability: e.target.value as Employee['availability']})}
+                              className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer"
+                            >
+                              <option value="available" className="bg-[#0a192f]">Full Time (Available)</option>
+                              <option value="saturated" className="bg-[#0a192f]">Part Time (Saturated)</option>
+                              <option value="blocked" className="bg-[#0a192f]">Blocked</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Section: Skills */}
+                        <div className="pt-4 space-y-4">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2">
+                            <Zap className="w-3 h-3 text-teal-400" />
+                            Skills
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="Add a skill..."
+                              value={tempSkill}
+                              onChange={e => setTempSkill(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                              className="flex-1 bg-[#0a192f]/40 border border-white/10 rounded-xl py-2 px-4 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
+                            />
+                            <button 
+                              type="button"
+                              onClick={handleAddSkill}
+                              className="px-4 py-2 bg-slate-800 rounded-xl text-teal-400 hover:bg-slate-700 transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {manualData.skills.map(skill => (
+                              <span key={skill} className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full text-[10px] font-bold text-teal-400 flex items-center gap-2 group">
+                                {skill}
+                                <button type="button" onClick={() => handleRemoveManualSkill(skill)}>
+                                  <X className="w-3 h-3 text-teal-500/50 group-hover:text-teal-400" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 2: Contact & Platforms */}
+                      <div className="space-y-6">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2">
+                          <Phone className="w-3 h-3 text-indigo-400" />
+                          Communication Channels
+                        </label>
+
+                        <div className="space-y-4">
+                          <div className="group relative">
+                            <input 
+                              type="text" 
+                              placeholder="Member Phone Number"
+                              value={manualData.phoneNumber}
+                              onChange={e => setManualData({...manualData, phoneNumber: e.target.value})}
+                              className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="group relative">
+                              <input 
+                                type="text" 
+                                placeholder="Messaging Platform"
+                                value={manualData.messagingPlatform}
+                                onChange={e => setManualData({...manualData, messagingPlatform: e.target.value})}
+                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                              />
+                            </div>
+                            <div className="group relative">
+                              <input 
+                                type="text" 
+                                placeholder="Platform ID"
+                                value={manualData.messagingPlatformId}
+                                onChange={e => setManualData({...manualData, messagingPlatformId: e.target.value})}
+                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section: Certificates */}
+                        <div className="pt-4 space-y-4">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2">
+                            <Award className="w-3 h-3 text-indigo-400" />
+                            Certificates
+                          </label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              placeholder="Add a certificate..."
+                              value={tempCert}
+                              onChange={e => setTempCert(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddCert())}
+                              className="flex-1 bg-[#0a192f]/40 border border-white/10 rounded-xl py-2 px-4 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                            />
+                            <button 
+                              type="button"
+                              onClick={handleAddCert}
+                              className="px-4 py-2 bg-slate-800 rounded-xl text-indigo-400 hover:bg-slate-700 transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {manualData.certificates.map(cert => (
+                              <span key={cert} className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-bold text-indigo-400 flex items-center gap-2 group">
+                                {cert}
+                                <button type="button" onClick={() => handleRemoveCert(cert)}>
+                                  <X className="w-3 h-3 text-indigo-500/50 group-hover:text-indigo-400" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2 pt-4">
+                          <Target className="w-3 h-3 text-indigo-400" />
+                          Expertise & Notes
+                        </label>
+
+                        <div className="space-y-4">
+                          <textarea 
+                            placeholder="Member Adaptability Notes"
+                            value={manualData.adaptabilityNote}
+                            onChange={e => setManualData({...manualData, adaptabilityNote: e.target.value})}
+                            className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all min-h-[80px] resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2 flex justify-end gap-4 mt-8">
+                        <button 
+                          type="button"
+                          onClick={() => setStep('mode')}
+                          className="px-8 py-4 rounded-full border border-white/10 text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          type="submit"
+                          className="px-8 py-4 bg-indigo-500 rounded-full text-white font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_40px_rgba(99,102,241,0.6)] hover:scale-105 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                          Generate Profile
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </form>
                   </motion.div>
                 )}
 

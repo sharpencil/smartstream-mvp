@@ -17,6 +17,14 @@ export interface Employee {
   projectHistory: string[];
   isAssigned: boolean; // Currently in 'The Crew'
   matchScore?: number; // For recommendations
+  
+  // New fields from onboarding
+  phoneNumber?: string;
+  messagingPlatform?: string;
+  messagingPlatformId?: string;
+  experienceYears?: number;
+  certificates?: string[];
+  adaptabilityNote?: string;
 }
 
 export const mockEmployees: Employee[] = [
