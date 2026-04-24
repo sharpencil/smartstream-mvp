@@ -85,17 +85,9 @@ export function DailyBriefing({
 
   return (
     <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
-      <div
-        className={cn(
-          'pt-5 pb-5 transition-all duration-500 pl-0 relative',
-          isAgentOpen ? 'pr-[392px]' : 'pr-8'
-        )}
-      >
+      <div className="pt-5 pb-5 relative">
         {isSandboxActive && (
-          <div className={cn(
-            "absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500",
-            isAgentOpen ? 'pr-[392px]' : 'pr-8'
-          )}>
+          <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500">
             <div className="flex items-center gap-8 w-full justify-between">
               <div className="flex items-center gap-8">
                 <div>
@@ -205,8 +197,8 @@ export function DailyBriefing({
               <Widget
                 className={cn(
                   'w-full transition-all duration-300',
-                  blockerResolutionCount > 0 
-                    ? 'border-rose-500/25 hover:border-rose-500/50 shadow-[0_0_20px_rgba(225,29,72,0.08)]' 
+                  blockerResolutionCount > 0
+                    ? 'border-rose-500/25 hover:border-rose-500/50 shadow-[0_0_20px_rgba(225,29,72,0.08)]'
                     : 'opacity-40 grayscale-[0.5] border-white/5'
                 )}
               >
@@ -221,7 +213,7 @@ export function DailyBriefing({
                     Blockers
                   </p>
                   <p className="text-xs text-slate-300 leading-snug truncate">
-                    {blockerResolutionCount > 0 
+                    {blockerResolutionCount > 0
                       ? <span className="text-rose-400 font-semibold">{blockerResolutionCount} required</span>
                       : 'No active blockers'}
                   </p>
@@ -258,7 +250,7 @@ export function DailyBriefing({
                     Forecast Slip
                   </p>
                   <p className="text-xs text-slate-300 leading-snug truncate">
-                    {forecastSlipHours > 0 
+                    {forecastSlipHours > 0
                       ? <><span className="text-amber-400 font-semibold">+{forecastSlipHours}h</span> slip</>
                       : 'On schedule'}
                   </p>

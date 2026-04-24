@@ -117,7 +117,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
     }, 400);
   };
 
-  const handleAddSkill = () => {
+  const handleReviewAddSkill = () => {
     if (!draftProfile) return;
     setDraftProfile({
       ...draftProfile,
@@ -125,7 +125,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
     });
   };
 
-  const handleRemoveSkill = (skillToRemove: string) => {
+  const handleReviewRemoveSkill = (skillToRemove: string) => {
     if (!draftProfile) return;
     setDraftProfile({
       ...draftProfile,
@@ -161,7 +161,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
     setStep('review');
   };
 
-  const handleAddSkill = () => {
+  const handleManualAddSkill = () => {
     if (tempSkill.trim() && !manualData.skills.includes(tempSkill.trim())) {
       setManualData({
         ...manualData,
@@ -363,14 +363,17 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="group relative">
-                              <input 
+                              <select 
                                 required
-                                type="text" 
-                                placeholder="Member Role"
                                 value={manualData.role}
                                 onChange={e => setManualData({...manualData, role: e.target.value})}
-                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all"
-                              />
+                                className="w-full bg-[#0a192f]/40 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="" disabled className="bg-[#0a192f]">Member Role</option>
+                                <option value="User" className="bg-[#0a192f]">User</option>
+                                <option value="Manager" className="bg-[#0a192f]">Manager</option>
+                                <option value="Admin" className="bg-[#0a192f]">Admin</option>
+                              </select>
                             </div>
                             <div className="group relative">
                               <input 
@@ -408,12 +411,12 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                               placeholder="Add a skill..."
                               value={tempSkill}
                               onChange={e => setTempSkill(e.target.value)}
-                              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleManualAddSkill())}
                               className="flex-1 bg-[#0a192f]/40 border border-white/10 rounded-xl py-2 px-4 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-all"
                             />
                             <button 
                               type="button"
-                              onClick={handleAddSkill}
+                              onClick={handleManualAddSkill}
                               className="px-4 py-2 bg-slate-800 rounded-xl text-teal-400 hover:bg-slate-700 transition-all"
                             >
                               <Plus className="w-4 h-4" />
@@ -508,8 +511,8 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                         </div>
 
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest-xl flex items-center gap-2 pt-4">
-                          <Target className="w-3 h-3 text-indigo-400" />
-                          Expertise & Notes
+                          <Target className="w-3 h-3 text-teal-400" />
+                          Member Adaptability Note
                         </label>
 
                         <div className="space-y-4">
@@ -532,10 +535,12 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                         </button>
                         <button 
                           type="submit"
-                          className="px-8 py-4 bg-indigo-500 rounded-full text-white font-bold text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_40px_rgba(99,102,241,0.6)] hover:scale-105 transition-all active:scale-95 flex items-center gap-2"
+                          className="group px-10 py-4 bg-cyan-500 rounded-full text-[#0a192f] font-bold text-sm tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_40px_rgba(34,211,238,0.6)] hover:scale-105 transition-all outline-none uppercase whitespace-nowrap active:scale-95 flex items-center justify-center gap-3"
                         >
                           Generate Profile
-                          <ChevronRight className="w-4 h-4" />
+                          <div className="w-6 h-6 rounded-full bg-[#0a192f]/10 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                            <ChevronRight className="w-4 h-4 text-[#0a192f]" />
+                          </div>
                         </button>
                       </div>
                     </form>
@@ -644,7 +649,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                               Oracle Skill Matrix
                             </label>
                             <button 
-                              onClick={handleAddSkill}
+                              onClick={handleReviewAddSkill}
                               className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-widest transition-colors flex items-center gap-1"
                             >
                               <Plus className="w-3 h-3" /> Add Skill
@@ -658,7 +663,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                               >
                                 <span className="pl-4 pr-4 group-hover:pr-2 transition-all py-2">{skill}</span>
                                 <button 
-                                  onClick={() => handleRemoveSkill(skill)} 
+                                  onClick={() => handleReviewRemoveSkill(skill)} 
                                   className="w-0 opacity-0 group-hover:w-8 group-hover:opacity-100 transition-all overflow-hidden flex items-center justify-center"
                                 >
                                   <Trash2 className="w-3.5 h-3.5 text-indigo-400 hover:text-rose-400" />

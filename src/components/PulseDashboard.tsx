@@ -672,18 +672,18 @@ export function PulseDashboard() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("relative w-full h-full flex flex-col pt-8 pb-8 pr-8 pl-0 transition-all duration-500 ease-in-out text-slate-50",
+    <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
       viewLevel === 'deadlines' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
-      isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
+      isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
+      isAgentOpen ? "pr-[392px]" : "pr-8"
     )}>
 
       {/* Header Controls */}
       <div className={cn(
-        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative pl-10 transition-all duration-500",
-        viewLevel === 'deadlines' ? 'bg-black/80' : 'bg-[#020617]/90',
-        isAgentOpen ? 'pr-[392px]' : 'pr-8'
+        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500",
+        viewLevel === 'deadlines' ? 'bg-black/80' : 'bg-[#020617]/90'
       )}>
-        <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 whitespace-nowrap">
+        <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           Pulse
         </h1>
       </div>
@@ -691,7 +691,7 @@ export function PulseDashboard() {
       {/* ── Main Scroll Context (Vertical) ── */}
       <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
         {/* Daily Briefing (Scrollable) */}
-        <div className="pl-10">
+        <div>
           <DailyBriefing
             blockerCount={blockerDismissed ? 0 : blockerCount}
             forecastSlipHours={forecastDismissed ? 0 : forecastSlipHours}
@@ -718,8 +718,7 @@ export function PulseDashboard() {
           <div 
             ref={scrollContainerRef}
             className={cn(
-            'flex flex-col pt-0 pb-32 overflow-x-auto custom-scrollbar relative min-w-0 transition-all duration-500 pl-10',
-            isAgentOpen ? 'pr-[392px]' : 'pr-8'
+            'flex flex-col pt-0 pb-32 overflow-x-auto custom-scrollbar relative min-w-0 transition-all duration-500'
           )}>
             
             {/* Invisible Scroll Width Spacer */}
