@@ -286,6 +286,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 export function PulseDashboard() {
   const [viewLevel, setViewLevel] = useState<'streams' | 'people' | 'milestones'>('streams');
   const [expandedStreamIds, setExpandedStreamIds] = useState<Set<string>>(new Set());
+  const [expandedMilestoneIds, setExpandedMilestoneIds] = useState<Set<string>>(new Set());
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
 
   const [milestones, setMilestones] = useState<Milestone[]>(DEFAULT_MILESTONES);
@@ -314,6 +315,16 @@ export function PulseDashboard() {
 
   const toggleStreamExpand = (id: string) => {
     setExpandedStreamIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleMilestoneExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedMilestoneIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -684,15 +695,14 @@ export function PulseDashboard() {
   return (
     <>
       <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
-        viewLevel === 'milestones' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
+        "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
         isAgentOpen ? "pr-[392px]" : "pr-8"
       )}>
 
       {/* Header Controls */}
       <div className={cn(
-        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500",
-        viewLevel === 'milestones' ? 'bg-black/80' : 'bg-[#020617]/90'
+        "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500 bg-[#020617]/90"
       )}>
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           Pulse
@@ -883,18 +893,34 @@ export function PulseDashboard() {
                 })}
 
                 {/* 2. Drop Dependency Traces */}
-                {(hoveredDropId || selectedDropId) && drops.map(targetDrop => {
-                  const activeDropId = hoveredDropId || selectedDropId;
-                  if (!activeDropId || targetDrop.id === activeDropId) return null;
+                {(() => {
+                   const linksToDraw: { src: DropData, dst: DropData }[] = [];
+                   const activeDropId = hoveredDropId || selectedDropId;
+                   const added = new Set<string>();
 
-                  const isParent = drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id) || drops.find(d => d.id === activeDropId)?.dependsOn?.includes(targetDrop.id.replace('staging-', ''));
-                  const isChild = targetDrop.dependsOn?.includes(activeDropId) || targetDrop.dependsOn?.includes(activeDropId.replace('staging-', ''));
-
-                  if (!isParent && !isChild) return null;
-
-                  const src = isParent ? targetDrop : drops.find(d => d.id === activeDropId)!;
-                  const dst = isParent ? drops.find(d => d.id === activeDropId)! : targetDrop;
-
+                   drops.forEach(drop => {
+                     if (drop.dependsOn) {
+                       drop.dependsOn.forEach(depId => {
+                         const parent = drops.find(d => d.id === depId || d.id === `staging-${depId}`);
+                         if (parent) {
+                           const isHoveredOrSelected = drop.id === activeDropId || parent.id === activeDropId;
+                           const isExpandedMilestoneLink = viewLevel === 'milestones' && 
+                               drop.milestoneId && expandedMilestoneIds.has(drop.milestoneId) && 
+                               parent.milestoneId === drop.milestoneId;
+                           
+                           if (isHoveredOrSelected || isExpandedMilestoneLink) {
+                             const key = `${parent.id}-${drop.id}`;
+                             if (!added.has(key)) {
+                               added.add(key);
+                               linksToDraw.push({ src: parent, dst: drop });
+                             }
+                           }
+                         }
+                       });
+                     }
+                   });
+                   return linksToDraw;
+                })().map(({ src, dst }) => {
                   const getCenter = (d: DropData) => {
                     const width = getDropWidth(d, zoomScale);
                     const isDraftX = isSandboxActive && sandboxSnapshot ? sandboxSnapshot.drops.find(sd => sd.id === d.id)?.xOffset !== d.xOffset : false;
@@ -1053,11 +1079,15 @@ export function PulseDashboard() {
                 const milestoneDrops = drops.filter(d => d.milestoneId === milestone.id);
                 const maxDropEnd = Math.max(...milestoneDrops.map(d => dropRightEdge(d, 1)), 0);
                 const isViolated = maxDropEnd > milestone.xOffset;
+                const isExpanded = expandedMilestoneIds.has(milestone.id);
+                
+                // Get contributors to this milestone
+                const contributors = Array.from(new Set(milestoneDrops.map(d => d.lane)));
                 
                 return (
                   <motion.div key={milestone.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-2 relative">
                     <div className="flex items-center relative group">
-                      <div className="shrink-0 flex items-center gap-4 py-4 px-8 sticky left-0 z-30 border-r border-[#1e1e2f]/50 bg-[#1e1e2f]/40 shadow-[15px_0_30px_rgba(0,0,0,0.4)]" style={{ width: SIDEBAR_OVERVIEW }}>
+                      <div className="shrink-0 flex items-center gap-4 py-4 px-8 sticky left-0 z-30 border-r border-[#0a192f]/50 bg-[#020617] shadow-[15px_0_30px_rgba(0,0,0,0.4)]" style={{ width: SIDEBAR_OVERVIEW }}>
                         <div className="flex-1 min-w-0 flex flex-col gap-2.5">
                           <div className="flex items-center justify-between group/title p-0.5 -mx-0.5 rounded transition-colors hover:bg-white/5">
                             <h3 className={cn("font-bold text-sm truncate tracking-tight transition-colors", isViolated ? "text-rose-400 animate-pulse" : "text-slate-100 group-hover/title:text-white")}>
@@ -1078,15 +1108,29 @@ export function PulseDashboard() {
                              )}
                           </div>
                         </div>
+
+                        {/* Expand button for Milestone */}
+                        <button
+                          onClick={(e) => toggleMilestoneExpand(milestone.id, e)}
+                          className={cn(
+                            'shrink-0 w-7 h-7 rounded-lg border border-white/10 flex items-center justify-center transition-all hover:bg-white/5',
+                            isExpanded ? 'bg-cyan-500 text-[#020617] border-cyan-400' : 'text-slate-500'
+                          )}
+                        >
+                          <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-300', isExpanded && 'rotate-180')} />
+                        </button>
                       </div>
                       
-                      <div className="flex-1 h-full relative border-l border-slate-800/30 overflow-visible bg-[#1e1e2f]/20">
+                      <div className="flex-1 h-full relative border-l border-slate-800/30 overflow-visible">
                         <div className="absolute inset-0 flex items-center">
                           <AnimatePresence>
-                            {milestoneDrops.map(drop => {
+                            {!isExpanded && milestoneDrops.map(drop => {
                               const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
                               const owner = TEAM_MEMBERS[drop.lane]?.name || 'Unknown';
                               const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : undefined;
+                              
+                              const isLateCriticalPath = criticalPathDropIds.has(drop.id) && violatingDropIds.has(drop.id);
+                              
                               return (
                                 <Drop
                                   key={drop.id}
@@ -1094,6 +1138,9 @@ export function PulseDashboard() {
                                   ownerName={owner}
                                   streamInitials={streamDef?.initials}
                                   streamColorHex={streamColorHex}
+                                  streamName={streamDef?.title}
+                                  milestoneContribution={milestone.label}
+                                  ownerVelocity={memberVelocity[TEAM_MEMBERS[drop.lane]?.id]}
                                   isMilestoneViolation={violatingDropIds.has(drop.id)}
                                   isDraft={isSandboxActive && (sandboxSnapshot?.drops.find(d => d.id === drop.id)?.lane !== drop.lane || sandboxSnapshot?.drops.find(d => d.id === drop.id)?.xOffset !== drop.xOffset)}
                                   references={drop.references}
@@ -1109,6 +1156,7 @@ export function PulseDashboard() {
                                   isDependencyBlocked={drop.isBlocked}
                                   forceDimmed={!criticalPathDropIds.has(drop.id)}
                                   isCriticalPath={criticalPathDropIds.has(drop.id)}
+                                  isLateCriticalPath={isLateCriticalPath}
                                   isReady={drop.isReady}
                                   variant="minimal"
                                 />
@@ -1118,6 +1166,86 @@ export function PulseDashboard() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Expandable Sub-Lanes for Milestone */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden border-x border-b border-slate-800/30 rounded-b-[30px] bg-slate-950/20"
+                        >
+                          <div className="pl-16 relative">
+                            {/* Hierarchy Line */}
+                            <div className="absolute left-10 top-0 bottom-10 w-px border-l border-dashed border-slate-700/50" />
+
+                            {contributors.map(laneIdx => {
+                              const member = TEAM_MEMBERS[laneIdx];
+                              const memberDrops = milestoneDrops.filter(d => d.lane === laneIdx);
+                              if (memberDrops.length === 0) return null;
+
+                              return (
+                                <div key={laneIdx} className="relative flex items-center min-h-[85px] border-t border-slate-800/30 group/sublane">
+                                  {/* Sub-Header Horizontal connector */}
+                                  <div className="absolute left-[-24px] top-1/2 w-6 border-t border-dashed border-slate-700/50" />
+
+                                  <div className="w-64 shrink-0 flex items-center gap-3 px-8 py-4 backdrop-blur-sm border-r border-slate-800/30">
+                                    <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700/50 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover/sublane:border-cyan-500/50 transition-colors">
+                                      {member.name.charAt(0)}
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-400 group-hover/sublane:text-white transition-colors whitespace-nowrap">
+                                      {member.name}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex-1 h-full relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                      {memberDrops.map(drop => {
+                                        const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
+                                        const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : undefined;
+                                        const isLateCriticalPath = criticalPathDropIds.has(drop.id) && violatingDropIds.has(drop.id);
+
+                                        return (
+                                          <Drop
+                                            key={`${milestone.id}-${member.id}-${drop.id}`}
+                                            {...drop}
+                                            ownerName={member.name}
+                                            streamInitials={streamDef?.initials}
+                                            streamColorHex={streamColorHex}
+                                            streamName={streamDef?.title}
+                                            milestoneContribution={milestone.label}
+                                            ownerVelocity={memberVelocity[member.id]}
+                                            isMilestoneViolation={violatingDropIds.has(drop.id)}
+                                            isDraft={isSandboxActive && (sandboxSnapshot?.drops.find(d => d.id === drop.id)?.lane !== drop.lane || sandboxSnapshot?.drops.find(d => d.id === drop.id)?.xOffset !== drop.xOffset)}
+                                            references={drop.references}
+                                            onAction={handleDropAction}
+                                            onDragEnd={handleDragEnd}
+                                            zoomScale={zoomScale}
+                                            onHoverStream={setHoveredStreamId}
+                                            hoveredStreamId={hoveredStreamId}
+                                            onHoverDrop={setHoveredDropId}
+                                            selectedDropId={selectedDropId}
+                                            onSelectDrop={setSelectedDropId}
+                                            hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
+                                            isDependencyBlocked={drop.isBlocked}
+                                            forceDimmed={!criticalPathDropIds.has(drop.id)}
+                                            isCriticalPath={criticalPathDropIds.has(drop.id)}
+                                            isLateCriticalPath={isLateCriticalPath}
+                                            isReady={drop.isReady}
+                                            variant="full"
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 );
               })

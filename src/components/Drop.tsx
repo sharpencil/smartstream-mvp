@@ -42,7 +42,11 @@ export interface DropProps {
   intensity?: number;
   forceDimmed?: boolean;
   isCriticalPath?: boolean;
+  isLateCriticalPath?: boolean;
   isReady?: boolean;
+  streamName?: string;
+  milestoneContribution?: string;
+  ownerVelocity?: number;
 }
 
 /** Map complexity 1–9 to a pixel width multiplier for the card. */
@@ -90,7 +94,11 @@ export function Drop({
   intensity = 1,
   forceDimmed = false,
   isCriticalPath = false,
+  isLateCriticalPath = false,
   isReady = false,
+  streamName,
+  milestoneContribution,
+  ownerVelocity,
 }: DropProps) {
   const isGhost = state === 'ghost';
   const isDraggable = !!onDragEnd;
@@ -116,6 +124,7 @@ export function Drop({
 
   // Compute box shadow
   const getBoxShadow = () => {
+    if (isLateCriticalPath) return '0 0 20px rgba(244,63,94,0.6), inset 0 0 12px rgba(244,63,94,0.3)';
     if (variant === 'minimal') return 'none';
     if (isMilestoneViolation) return '0 0 20px rgba(244,63,94,0.5), inset 0 0 12px rgba(244,63,94,0.1)';
     if (isMatchingStream && streamColorHex) return `0 0 20px ${streamColorHex}80, inset 0 0 10px ${streamColorHex}20`;
@@ -148,11 +157,35 @@ export function Drop({
                 )}>
                   {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'}
                 </span>
-                <span className="text-[10px] font-bold text-slate-500">{ownerName}</span>
+                <span className="text-[10px] font-bold text-slate-500 flex items-center">
+                  {ownerName}
+                  {ownerVelocity !== undefined && (
+                    <span className={cn(
+                      'ml-1.5 px-1 py-0.5 rounded-sm text-[8px] leading-none',
+                      ownerVelocity >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-500'
+                    )}>
+                      {ownerVelocity >= 0 ? '+' : ''}{ownerVelocity}%
+                    </span>
+                  )}
+                </span>
               </div>
               <h5 className="text-[11px] font-bold text-slate-100 line-clamp-2 leading-tight">
                 {title}
               </h5>
+              {(streamName || milestoneContribution) && (
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                  {streamName && (
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                      Stream: {streamName}
+                    </div>
+                  )}
+                  {milestoneContribution && (
+                    <div className="text-[9px] font-bold text-cyan-400/80 uppercase tracking-widest">
+                      Req for: {milestoneContribution}
+                    </div>
+                  )}
+                </div>
+              )}
               {isBlocked && (
                 <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-rose-400 uppercase tracking-wider animate-pulse">
                   <AlertTriangle className="w-3 h-3" />
@@ -253,8 +286,8 @@ export function Drop({
             )}
 
             {/* Milestone violation pulse ring */}
-            {isMilestoneViolation && (
-              <div className={cn("absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none", variant === 'minimal' && 'border-amber-500/60')} />
+            {(isMilestoneViolation || isLateCriticalPath) && (
+              <div className={cn("absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none", (variant === 'minimal' && !isLateCriticalPath) && 'border-amber-500/60', isLateCriticalPath && 'border-rose-500/80 shadow-[0_0_15px_rgba(244,63,94,0.5)]')} />
             )}
 
             {/* Dependency indicator */}
