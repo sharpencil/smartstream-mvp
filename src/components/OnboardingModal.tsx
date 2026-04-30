@@ -9,7 +9,7 @@ import {
   Mail, Phone, MessageSquare, Award, Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Employee } from '@/lib/mockRoster';
+import { Employee } from '@/lib/mockTeam';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -716,7 +716,7 @@ export function OnboardingModal({ isOpen, onClose, onAdd }: OnboardingModalProps
                           onClick={handleFinalize}
                           className="group w-full py-4 bg-cyan-500 rounded-full text-[#0a192f] font-bold text-sm tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:shadow-[0_0_40px_rgba(34,211,238,0.6)] hover:scale-105 transition-all outline-none uppercase whitespace-nowrap active:scale-95 flex items-center justify-center gap-3"
                         >
-                          ADD TO ROSTER
+                          ADD TO TEAM
                           <div className="w-6 h-6 rounded-full bg-[#0a192f]/10 flex items-center justify-center group-hover:translate-x-1 transition-transform">
                             <ChevronRight className="w-4 h-4 text-[#0a192f]" />
                           </div>

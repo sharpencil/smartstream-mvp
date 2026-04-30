@@ -11,10 +11,10 @@ import { AgentPanel, type FeedItem } from './AgentPanel';
 export function LibraryDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'genesis' | 'dependencies'>('active');
   const [genesisState, setGenesisState] = useState<'idle' | 'uploading' | 'scanning' | 'complete' | 'approving' | 'synthesizing' | 'reviewed'>('idle');
-  const [isRosterConfirmed, setIsRosterConfirmed] = useState(false);
+  const [isTeamConfirmed, setIsTeamConfirmed] = useState(false);
   const [synthesisProgress, setSynthesisProgress] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [isAgentOpen, setIsAgentOpen] = useState(true);
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [feed, setFeed] = useState<FeedItem[]>([
     {
       id: 'l1',
@@ -26,7 +26,7 @@ export function LibraryDashboard() {
   const handleUpload = () => {
     if (genesisState !== 'idle') return;
     setGenesisState('uploading');
-    setIsRosterConfirmed(false);
+    setIsTeamConfirmed(false);
     setProgress(0);
     setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span>Deep-scanning uploaded contextual requirements...</span> }, ...prev]);
     
@@ -44,21 +44,21 @@ export function LibraryDashboard() {
       if (val >= 100) {
         clearInterval(interval);
         setGenesisState('complete');
-        setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-green-400 font-bold">Analysis Complete:</span> 3 Streams successfully decompiled. Formulating dynamic Roster suggestions.</span> }, ...prev]);
+        setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-green-400 font-bold">Analysis Complete:</span> 3 Streams successfully decompiled. Formulating dynamic Team suggestions.</span> }, ...prev]);
         
         // Auto-transition to Step 3 (Stream Approval)
         setTimeout(() => {
           setGenesisState('approving');
-          setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Oracle Sync:</span> Porting roster alignments to stream architectures. Sign-off required.</span> }, ...prev]);
+          setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Oracle Sync:</span> Porting Team alignments to stream architectures. Sign-off required.</span> }, ...prev]);
         }, 1800);
       }
     }, 200);
   };
 
-  const handleConfirmRoster = () => {
-    setIsRosterConfirmed(true);
+  const handleConfirmTeam = () => {
+    setIsTeamConfirmed(true);
     setGenesisState('approving');
-    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Roster Confirmed:</span> Awaiting stream architectural sign-off.</span> }, ...prev]);
+    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Team Confirmed:</span> Awaiting stream architectural sign-off.</span> }, ...prev]);
   };
 
   const handleApproveStreams = () => {
@@ -203,11 +203,11 @@ export function LibraryDashboard() {
                   )}
                </div>
 
-                {/* Right: Roster Recommendations */}
+                {/* Right: Team Recommendations */}
                 <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group">
                   <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                     <UserPlus className="w-5 h-5 text-indigo-400" />
-                    <h2 className="text-sm font-semibold text-slate-200 whitespace-nowrap">Oracle Roster Alignments</h2>
+                    <h2 className="text-sm font-semibold text-slate-200 whitespace-nowrap">Oracle Team Alignments</h2>
                   </div>
 
                   {(genesisState === 'complete' || genesisState === 'approving' || genesisState === 'synthesizing') ? (
@@ -248,14 +248,14 @@ export function LibraryDashboard() {
                       <div className="mt-4 p-4 rounded-2xl bg-cyan-900/10 border border-cyan-500/20 flex items-center gap-3">
                          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                          <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest leading-relaxed">
-                           {genesisState === 'complete' ? "Oracle matrixing roster to stream signatures..." : "Oracle sync active. Heuristics aligned."}
+                           {genesisState === 'complete' ? "Oracle matrixing Team to stream signatures..." : "Oracle sync active. Heuristics aligned."}
                          </p>
                       </div>
                     </div>
                   ) : (
                    <div className="flex-1 flex flex-col items-center justify-center opacity-40">
                       <UserCheck className="w-12 h-12 text-slate-600 mb-3" />
-                      <p className="text-xs text-slate-400 text-center px-4 max-w-[200px]">Provide raw context to unlock predictive AI Roster match scoring.</p>
+                      <p className="text-xs text-slate-400 text-center px-4 max-w-[200px]">Provide raw context to unlock predictive AI Team match scoring.</p>
                    </div>
                   )}
                 </div>
@@ -354,11 +354,11 @@ export function LibraryDashboard() {
                        <StreamAccordion type="drafted" showDrops={true} />
                      </div>
 
-                     {/* Right: Full Roster Matrix (Detailed) */}
+                     {/* Right: Full Team Matrix (Detailed) */}
                      <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-8 flex flex-col relative overflow-hidden shadow-2xl">
                         <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-6">
                           <UserPlus className="w-6 h-6 text-indigo-400" />
-                          <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-widest">Full Roster Matrix</h2>
+                          <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-widest">Full Team Matrix</h2>
                         </div>
 
                         <div className="flex flex-col gap-3">

@@ -110,7 +110,7 @@ export function GlobalHeader() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-cyan-400 transition-colors" />
           <input
             type="text"
-            placeholder="Search drops, people..."
+            placeholder="Search drops, team..."
             className="w-64 bg-slate-900/50 border border-slate-800/80 rounded-[16px] py-1.5 pl-9 pr-4 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
           />
         </div>

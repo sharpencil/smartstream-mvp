@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Zap, Trophy, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Employee } from '@/lib/mockRoster';
+import { Employee } from '@/lib/mockTeam';
 
 interface TalentCardProps {
   employee: Employee;

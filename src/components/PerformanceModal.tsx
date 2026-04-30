@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/Dialog';
-import { Employee } from '@/lib/mockRoster';
+import { Employee } from '@/lib/mockTeam';
 import { cn } from '@/lib/utils';
 
 interface PerformanceModalProps {

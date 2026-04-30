@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const pillars = [
   { name: 'Pulse', icon: Activity, href: '/' },
   { name: 'Streams', icon: LayoutDashboard, href: '/library' },
-  { name: 'Roster', icon: Users, href: '/roster' },
+  { name: 'Team', icon: Users, href: '/team' },
   { name: 'Operations', icon: Settings, href: '/operations' },
 ];
 

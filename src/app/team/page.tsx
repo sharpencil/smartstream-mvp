@@ -9,10 +9,10 @@ import { AISkillsBanner } from '@/components/AISkillsBanner';
 import { PerformanceModal } from '@/components/PerformanceModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { AgentPanel, type FeedItem } from '@/components/AgentPanel';
-import { mockEmployees as initialEmployees, Employee } from '@/lib/mockRoster';
+import { mockEmployees as initialEmployees, Employee } from '@/lib/mockTeam';
 import { cn } from '@/lib/utils';
 
-export default function RosterPage() {
+export default function TeamPage() {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [activeTab, setActiveTab] = useState('crew');
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,7 +23,7 @@ export default function RosterPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [isAgentOpen, setIsAgentOpen] = useState(true);
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
   
   // Fly-to-bench animation state
   const [flyingCard, setFlyingCard] = useState<{ employee: Employee, startX: number, startY: number } | null>(null);
@@ -34,7 +34,7 @@ export default function RosterPage() {
     {
       id: 'r1',
       type: 'suggestion',
-      text: <span>Analyzing current Roster alignment against active Streams... Skill density is optimal for "The Crew".</span>
+      text: <span>Analyzing current Team alignment against active Streams... Skill density is optimal for "The Crew".</span>
     }
   ]);
 
@@ -168,7 +168,7 @@ export default function RosterPage() {
         {/* Identical Header (Matches Streams/LibraryDashboard) */}
         <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
           <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
-            Roster
+            Team
           </h1>
 
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20">

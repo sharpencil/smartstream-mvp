@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, Database, UserPlus, Layers, Info, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AssistantFocus = 'intake' | 'roster' | 'streams' | null;
+export type AssistantFocus = 'intake' | 'team' | 'streams' | null;
 
 interface WizardAssistantProps {
   focus: AssistantFocus;
@@ -84,10 +84,10 @@ export function WizardAssistant({ focus, genesisState, isOpen }: WizardAssistant
             </motion.div>
           )}
 
-          {/* Roster Focus */}
-          {focus === 'roster' && (
+          {/* Team Focus */}
+          {focus === 'team' && (
             <motion.div
-              key="roster-focus"
+              key="team-focus"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -99,7 +99,7 @@ export function WizardAssistant({ focus, genesisState, isOpen }: WizardAssistant
               </div>
               <AdviceCard
                 icon={<Sparkles className="w-4 h-4 text-indigo-400" />}
-                text="Sarah is leading the Roster due to her 98% match on JWT protocols. Her history in Project Phoenix shows identical Auth refactor patterns."
+                text="Sarah is leading the Team due to her 98% match on JWT protocols. Her history in Project Phoenix shows identical Auth refactor patterns."
               />
               <AdviceCard
                 icon={<Bot className="w-4 h-4 text-slate-400" />}

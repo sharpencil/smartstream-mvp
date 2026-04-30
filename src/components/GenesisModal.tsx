@@ -306,14 +306,14 @@ function Step2SynthesisWorkspace({
            )}
         </div>
 
-        {/* Right: Roster Recommendations */}
+        {/* Right: Team Recommendations */}
         <div 
-          onMouseEnter={() => onUpdateFocus('roster')}
+          onMouseEnter={() => onUpdateFocus('team')}
           onMouseLeave={() => onUpdateFocus(null)}
           className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <UserPlus className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold text-slate-200">Oracle Roster Alignments</h2>
+            <h2 className="text-sm font-semibold text-slate-200">Oracle Team Alignments</h2>
           </div>
           {['complete', 'generating', 'launched'].includes(genesisState) ? (
             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -341,13 +341,13 @@ function Step2SynthesisWorkspace({
               
               <div className="mt-4 p-4 rounded-2xl bg-cyan-900/10 border border-cyan-500/20 flex items-center gap-3">
                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                 <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest leading-relaxed">Oracle matrixing roster to stream signatures...</p>
+                 <p className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest leading-relaxed">Oracle matrixing Team to stream signatures...</p>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center opacity-40">
                <UserCheck className="w-12 h-12 text-slate-600 mb-3" />
-               <p className="text-xs text-slate-400 text-center px-4">Provide raw context to unlock predictive AI Roster match scoring.</p>
+               <p className="text-xs text-slate-400 text-center px-4">Provide raw context to unlock predictive AI Team match scoring.</p>
             </div>
           )}
         </div>
@@ -415,7 +415,7 @@ function PersistentGenesisSummary() {
          </motion.div>
       </div>
 
-      {/* Right: Roster Recommendations Summary */}
+      {/* Right: Team Recommendations Summary */}
       <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-6 flex flex-col relative overflow-hidden group shadow-inner shadow-cyan-900/10">
         <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
           <UserPlus className="w-4 h-4 text-indigo-400" />
@@ -585,11 +585,11 @@ function Step4FinalPreview({ onLaunch }: { onLaunch: () => void }) {
             <StreamAccordion type="drafted" showDrops={true} />
          </div>
 
-         {/* Right: Roster Alignments (Detailed) */}
+         {/* Right: Team Alignments (Detailed) */}
          <div className="flex-1 bg-[#0a192f]/40 border border-slate-800/60 rounded-3xl p-8 flex flex-col relative overflow-hidden shadow-2xl">
             <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-6">
               <UserPlus className="w-6 h-6 text-indigo-400" />
-              <h2 className="text-sm font-semibold text-slate-200">Full Roster Matrix</h2>
+              <h2 className="text-sm font-semibold text-slate-200">Full Team Matrix</h2>
             </div>
 
             <div className="flex flex-col gap-3">
