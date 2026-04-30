@@ -351,7 +351,7 @@ export function Drop({
             </div>
             <h4 className="text-sm font-bold text-cyan-50 leading-snug mt-2 pr-8">{title}</h4>
             {isMilestoneViolation && (
-              <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider mt-1">⚠ Milestone Deadline Conflict</p>
+              <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider mt-1">⚠ Milestone Target Conflict</p>
             )}
           </div>
 

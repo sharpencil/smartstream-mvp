@@ -284,7 +284,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
-  const [viewLevel, setViewLevel] = useState<'streams' | 'people' | 'deadlines'>('streams');
+  const [viewLevel, setViewLevel] = useState<'streams' | 'people' | 'milestones'>('streams');
   const [expandedStreamIds, setExpandedStreamIds] = useState<Set<string>>(new Set());
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
 
@@ -684,7 +684,7 @@ export function PulseDashboard() {
   return (
     <>
       <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
-        viewLevel === 'deadlines' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
+        viewLevel === 'milestones' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
         isAgentOpen ? "pr-[392px]" : "pr-8"
       )}>
@@ -692,7 +692,7 @@ export function PulseDashboard() {
       {/* Header Controls */}
       <div className={cn(
         "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500",
-        viewLevel === 'deadlines' ? 'bg-black/80' : 'bg-[#020617]/90'
+        viewLevel === 'milestones' ? 'bg-black/80' : 'bg-[#020617]/90'
       )}>
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           Pulse
@@ -759,13 +759,13 @@ export function PulseDashboard() {
                 People
               </button>
               <button
-                onClick={() => { setViewLevel('deadlines'); setActiveMilestoneId(null); }}
+                onClick={() => { setViewLevel('milestones'); setActiveMilestoneId(null); }}
                 className={cn(
                   'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                  viewLevel === 'deadlines' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                  viewLevel === 'milestones' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
                 )}
               >
-                Deadlines
+                Milestones
               </button>
             </div>
 
@@ -948,7 +948,7 @@ export function PulseDashboard() {
               const violated = violatedMilestoneIds.has(m.id);
               const lineX = (m.xOffset * zoomScale) + 4; // +4 for sidebar offset tweak
               
-              const isDeadlinesView = viewLevel === 'deadlines';
+              const isMilestonesView = viewLevel === 'milestones';
               const isSelected = activeMilestoneId === m.id;
               
               const diffToNow = m.xOffset - NOW_LINE_X;
@@ -958,9 +958,9 @@ export function PulseDashboard() {
               return (
                 <div
                   key={m.id}
-                  className={cn("absolute top-0 bottom-0 z-30 transition-all", isDeadlinesView ? "pointer-events-auto cursor-pointer group/mline" : "pointer-events-none")}
+                  className={cn("absolute top-0 bottom-0 z-30 transition-all", isMilestonesView ? "pointer-events-auto cursor-pointer group/mline" : "pointer-events-none")}
                   style={{ left: currentSidebarWidth + lineX }}
-                  onClick={() => isDeadlinesView && setActiveMilestoneId(activeMilestoneId === m.id ? null : m.id)}
+                  onClick={() => isMilestonesView && setActiveMilestoneId(activeMilestoneId === m.id ? null : m.id)}
                 >
                   {/* Dashed vertical line */}
                   <div
@@ -979,7 +979,7 @@ export function PulseDashboard() {
                       : 'bg-slate-900/70 border-slate-700/50 text-slate-500 group-hover/mline:text-slate-300'
                   )}>
                     {(violated && !isSelected) && <span className="text-amber-500">⚠</span>}
-                    {isDeadlinesView ? (
+                    {isMilestonesView ? (
                       <div className="flex flex-col">
                         <span className="text-[7.5px] opacity-70 mb-[1px] leading-none">{m.label}</span>
                         <span className="leading-none">{tMinusText}</span>
@@ -1047,8 +1047,8 @@ export function PulseDashboard() {
                   </motion.div>
                 );
               })
-            ) : viewLevel === 'deadlines' ? (
-              // ── DEADLINES (MILESTONES) VIEW ──
+            ) : viewLevel === 'milestones' ? (
+              // ── MILESTONES VIEW ──
               milestones.map((milestone) => {
                 const milestoneDrops = drops.filter(d => d.milestoneId === milestone.id);
                 const maxDropEnd = Math.max(...milestoneDrops.map(d => dropRightEdge(d, 1)), 0);
