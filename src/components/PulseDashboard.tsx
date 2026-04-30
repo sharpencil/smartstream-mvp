@@ -27,9 +27,10 @@ export interface DropData {
   streamId?: string;
   dependsOn?: string[];
   isReady?: boolean;
+  milestoneId?: string;
 }
 
-interface Milestone {
+export interface Milestone {
   id: string;
   label: string;
   xOffset: number; // canvas-space x (pre-zoom)
@@ -53,7 +54,7 @@ if (TEAM_MEMBERS.length === 0) {
   TEAM_MEMBERS.push({ id: '1', name: 'Sarah' });
 }
 
-const MILESTONES: Milestone[] = [
+const DEFAULT_MILESTONES: Milestone[] = [
   { id: 'm1', label: 'Tracking MVP', xOffset: 1400 },
   { id: 'm2', label: 'DB Migration', xOffset: 2800 },
   { id: 'm3', label: 'AI Eval Live', xOffset: 4500 },
@@ -220,6 +221,12 @@ function buildInitialData(): { drops: DropData[], unassigned: DropData[] } {
       }
    });
 
+  allDrops.forEach(d => {
+    const nodeRightEdge = d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1);
+    const m = DEFAULT_MILESTONES.find(m => m.xOffset >= nodeRightEdge);
+    d.milestoneId = m ? m.id : DEFAULT_MILESTONES[DEFAULT_MILESTONES.length - 1].id;
+  });
+
   return { drops: allDrops, unassigned };
 }
 
@@ -228,7 +235,7 @@ const { drops: INITIAL_DROPS, unassigned: INITIAL_UNASSIGNED_DROPS } = buildInit
 const RAW_MIN_X = Math.min(...INITIAL_DROPS.map(d => d.xOffset));
 const X_SHIFT = -RAW_MIN_X + 24;
 INITIAL_DROPS.forEach(d => { d.xOffset += X_SHIFT; });
-MILESTONES.forEach(m => { m.xOffset += X_SHIFT; });
+DEFAULT_MILESTONES.forEach(m => { m.xOffset += X_SHIFT; });
 
 const INITIAL_MAX_X = Math.max(...INITIAL_DROPS.map(d => d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1)));
 const INITIAL_ZOOM = Math.min(1, 1000 / Math.max(INITIAL_MAX_X, 100));
@@ -280,6 +287,9 @@ export function PulseDashboard() {
   const [viewLevel, setViewLevel] = useState<'streams' | 'people' | 'deadlines'>('streams');
   const [expandedStreamIds, setExpandedStreamIds] = useState<Set<string>>(new Set());
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
+
+  const [milestones, setMilestones] = useState<Milestone[]>(DEFAULT_MILESTONES);
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -454,12 +464,12 @@ export function PulseDashboard() {
       .filter(d => d.state === 'ghost')
       .forEach(drop => {
         const rightEdge = drop.xOffset + (getDropWidth(drop, 1));
-        MILESTONES.forEach(m => {
+        milestones.forEach(m => {
           if (drop.xOffset < m.xOffset && rightEdge > m.xOffset) violated.add(m.id);
         });
       });
     return violated;
-  }, [drops]);
+  }, [drops, milestones]);
 
   const violatingDropIds = useMemo<Set<string>>(() => {
     const result = new Set<string>();
@@ -467,10 +477,10 @@ export function PulseDashboard() {
       .filter(d => d.state === 'ghost')
       .forEach(drop => {
         const rightEdge = drop.xOffset + (getDropWidth(drop, 1));
-        if (MILESTONES.some(m => drop.xOffset < m.xOffset && rightEdge > m.xOffset)) result.add(drop.id);
+        if (milestones.some(m => drop.xOffset < m.xOffset && rightEdge > m.xOffset)) result.add(drop.id);
       });
     return result;
-  }, [drops]);
+  }, [drops, milestones]);
 
   // Find stream dependencies if a stream link is triggered
   const activeStreamDependencyPaths = useMemo(() => {
@@ -672,11 +682,12 @@ export function PulseDashboard() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
-      viewLevel === 'deadlines' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
-      isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
-      isAgentOpen ? "pr-[392px]" : "pr-8"
-    )}>
+    <>
+      <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
+        viewLevel === 'deadlines' ? "bg-black contrast-[1.05] brightness-[0.98]" : "bg-[#020617]",
+        isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
+        isAgentOpen ? "pr-[392px]" : "pr-8"
+      )}>
 
       {/* Header Controls */}
       <div className={cn(
@@ -933,7 +944,7 @@ export function PulseDashboard() {
 
 
             {/* ── Milestone Lines ── */}
-            {MILESTONES.map(m => {
+            {milestones.map(m => {
               const violated = violatedMilestoneIds.has(m.id);
               const lineX = (m.xOffset * zoomScale) + 4; // +4 for sidebar offset tweak
               
@@ -1036,43 +1047,90 @@ export function PulseDashboard() {
                   </motion.div>
                 );
               })
+            ) : viewLevel === 'deadlines' ? (
+              // ── DEADLINES (MILESTONES) VIEW ──
+              milestones.map((milestone) => {
+                const milestoneDrops = drops.filter(d => d.milestoneId === milestone.id);
+                const maxDropEnd = Math.max(...milestoneDrops.map(d => dropRightEdge(d, 1)), 0);
+                const isViolated = maxDropEnd > milestone.xOffset;
+                
+                return (
+                  <motion.div key={milestone.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-2 relative">
+                    <div className="flex items-center relative group">
+                      <div className="shrink-0 flex items-center gap-4 py-4 px-8 sticky left-0 z-30 border-r border-[#1e1e2f]/50 bg-[#1e1e2f]/40 shadow-[15px_0_30px_rgba(0,0,0,0.4)]" style={{ width: SIDEBAR_OVERVIEW }}>
+                        <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+                          <div className="flex items-center justify-between group/title p-0.5 -mx-0.5 rounded transition-colors hover:bg-white/5">
+                            <h3 className={cn("font-bold text-sm truncate tracking-tight transition-colors", isViolated ? "text-rose-400 animate-pulse" : "text-slate-100 group-hover/title:text-white")}>
+                              {milestone.label}
+                            </h3>
+                            <button onClick={() => setEditingMilestoneId(milestone.id)} className="p-1 rounded-md opacity-0 group-hover/title:opacity-100 transition-all text-slate-500 hover:text-white hover:bg-slate-800">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-900/50 px-2 py-0.5 rounded">
+                               T-Minus {Math.round(Math.max(0, milestone.xOffset - NOW_LINE_X) / 80)} Days
+                             </div>
+                             {isViolated && (
+                               <div className="text-[9px] font-bold text-rose-400 border border-rose-500/50 px-1.5 py-0.5 rounded bg-rose-500/10 whitespace-nowrap">
+                                 Delay Risk
+                               </div>
+                             )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 h-full relative border-l border-slate-800/30 overflow-visible bg-[#1e1e2f]/20">
+                        <div className="absolute inset-0 flex items-center">
+                          <AnimatePresence>
+                            {milestoneDrops.map(drop => {
+                              const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
+                              const owner = TEAM_MEMBERS[drop.lane]?.name || 'Unknown';
+                              const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : undefined;
+                              return (
+                                <Drop
+                                  key={drop.id}
+                                  {...drop}
+                                  ownerName={owner}
+                                  streamInitials={streamDef?.initials}
+                                  streamColorHex={streamColorHex}
+                                  isMilestoneViolation={violatingDropIds.has(drop.id)}
+                                  isDraft={isSandboxActive && (sandboxSnapshot?.drops.find(d => d.id === drop.id)?.lane !== drop.lane || sandboxSnapshot?.drops.find(d => d.id === drop.id)?.xOffset !== drop.xOffset)}
+                                  references={drop.references}
+                                  onAction={handleDropAction}
+                                  onDragEnd={handleDragEnd}
+                                  zoomScale={zoomScale}
+                                  onHoverStream={setHoveredStreamId}
+                                  hoveredStreamId={hoveredStreamId}
+                                  onHoverDrop={setHoveredDropId}
+                                  selectedDropId={selectedDropId}
+                                  onSelectDrop={setSelectedDropId}
+                                  hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
+                                  isDependencyBlocked={drop.isBlocked}
+                                  forceDimmed={!criticalPathDropIds.has(drop.id)}
+                                  isCriticalPath={criticalPathDropIds.has(drop.id)}
+                                  isReady={drop.isReady}
+                                  variant="minimal"
+                                />
+                              );
+                            })}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
             ) : (
-              // ── OVERVIEW (STREAM-FIRST) OR DEADLINES VIEW ──
-              [...STAGING_STREAMS].filter(stream => {
-                  if (viewLevel !== 'deadlines' || !activeMilestoneId) return true;
-                  const streamDrops = drops.filter(d => d.streamId === stream.id);
-                  if (streamDrops.length === 0) return true;
-                  const end = Math.max(...streamDrops.map(d => dropRightEdge(d, 1)), 0);
-                  const mAfter = MILESTONES.find(m => m.xOffset >= end) || MILESTONES[MILESTONES.length - 1];
-                  return mAfter && mAfter.id === activeMilestoneId;
-              }).sort((a, b) => {
-                if (viewLevel === 'deadlines') {
-                  const blockCountA = drops.filter(d => d.streamId === a.id && d.isBlocked).length;
-                  const blockCountB = drops.filter(d => d.streamId === b.id && d.isBlocked).length;
-                  if (blockCountA !== blockCountB) return blockCountB - blockCountA;
-
-                  const endA = Math.max(...drops.filter(d => d.streamId === a.id).map(d => dropRightEdge(d, 1)), 0);
-                  const endB = Math.max(...drops.filter(d => d.streamId === b.id).map(d => dropRightEdge(d, 1)), 0);
-                  const mAfterA = MILESTONES.find(m => m.xOffset >= endA) || MILESTONES[MILESTONES.length - 1];
-                  const mAfterB = MILESTONES.find(m => m.xOffset >= endB) || MILESTONES[MILESTONES.length - 1];
-                  const gapA = mAfterA ? mAfterA.xOffset - endA : Infinity;
-                  const gapB = mAfterB ? mAfterB.xOffset - endB : Infinity;
-                  return gapA - gapB; // Smallest gap (or highly negative collisions) bubble up.
-                } else {
+              // ── OVERVIEW (STREAMS) VIEW ──
+              [...STAGING_STREAMS].sort((a, b) => {
                   const minA = Math.min(...drops.filter(d => d.streamId === a.id).map(d => d.xOffset), Infinity);
                   const minB = Math.min(...drops.filter(d => d.streamId === b.id).map(d => d.xOffset), Infinity);
                   return minA - minB;
-                }
               }).map((stream) => {
                 const stats = streamStats.find(s => s.id === stream.id)!;
                 const isExpanded = expandedStreamIds.has(stream.id);
                 const streamColor = STREAM_COLORS[stream.colorKey as StreamColorKey];
-                
-                // Deadlines properties calculation per stream
-                const streamDrops = drops.filter(d => d.streamId === stream.id);
-                const streamEnd = Math.max(...streamDrops.map(d => dropRightEdge(d, 1)), 0);
-                const nearestM = MILESTONES.find(m => m.xOffset >= streamEnd) || MILESTONES[MILESTONES.length - 1];
-                const gapToNearestM = nearestM ? nearestM.xOffset - streamEnd : 0;
                 
                 return (
                   <motion.div
@@ -1153,31 +1211,6 @@ export function PulseDashboard() {
                       {/* Timeline Area (Collapsed View) */}
                       <div className="flex-1 h-full relative border-l border-slate-800/30 overflow-visible">
                         <div className="absolute inset-0 flex items-center">
-                          {viewLevel === 'deadlines' && (
-                            <>
-                              {/* Safety Bridge */}
-                              <div 
-                                className={cn(
-                                  "absolute h-1.5 top-1/2 -translate-y-1/2 rounded-full transition-all duration-500",
-                                  gapToNearestM < 0 ? "bg-rose-500 shadow-[0_0_15px_rgba(243,24,72,0.8)] z-40" :
-                                  gapToNearestM <= 80 ? "bg-amber-500/50" : "bg-green-500/20"
-                                )}
-                                style={{ 
-                                  left: gapToNearestM < 0 ? nearestM.xOffset * zoomScale : streamEnd * zoomScale, 
-                                  width: Math.abs(gapToNearestM) * zoomScale 
-                                }}
-                              />
-                              {/* Collision Alert Label */}
-                              {gapToNearestM < 0 && (
-                                <div 
-                                  className="absolute top-1/2 -translate-y-1/2 -mt-6 rounded px-2 py-0.5 bg-rose-950 border border-rose-500 text-[9px] font-bold text-rose-400 uppercase tracking-widest whitespace-nowrap animate-pulse z-50 shadow-[0_0_20px_rgba(244,63,94,0.5)]"
-                                  style={{ left: (streamEnd * zoomScale) + 10 }}
-                                >
-                                  Late {Math.round(Math.abs(gapToNearestM)/80)} Days
-                                </div>
-                              )}
-                            </>
-                          )}
                           <AnimatePresence>
                             {!isExpanded && stats.drops.map(drop => {
                               // Calculate Overlap Intensity
@@ -1217,8 +1250,8 @@ export function PulseDashboard() {
                                   onSelectDrop={setSelectedDropId}
                                   hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
                                   isDependencyBlocked={drop.isBlocked}
-                                  forceDimmed={viewLevel === 'deadlines' && !criticalPathDropIds.has(drop.id)}
-                                  isCriticalPath={viewLevel === 'deadlines' && criticalPathDropIds.has(drop.id)}
+                                  forceDimmed={false}
+                                  isCriticalPath={false}
                                   isReady={drop.isReady}
                                   variant="minimal"
                                 />
@@ -1301,7 +1334,8 @@ export function PulseDashboard() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      </div>
 
       {/* Agent Panel */}
       <AgentPanel
@@ -1313,6 +1347,114 @@ export function PulseDashboard() {
       />
 
       <BacklogTray unassignedDrops={unassignedDrops} onDragEnd={handleDragEnd} isSandboxActive={isSandboxActive} />
-    </div>
+
+      <AnimatePresence>
+        {editingMilestoneId && (
+          <MilestoneEditDrawer
+            milestoneId={editingMilestoneId}
+            milestones={milestones}
+            setMilestones={setMilestones}
+            drops={drops}
+            setDrops={setDrops}
+            onClose={() => setEditingMilestoneId(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function MilestoneEditDrawer({
+  milestoneId,
+  milestones,
+  setMilestones,
+  drops,
+  setDrops,
+  onClose
+}: {
+  milestoneId: string;
+  milestones: Milestone[];
+  setMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>;
+  drops: DropData[];
+  setDrops: React.Dispatch<React.SetStateAction<DropData[]>>;
+  onClose: () => void;
+}) {
+  const milestone = milestones.find(m => m.id === milestoneId);
+  if (!milestone) return null;
+
+  return (
+    <motion.div 
+      initial={{ x: 400 }} 
+      animate={{ x: 0 }} 
+      exit={{ x: 400 }} 
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="fixed inset-y-0 right-0 w-96 bg-[#020617] border-l border-white/10 shadow-2xl z-[100] flex flex-col pointer-events-auto"
+    >
+      <div className="p-6 border-b border-white/5 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">Edit Milestone</h2>
+        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2 -mr-2">
+          <Plus className="w-5 h-5 rotate-45" />
+        </button>
+      </div>
+      <div className="p-6 flex-1 overflow-y-auto flex flex-col gap-8 custom-scrollbar">
+        <div>
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Milestone Name</label>
+          <input 
+            type="text" 
+            value={milestone.label}
+            onChange={(e) => setMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, label: e.target.value } : m))}
+            className="w-full bg-[#0a192f] border border-white/10 rounded-lg px-4 py-2.5 text-slate-100 outline-none focus:border-cyan-500 transition-colors text-sm font-medium"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Target Sequence (X Offset)</label>
+          <input 
+            type="number" 
+            value={milestone.xOffset}
+            onChange={(e) => setMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, xOffset: Number(e.target.value) } : m))}
+            className="w-full bg-[#0a192f] border border-white/10 rounded-lg px-4 py-2.5 text-slate-100 outline-none focus:border-cyan-500 transition-colors text-sm font-medium tabular-nums"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 block">Bundled Work</label>
+          <div className="flex flex-col gap-4">
+            {STAGING_STREAMS.map(stream => {
+              const streamDrops = drops.filter(d => d.streamId === stream.id);
+              if (streamDrops.length === 0) return null;
+              
+              const assignedCount = streamDrops.filter(d => d.milestoneId === milestone.id).length;
+              
+              return (
+                <div key={stream.id} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xs font-bold text-slate-300">{stream.title}</h4>
+                    <span className="text-[10px] font-black text-slate-500 bg-black/50 px-2 py-0.5 rounded">{assignedCount} Assigned</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {streamDrops.map(drop => {
+                      const isAssigned = drop.milestoneId === milestone.id;
+                      return (
+                         <label key={drop.id} className="flex items-start gap-3 cursor-pointer group">
+                           <input 
+                             type="checkbox" 
+                             checked={isAssigned}
+                             onChange={(e) => {
+                               const checked = e.target.checked;
+                               setDrops(prev => prev.map(d => d.id === drop.id ? { ...d, milestoneId: checked ? milestone.id : undefined } : d));
+                             }}
+                             className="mt-0.5 accent-cyan-500 scale-110"
+                           />
+                           <span className={cn("text-xs leading-snug transition-colors pt-0.5", isAssigned ? "text-slate-200 font-medium" : "text-slate-500 group-hover:text-slate-400")}>{drop.title}</span>
+                         </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
