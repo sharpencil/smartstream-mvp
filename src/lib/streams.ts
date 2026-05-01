@@ -1,4 +1,4 @@
-export type StreamColorKey = 'teal' | 'purple' | 'cyan' | 'blue' | 'indigo' | 'violet';
+export type StreamColorKey = 'indigo' | 'fuchsia' | 'emerald' | 'pink' | 'violet' | 'slate';
 
 export interface StreamDef {
   id: string;
@@ -14,12 +14,12 @@ export interface StreamDef {
 }
 
 export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> = {
-  teal: { hex: '#14b8a6', tw: 'teal-500' },       // Teal 500
-  purple: { hex: '#a855f7', tw: 'purple-500' },   // Purple 500
-  cyan: { hex: '#06b6d4', tw: 'cyan-500' },       // Cyan 500
-  blue: { hex: '#3b82f6', tw: 'blue-500' },       // Blue 500
-  indigo: { hex: '#6366f1', tw: 'indigo-500' },   // Indigo 500
-  violet: { hex: '#8b5cf6', tw: 'violet-500' },   // Violet 500
+  indigo: { hex: '#6366f1', tw: 'indigo-500' },
+  fuchsia: { hex: '#D946EF', tw: 'fuchsia-500' },
+  emerald: { hex: '#059669', tw: 'emerald-600' },
+  pink: { hex: '#EC4899', tw: 'pink-500' },
+  violet: { hex: '#8B5CF6', tw: 'violet-600' },
+  slate: { hex: '#94A3B8', tw: 'slate-400' },
 };
 
 export interface Reference {
@@ -45,9 +45,9 @@ export interface DropDef {
 }
 
 export const GLOBAL_STREAMS: Record<string, StreamDef> = {
-  's_auth': { id: 's_auth', title: 'Identity & Auth Hub', initials: 'AUTH', colorKey: 'purple' },
+  's_auth': { id: 's_auth', title: 'Identity & Auth Hub', initials: 'AUTH', colorKey: 'fuchsia' },
   's_infra': { id: 's_infra', title: 'Core Infrastructure', initials: 'CORE', colorKey: 'indigo' },
-  's_ux': { id: 's_ux', title: 'User Experience', initials: 'UX', colorKey: 'blue' },
-  's_billing': { id: 's_billing', title: 'Payment Gateway', initials: 'PAY', colorKey: 'violet' },
-  's_comms': { id: 's_comms', title: 'Communications', initials: 'COM', colorKey: 'cyan' },
+  's_ux': { id: 's_ux', title: 'User Experience', initials: 'UX', colorKey: 'violet' },
+  's_billing': { id: 's_billing', title: 'Payment Gateway', initials: 'PAY', colorKey: 'slate' },
+  's_comms': { id: 's_comms', title: 'Communications', initials: 'COM', colorKey: 'emerald' },
 };

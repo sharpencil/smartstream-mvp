@@ -37,11 +37,18 @@ export interface Milestone {
   xOffset: number; // canvas-space x (pre-zoom)
 }
 
+const PALETTE_KEYS: StreamColorKey[] = ['indigo', 'fuchsia', 'emerald', 'pink', 'violet', 'slate'];
+
 // ── Staging stream definition map ────────────────────────────────────────────
 const STAGING_STREAM_MAP = Object.fromEntries(
-  STAGING_STREAMS.map((s) => [
+  STAGING_STREAMS.map((s, idx) => [
     s.id,
-    { id: s.id, title: s.title, initials: s.initials, colorKey: s.colorKey as StreamColorKey },
+    { 
+      id: s.id, 
+      title: s.title, 
+      initials: s.initials, 
+      colorKey: PALETTE_KEYS[idx % PALETTE_KEYS.length] 
+    },
   ])
 );
 
@@ -973,7 +980,7 @@ export function PulseDashboard() {
               />
 
               {/* Swimlanes container */}
-              <div className="flex flex-col gap-0 mt-5 relative">
+              <div className="flex flex-col gap-0 mt-14 relative">
 
 
                 {/* Dependency Traces SVG Layer */}
@@ -1013,7 +1020,7 @@ export function PulseDashboard() {
                           fill="none"
                           stroke={traceColor}
                           strokeWidth="3"
-                          filter="url(#underwater-blur)"
+                          style={{ filter: `drop-shadow(0 0 5px ${traceColor}80)` }}
                         />
                       );
                     })}
@@ -1095,14 +1102,27 @@ export function PulseDashboard() {
                         <motion.path
                           key={`drop-${src.id}-${dst.id}`}
                           initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 0.8 }}
+                          animate={{ 
+                            pathLength: 1, 
+                            opacity: (hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) ? 1 : 0.6,
+                            strokeDashoffset: (selectedDropId === src.id || selectedDropId === dst.id) ? [0, -20] : 0
+                          }}
                           exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                          transition={{ duration: 0.5, ease: "easeInOut" }}
+                          transition={{ 
+                            pathLength: { duration: 0.5, ease: "easeInOut" },
+                            strokeDashoffset: { repeat: Infinity, duration: 1, ease: "linear" }
+                          }}
                           d={dPath}
                           fill="none"
                           stroke={traceColor}
-                          strokeWidth={(hoveredDropId || selectedDropId) || isBroken ? "3" : "1.5"}
+                          strokeWidth={(hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) || isBroken ? "3" : "1.5"}
+                          strokeDasharray={(selectedDropId === src.id || selectedDropId === dst.id) ? "10,5" : "none"}
                           className={cn(isBroken && !isSimulating && 'animate-pulse')}
+                          style={{ 
+                            filter: (hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) 
+                              ? `drop-shadow(0 0 8px ${traceColor})` 
+                              : 'none' 
+                          }}
                         />
                       );
                     })}
@@ -1234,33 +1254,33 @@ export function PulseDashboard() {
                                 <div className="flex-1 h-full relative border-l border-slate-800/30 min-h-[100px] flex items-center">
                                   {!isFocused ? (
                                     /* MACRO-FLATTENED VIEW: Liquid Tube using Drop component */
-                                    <div className="absolute inset-x-8 h-8 bg-slate-900/40 rounded-full border border-white/5 flex items-center backdrop-blur-sm group-hover:bg-slate-900/60 transition-all">
-                                      <div className="relative w-full h-full">
-                                        <AnimatePresence>
-                                          {memberDrops.map(drop => {
-                                            const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
-                                            const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
-                                            const intensity = 1.2; // Consistent intensity for macro view
-                                            return (
-                                              <Drop
-                                                key={`macro-${member.id}-${drop.id}`}
-                                                {...drop}
-                                                variant="minimal"
-                                                intensity={intensity}
-                                                streamColorHex={streamColorHex}
-                                                zoomScale={zoomScale}
-                                                onHoverStream={setHoveredStreamId}
-                                                hoveredStreamId={hoveredStreamId}
-                                                onHoverDrop={setHoveredDropId}
-                                                selectedDropId={selectedDropId}
-                                                onSelectDrop={setSelectedDropId}
-                                                hasDependencies={false}
-                                                isReady={drop.isReady}
-                                              />
-                                            );
-                                          })}
-                                        </AnimatePresence>
-                                      </div>
+                                    <div className="absolute inset-0 flex items-center">
+                                      <AnimatePresence>
+                                        {memberDrops.map(drop => {
+                                          const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
+                                          const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
+                                          const intensity = 1.2; // Consistent intensity for macro view
+                                          return (
+                                            <Drop
+                                              key={`macro-${member.id}-${drop.id}`}
+                                              {...drop}
+                                              variant="minimal"
+                                              intensity={intensity}
+                                              streamColorHex={streamColorHex}
+                                              zoomScale={zoomScale}
+                                              onHoverStream={setHoveredStreamId}
+                                              hoveredStreamId={hoveredStreamId}
+                                              onHoverDrop={setHoveredDropId}
+                                              selectedDropId={selectedDropId}
+                                              onSelectDrop={setSelectedDropId}
+                                              isMilestoneViolation={violatingDropIds.has(drop.id)}
+                                              hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
+                                              isDependencyBlocked={drop.isBlocked}
+                                              isReady={drop.isReady}
+                                            />
+                                          );
+                                        })}
+                                      </AnimatePresence>
                                     </div>
                                   ) : (
                                     /* FOCUSED VIEW PLACEHOLDER (Actual sub-lanes are rendered below) */
@@ -1609,7 +1629,8 @@ export function PulseDashboard() {
                         }).map((stream) => {
                           const stats = streamStats.find(s => s.id === stream.id)!;
                           const isExpanded = expandedStreamIds.has(stream.id);
-                          const streamColor = STREAM_COLORS[stream.colorKey as StreamColorKey];
+                          const streamDef = STAGING_STREAM_MAP[stream.id];
+                          const streamColor = STREAM_COLORS[streamDef?.colorKey as StreamColorKey] || STREAM_COLORS.slate;
                           const isFocused = focusedStreamId === stream.id;
 
                           return (
@@ -1639,13 +1660,13 @@ export function PulseDashboard() {
                                   {/* Stream Content Stack */}
                                   <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     {/* Top Line: Name and Focus Controls */}
-                                    <div className="flex items-center gap-3 group/title">
-                                      <h3 className={cn(
-                                        "flex-1 font-bold transition-all truncate tracking-tight",
-                                        isFocused ? "text-xl text-white" : "text-sm text-slate-100 group-hover/title:text-white"
-                                      )}>
-                                        {stream.title}
-                                      </h3>
+                                      <div className="flex-1 flex items-center gap-3 group/title">
+                                        <h3 className={cn(
+                                          "flex-1 font-bold transition-all truncate tracking-tight",
+                                          isFocused ? "text-xl text-white" : "text-sm text-slate-100 group-hover/title:text-white"
+                                        )}>
+                                          {stream.title}
+                                        </h3>
 
                                       {!isFocused && (
                                         <button
