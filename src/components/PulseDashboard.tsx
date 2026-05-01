@@ -843,6 +843,8 @@ export function PulseDashboard() {
                       setFocusedStreamId(null);
                       setFocusedMemberId(null);
                       setFocusedMilestoneId(null);
+                      setHoveredStreamId(null);
+                      setHoveredDropId(null);
                     }}
                     className={cn(
                       'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
@@ -857,6 +859,8 @@ export function PulseDashboard() {
                       setFocusedStreamId(null);
                       setFocusedMemberId(null);
                       setFocusedMilestoneId(null);
+                      setHoveredStreamId(null);
+                      setHoveredDropId(null);
                     }}
                     className={cn(
                       'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
@@ -872,6 +876,8 @@ export function PulseDashboard() {
                       setFocusedMemberId(null);
                       setFocusedMilestoneId(null);
                       setActiveMilestoneId(null);
+                      setHoveredStreamId(null);
+                      setHoveredDropId(null);
                     }}
                     className={cn(
                       'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
