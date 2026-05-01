@@ -22,6 +22,15 @@ export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> 
   slate: { hex: '#94A3B8', tw: 'slate-400' },
 };
 
+export const PALETTE_KEYS: StreamColorKey[] = ['indigo', 'fuchsia', 'emerald', 'pink', 'violet', 'slate'];
+
+export function getStreamColor(colorKey: string | undefined): { hex: string, tw: string } {
+  if (colorKey && (PALETTE_KEYS as string[]).includes(colorKey)) {
+    return STREAM_COLORS[colorKey as StreamColorKey];
+  }
+  return STREAM_COLORS.slate;
+}
+
 export interface Reference {
   type: 'stream' | 'doc' | 'design';
   targetId?: string; // e.g. 's_auth'

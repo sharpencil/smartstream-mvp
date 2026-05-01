@@ -7,7 +7,7 @@ import { Drop, DropState, getDropWidth } from './Drop';
 import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
-import { STREAM_COLORS, StreamColorKey, Reference } from '@/lib/streams';
+import { STREAM_COLORS, StreamColorKey, Reference, PALETTE_KEYS, getStreamColor } from '@/lib/streams';
 import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search } from 'lucide-react';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
@@ -37,7 +37,7 @@ export interface Milestone {
   xOffset: number; // canvas-space x (pre-zoom)
 }
 
-const PALETTE_KEYS: StreamColorKey[] = ['indigo', 'fuchsia', 'emerald', 'pink', 'violet', 'slate'];
+
 
 // ── Staging stream definition map ────────────────────────────────────────────
 const STAGING_STREAM_MAP = Object.fromEntries(
@@ -1003,7 +1003,7 @@ export function PulseDashboard() {
                       if (!srcPos || !dstPos) return null;
 
                       const targetStreamDef = STAGING_STREAM_MAP[path.srcStreamId];
-                      const traceColor = targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8';
+                      const traceColor = targetStreamDef ? getStreamColor(targetStreamDef.colorKey).hex : '#94a3b8';
 
                       const startX = currentSidebarWidth - 20;
                       const midX = startX + 50;
@@ -1094,7 +1094,7 @@ export function PulseDashboard() {
                       const isBroken = dst.isBlocked;
 
                       const targetStreamDef = STAGING_STREAM_MAP[dst.streamId || ''];
-                      const traceColor = isSimulating ? '#f59e0b' : (isBroken ? '#f43f5e' : (targetStreamDef ? STREAM_COLORS[targetStreamDef.colorKey].hex : '#94a3b8'));
+                      const traceColor = isSimulating ? '#f59e0b' : (isBroken ? '#f43f5e' : (targetStreamDef ? getStreamColor(targetStreamDef.colorKey).hex : '#94a3b8'));
 
                       const dPath = `M ${p1.x} ${p1.y} C ${p1.x + 100} ${p1.y}, ${p2.x - 100} ${p2.y}, ${p2.x} ${p2.y}`;
 
@@ -1258,7 +1258,7 @@ export function PulseDashboard() {
                                       <AnimatePresence>
                                         {memberDrops.map(drop => {
                                           const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
-                                          const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
+                                          const streamColorHex = streamDef ? getStreamColor(streamDef.colorKey).hex : '#64748b';
                                           const intensity = 1.2; // Consistent intensity for macro view
                                           return (
                                             <Drop
@@ -1304,7 +1304,7 @@ export function PulseDashboard() {
 
                                       {Object.entries(dropsByStream).map(([streamId, streamDrops]) => {
                                         const stream = STAGING_STREAM_MAP[streamId];
-                                        const streamColor = stream ? STREAM_COLORS[stream.colorKey].hex : '#475569';
+                                        const streamColor = stream ? getStreamColor(stream.colorKey).hex : '#475569';
 
                                         return (
                                           <div
@@ -1337,7 +1337,7 @@ export function PulseDashboard() {
                                               <div className="absolute inset-0 flex items-center">
                                                 {streamDrops.map(drop => {
                                                   const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
-                                                  const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
+                                                  const streamColorHex = streamDef ? getStreamColor(streamDef.colorKey).hex : '#64748b';
                                                   const isLateCriticalPath = criticalPathDropIds.has(drop.id) && violatingDropIds.has(drop.id);
 
                                                   return (
@@ -1481,7 +1481,7 @@ export function PulseDashboard() {
 
                                         const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
                                         const owner = TEAM_MEMBERS[drop.lane]?.name || 'Unknown';
-                                        const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
+                                        const streamColorHex = streamDef ? getStreamColor(streamDef.colorKey).hex : '#64748b';
 
                                         const isLateCriticalPath = criticalPathDropIds.has(drop.id) && violatingDropIds.has(drop.id);
 
@@ -1568,7 +1568,7 @@ export function PulseDashboard() {
                                               <div className="absolute inset-0 flex items-center">
                                                 {memberDrops.map(drop => {
                                                   const streamDef = STAGING_STREAM_MAP[drop.streamId || ''];
-                                                  const streamColorHex = streamDef ? STREAM_COLORS[streamDef.colorKey].hex : '#64748b';
+                                                  const streamColorHex = streamDef ? getStreamColor(streamDef.colorKey).hex : '#64748b';
                                                   const isLateCriticalPath = criticalPathDropIds.has(drop.id) && violatingDropIds.has(drop.id);
 
                                                   return (
@@ -1630,7 +1630,7 @@ export function PulseDashboard() {
                           const stats = streamStats.find(s => s.id === stream.id)!;
                           const isExpanded = expandedStreamIds.has(stream.id);
                           const streamDef = STAGING_STREAM_MAP[stream.id];
-                          const streamColor = STREAM_COLORS[streamDef?.colorKey as StreamColorKey] || STREAM_COLORS.slate;
+                          const streamColor = getStreamColor(streamDef?.colorKey);
                           const isFocused = focusedStreamId === stream.id;
 
                           return (

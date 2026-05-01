@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Network, Search, AlertTriangle, Blocks } from 'lucide-react';
-import { STREAM_COLORS } from '@/lib/streams';
+import { STREAM_COLORS, getStreamColor } from '@/lib/streams';
 import { STAGING_STREAMS, STAGING_DROPS } from '@/lib/stagingData';
 
 export function DependencyMatrix() {
@@ -200,7 +200,7 @@ export function DependencyMatrix() {
                 {layer.streams.map(streamId => {
                   const stream = getStream(streamId);
                   if (!stream) return null;
-                  const colorHex = STREAM_COLORS[stream.colorKey].hex;
+                  const colorHex = getStreamColor(stream.colorKey).hex;
 
                   return (
                     <motion.div
