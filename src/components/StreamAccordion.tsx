@@ -3,7 +3,7 @@
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDown, CheckCircle2, CircleDashed, Activity, ListChecks, Info, Zap, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { STREAM_COLORS } from '@/lib/streams';
+import { STREAM_COLORS, getStreamColor } from '@/lib/streams';
 import { STAGING_STREAMS, StagingStream, StagingDrop } from '@/lib/stagingData';
 import { useState } from 'react';
 
@@ -128,7 +128,7 @@ export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?:
       className="w-full flex flex-col gap-4 z-10 max-w-4xl mx-auto"
     >
       {streams.map((stream) => {
-        const colorHex = STREAM_COLORS[stream.colorKey].hex;
+        const colorHex = getStreamColor(stream.colorKey).hex;
         const totalDrops = stream.drops.length;
         const completedDrops = stream.drops.filter((d) => d.status === 'Completed').length;
         const notStarted = stream.drops.filter((d) => d.status === 'Not Started').length;

@@ -237,7 +237,7 @@ export function DependencyMatrix() {
                                 <div className="flex flex-col gap-3">
                                   {CRITICAL_BRIDGES[stream.id].map((bridge, bIdx) => {
                                     const tStream = getStream(bridge.targetStream);
-                                    const tColorHex = tStream ? STREAM_COLORS[tStream.colorKey].hex : '#94a3b8';
+                                    const tColorHex = tStream ? getStreamColor(tStream.colorKey).hex : '#94a3b8';
                                     return (
                                       <div key={bIdx} className="flex flex-col gap-1.5 p-2 bg-black/20 rounded-xl border border-white/5">
                                         <div className="flex items-center gap-1.5">
