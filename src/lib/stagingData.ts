@@ -15,7 +15,7 @@ export interface StagingDrop {
 
 export interface StagingStream {
   workstream_id: string; id: string; title: string; description: string;
-  initials: string; colorKey: StreamColorKey; priority: string;
+  initials: string; colorKey: string; priority: string;
   complexity: number; estimated_completion_time: number;
   workstream_hash: string; project: string; drops: StagingDrop[];
 }
