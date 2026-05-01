@@ -14,11 +14,11 @@ export interface StreamDef {
 }
 
 export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> = {
-  indigo: { hex: '#6366f1', tw: 'indigo-500' },
-  fuchsia: { hex: '#D946EF', tw: 'fuchsia-500' },
-  emerald: { hex: '#059669', tw: 'emerald-600' },
-  pink: { hex: '#EC4899', tw: 'pink-500' },
-  violet: { hex: '#8B5CF6', tw: 'violet-600' },
+  indigo: { hex: '#818CF8', tw: 'indigo-400' },
+  fuchsia: { hex: '#E879F9', tw: 'fuchsia-400' },
+  emerald: { hex: '#34D399', tw: 'emerald-400' },
+  pink: { hex: '#38BDF8', tw: 'sky-400' },
+  violet: { hex: '#A78BFA', tw: 'violet-400' },
   slate: { hex: '#94A3B8', tw: 'slate-400' },
 };
 

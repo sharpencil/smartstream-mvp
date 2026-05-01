@@ -5,6 +5,9 @@ import { motion } from 'framer-motion';
 import { ChevronUp, ChevronDown, ListTodo } from 'lucide-react';
 import { DropData } from './PulseDashboard';
 import { Drop } from './Drop';
+import { getStreamColor, PALETTE_KEYS } from '@/lib/streams';
+import { STAGING_STREAMS } from '@/lib/stagingData';
+import { useMemo } from 'react';
 
 interface BacklogTrayProps {
   unassignedDrops: DropData[];
@@ -14,6 +17,15 @@ interface BacklogTrayProps {
 
 export function BacklogTray({ unassignedDrops, onDragEnd, isSandboxActive }: BacklogTrayProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const streamColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    STAGING_STREAMS.forEach((s, idx) => {
+      const colorKey = PALETTE_KEYS[idx % PALETTE_KEYS.length];
+      map[s.id] = getStreamColor(colorKey).hex;
+    });
+    return map;
+  }, []);
 
   return (
     <motion.div
@@ -51,6 +63,7 @@ export function BacklogTray({ unassignedDrops, onDragEnd, isSandboxActive }: Bac
                     effortHours={drop.effortHours}
                     xOffset={0}
                     streamId={drop.streamId}
+                    streamColorHex={drop.streamId ? streamColorMap[drop.streamId] : undefined}
                     isDraft={isSandboxActive}
                     onDragEnd={onDragEnd}
                     dragTooltip="Adding to Flow..."

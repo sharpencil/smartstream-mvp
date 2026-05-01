@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Network, Search, AlertTriangle, Blocks } from 'lucide-react';
-import { STREAM_COLORS, getStreamColor } from '@/lib/streams';
+import { STREAM_COLORS, getStreamColor, PALETTE_KEYS } from '@/lib/streams';
 import { STAGING_STREAMS, STAGING_DROPS } from '@/lib/stagingData';
 
 export function DependencyMatrix() {
@@ -88,12 +88,25 @@ export function DependencyMatrix() {
     });
     return bridges;
   }, []);
+  
+  // 3. Consistent color mapping for streams
+  const streamColors = useMemo(() => {
+    const colors: Record<string, { hex: string, key: string }> = {};
+    STAGING_STREAMS.forEach((s, idx) => {
+      const colorKey = PALETTE_KEYS[idx % PALETTE_KEYS.length];
+      colors[s.id] = { 
+        hex: getStreamColor(colorKey).hex,
+        key: colorKey
+      };
+    });
+    return colors;
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="w-full flex-1 flex flex-col relative overflow-hidden bg-[#061124] rounded-3xl border border-slate-800/60 shadow-inner shadow-cyan-900/10 min-h-[600px] mt-4"
+      className="w-full flex-1 flex flex-col relative overflow-hidden bg-[#061124] rounded-3xl border border-slate-800/60 shadow-inner shadow-indigo-900/10 min-h-[600px] mt-4"
     >
       <div className="flex items-center justify-between p-6 border-b border-white/5 bg-[#0a192f]/50">
         <div className="flex items-center gap-3">
@@ -130,7 +143,7 @@ export function DependencyMatrix() {
               <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
             </marker>
             <marker id="arrowhead-active" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
-              <polygon points="0 0, 6 2, 0 4" fill="#22d3ee" />
+              <polygon points="0 0, 6 2, 0 4" fill="#818CF8" />
             </marker>
           </defs>
 
@@ -169,8 +182,8 @@ export function DependencyMatrix() {
                     animate={{ 
                       pathLength: 1, 
                       opacity: isRelated ? 1 : 0.4,
-                      stroke: isRelated ? '#22d3ee' : '#94a3b8',
-                      strokeWidth: isRelated ? 3 : 1.5
+                      stroke: isRelated ? streamColors[stream.id].hex : '#334155',
+                      strokeWidth: isRelated ? 3 : 1
                     }}
                     d={`M ${startX} ${startY} C ${cp1X} ${startY}, ${cp2X} ${endY}, ${endX} ${endY}`} 
                     markerEnd={isRelated ? "url(#arrowhead-active)" : "url(#arrowhead)"}
@@ -200,7 +213,8 @@ export function DependencyMatrix() {
                 {layer.streams.map(streamId => {
                   const stream = getStream(streamId);
                   if (!stream) return null;
-                  const colorHex = getStreamColor(stream.colorKey).hex;
+                  const streamColor = streamColors[stream.id];
+                  const colorHex = streamColor.hex;
 
                   return (
                     <motion.div
@@ -237,7 +251,8 @@ export function DependencyMatrix() {
                                 <div className="flex flex-col gap-3">
                                   {CRITICAL_BRIDGES[stream.id].map((bridge, bIdx) => {
                                     const tStream = getStream(bridge.targetStream);
-                                    const tColorHex = tStream ? getStreamColor(tStream.colorKey).hex : '#94a3b8';
+                                    const tStreamColor = tStream ? streamColors[tStream.id] : null;
+                                    const tColorHex = tStreamColor ? tStreamColor.hex : '#475569';
                                     return (
                                       <div key={bIdx} className="flex flex-col gap-1.5 p-2 bg-black/20 rounded-xl border border-white/5">
                                         <div className="flex items-center gap-1.5">

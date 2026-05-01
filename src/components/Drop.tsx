@@ -158,7 +158,7 @@ export function Drop({
                 <span className={cn(
                   'text-[8px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-sm',
                   isCompleted ? 'bg-green-500/20 text-green-400'
-                    : isActive ? 'bg-cyan-500/20 text-cyan-400'
+                    : isActive ? 'bg-blue-500/20 text-blue-400'
                       : 'bg-slate-500/20 text-slate-400'
                 )}>
                   {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'}
@@ -288,7 +288,7 @@ export function Drop({
             {/* Active shimmer */}
             <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none -z-10">
               {isActive && !isBlocked && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
               )}
               {isBlocked && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-400/8 to-transparent w-[200%] animate-[shimmer_3s_infinite]" />
@@ -319,11 +319,11 @@ export function Drop({
             )}
             <div className="flex items-center gap-2 mb-1">
               {isCompleted && <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />}
-              {isActive && <div className="w-4 h-4 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-cyan-400" /></div>}
+              {isActive && <div className="w-4 h-4 shrink-0 rounded-full border-2 border-blue-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-blue-400" /></div>}
               <span className={cn(
                 'text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full',
                 isCompleted ? 'bg-green-950/60 text-green-400 border border-green-500/30'
-                  : isActive ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30'
+                  : isActive ? 'bg-blue-950/60 text-blue-400 border border-blue-500/30'
                     : 'bg-slate-800/60 text-slate-400 border border-slate-700/30'
               )}>
                 {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Not Started'}

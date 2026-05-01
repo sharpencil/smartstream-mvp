@@ -1696,7 +1696,8 @@ export function PulseDashboard() {
                                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/50 text-slate-400">
                                             <span className="text-slate-500">PRIORITY</span>
                                             <span className={cn(
-                                              stream.priority === 'High' ? 'text-rose-400' : 'text-cyan-400'
+                                              stream.priority === 'High' ? 'text-rose-400' : 
+                                              stream.priority === 'Medium-High' ? 'text-amber-400' : 'text-blue-400'
                                             )}>{stream.priority}</span>
                                           </div>
                                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/50 text-slate-400">

@@ -3,7 +3,7 @@
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDown, CheckCircle2, CircleDashed, Activity, ListChecks, Info, Zap, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { STREAM_COLORS, getStreamColor } from '@/lib/streams';
+import { STREAM_COLORS, getStreamColor, PALETTE_KEYS } from '@/lib/streams';
 import { STAGING_STREAMS, StagingStream, StagingDrop } from '@/lib/stagingData';
 import { useState } from 'react';
 
@@ -22,7 +22,7 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
           ? 'bg-green-950/10 border-green-500/20'
           : isNotStarted
           ? 'bg-slate-900/40 border-white/5'
-          : 'bg-cyan-950/20 border-cyan-500/20'
+          : 'bg-blue-950/20 border-blue-500/20'
       )}
     >
       {/* Drop header row */}
@@ -38,8 +38,8 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
         ) : isNotStarted ? (
           <CircleDashed className="w-4 h-4 text-slate-500/60 shrink-0" />
         ) : (
-          <div className="w-4 h-4 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
-            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+          <div className="w-4 h-4 shrink-0 rounded-full border-2 border-blue-400 flex items-center justify-center animate-pulse">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
           </div>
         )}
 
@@ -48,7 +48,7 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
           <p
             className={cn(
               'text-sm font-medium leading-snug line-clamp-2',
-              isCompleted ? 'text-green-100' : isNotStarted ? 'text-slate-400' : 'text-cyan-100'
+              isCompleted ? 'text-green-100' : isNotStarted ? 'text-slate-400' : 'text-blue-100'
             )}
           >
             {drop.title}
@@ -73,7 +73,7 @@ function DropRow({ drop, idx, streamColorHex }: { drop: StagingDrop; idx: number
               ? 'bg-green-950/40 text-green-400 border-green-500/30'
               : isNotStarted
               ? 'bg-slate-800/60 text-slate-500 border-slate-700/30'
-              : 'bg-cyan-950/40 text-cyan-400 border-cyan-500/30'
+              : 'bg-blue-950/40 text-blue-400 border-blue-500/30'
           )}>
             {drop.status}
           </span>
@@ -124,11 +124,12 @@ export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?:
   return (
     <Accordion.Root
       type="multiple"
-      defaultValue={streams.slice(0, 2).map((s) => s.id)}
+      defaultValue={[]}
       className="w-full flex flex-col gap-4 z-10 max-w-4xl mx-auto"
     >
-      {streams.map((stream) => {
-        const colorHex = getStreamColor(stream.colorKey).hex;
+      {streams.map((stream, idx) => {
+        const colorKey = PALETTE_KEYS[idx % PALETTE_KEYS.length];
+        const colorHex = getStreamColor(colorKey).hex;
         const totalDrops = stream.drops.length;
         const completedDrops = stream.drops.filter((d) => d.status === 'Completed').length;
         const notStarted = stream.drops.filter((d) => d.status === 'Not Started').length;
@@ -230,8 +231,8 @@ export function StreamAccordion({ type = 'drafted', showDrops = true }: { type?:
                     <div className="flex flex-col flex-1 items-center justify-center py-2.5 border-r border-slate-800/50">
                       <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest mb-0.5">In Progress</span>
                       <div className="flex items-center gap-1.5">
-                        <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="text-sm font-bold text-cyan-300">{inProgress}</span>
+                        <Activity className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="text-sm font-bold text-blue-300">{inProgress}</span>
                       </div>
                     </div>
                     <div className="flex flex-col flex-1 items-center justify-center py-2.5">
