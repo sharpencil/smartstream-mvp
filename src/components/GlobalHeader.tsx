@@ -29,7 +29,7 @@ export function GlobalHeader() {
   const [selectedProject, setSelectedProject] = useState(projects[0]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-[#162744]/60 backdrop-blur-2xl border-b border-white/15 z-50 px-6 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-[#162744]/60 backdrop-blur-2xl border-b border-white/15 z-[150] px-6 flex items-center justify-between">
       <div className="flex items-center gap-12">
         {/* Logo */}
         <div className="h-12 min-w-[48px] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">

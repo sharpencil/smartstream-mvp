@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, CircleDashed, AlertTriangle, Link, ChevronDown } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ChevronDown } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { Reference } from '@/lib/streams';
@@ -47,6 +47,7 @@ export interface DropProps {
   streamName?: string;
   milestoneContribution?: string;
   ownerVelocity?: number;
+  enableStreamHover?: boolean;
 }
 
 /** Map complexity 1–9 to a pixel width multiplier for the card. */
@@ -99,6 +100,7 @@ export function Drop({
   streamName,
   milestoneContribution,
   ownerVelocity,
+  enableStreamHover = true,
 }: DropProps) {
   const isGhost = state === 'ghost';
   const isDraggable = !!onDragEnd;
@@ -113,21 +115,20 @@ export function Drop({
 
   // Dim-highlight: if any stream or drop is being hovered, or if forceDimmed is applied
   const isStreamHovered = hoveredStreamId != null;
-  const isMatchingStream = hoveredStreamId === streamId && streamId != null;
-  const isDimmed = 
-    (hoveredStreamId && hoveredStreamId !== streamId) || 
-    ((hoveredDropId || selectedDropId) && hoveredDropId !== id && selectedDropId !== id && !hasDependencies) || 
+  const isMatchingStream = enableStreamHover && hoveredStreamId === streamId && streamId != null;
+  const isSelfHovered = hoveredDropId === id;
+  const isDimmed =
+    (enableStreamHover && hoveredStreamId && hoveredStreamId !== streamId) ||
+    ((hoveredDropId || selectedDropId) && !isMatchingStream && !isSelfHovered && selectedDropId !== id && !hasDependencies) ||
     forceDimmed;
 
-  // Complexity badge label
-  const complexityLabel = complexity ? `C${complexity}` : null;
 
   // Compute box shadow
   const getBoxShadow = () => {
     if (isLateCriticalPath) return '0 0 20px rgba(244,63,94,0.6), inset 0 0 12px rgba(244,63,94,0.3)';
     if (variant === 'minimal') return 'none';
     if (isMilestoneViolation) return '0 0 20px rgba(244,63,94,0.5), inset 0 0 12px rgba(244,63,94,0.1)';
-    if (isMatchingStream && streamColorHex) return `0 0 20px ${streamColorHex}80, inset 0 0 10px ${streamColorHex}20`;
+    if ((isMatchingStream || isSelfHovered) && streamColorHex) return `0 0 20px ${streamColorHex}80, inset 0 0 10px ${streamColorHex}20`;
     if (isCompleted) return '0 4px 6px -1px rgb(0 0 0 / 0.1)';
     if (isActive && !isBlocked) return '0 0 15px rgba(6,182,212,0.3)';
     if (isActive && isBlocked) return '0 0 20px rgba(244,63,94,0.4)';
@@ -153,7 +154,7 @@ export function Drop({
                   'text-[8px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-sm',
                   isCompleted ? 'bg-green-500/20 text-green-400'
                     : isActive ? 'bg-cyan-500/20 text-cyan-400'
-                    : 'bg-slate-500/20 text-slate-400'
+                      : 'bg-slate-500/20 text-slate-400'
                 )}>
                   {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'}
                 </span>
@@ -204,43 +205,46 @@ export function Drop({
             onClick={() => onSelectDrop?.(selectedDropId === id ? null : id)}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{
-              opacity: isDimmed ? 0.10 : 1, // Enforce solid opacity unless dimmed 
-              scale: (variant === 'full' && isMatchingStream) || isCriticalPath ? 1.05 : 1,
+              opacity: isDimmed ? 0.10 : (variant === 'minimal' ? 0.8 : 1),
+              scale: (variant === 'full' && (isMatchingStream || isSelfHovered)) || isCriticalPath ? 1.05 : 1,
               boxShadow: isCriticalPath ? `0 0 15px 5px ${streamColorHex}40` : getBoxShadow(),
+              border: variant === 'minimal' ? '1px solid rgba(0,0,0,0.3)' : undefined,
               width,
               height: variant === 'minimal' ? tubeHeight : undefined,
-              filter: isCriticalPath 
-                ? 'brightness(1.5) saturate(1.5)' 
-                : (variant === 'minimal' ? `saturate(${1 + (intensity - 1) * 0.4})` : undefined),
+              filter: isCriticalPath
+                ? 'brightness(1.5) saturate(1.5)'
+                : undefined,
               zIndex: isBlocked || isCriticalPath ? 40 : 20 // Enforce visual Z-index priority 
             }}
-          whileHover={{ 
-            scale: variant === 'minimal' ? 1.1 : (isDimmed ? 0.99 : 1.02), 
-            filter: 'brightness(1.2) saturate(1.2)',
-            zIndex: 50
-          }}
-          onMouseEnter={() => {
-            if (streamId) onHoverStream?.(streamId);
-            onHoverDrop?.(id);
-            setIsHovered(true);
-          }}
-          onMouseLeave={() => {
-            onHoverStream?.(null);
-            onHoverDrop?.(null);
-            setIsHovered(false);
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: isMatchingStream ? 15 : 30 }}
-          style={{
-            backgroundImage: isBlocked
-              ? (variant === 'minimal' ? undefined : 'repeating-linear-gradient(45deg, rgba(244,63,94,0.12) 0px, rgba(244,63,94,0.12) 4px, transparent 4px, transparent 12px)')
-              : undefined,
-            ...(variant === 'full' && isMatchingStream && streamColorHex ? {
-              borderColor: streamColorHex,
-              borderWidth: '2px',
-            } : {}),
-            ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
-            backgroundColor: variant === 'minimal' ? (isBlocked ? '#f43f5e' : (isGhost ? (isReady ? '#06b6d4' : '#64748b') : streamColorHex)) : undefined
-          }}
+            whileHover={{
+              scale: variant === 'minimal' ? 1.1 : (isDimmed ? 0.99 : 1.02),
+              filter: 'brightness(1.2) saturate(1.2)',
+              zIndex: 50
+            }}
+            onMouseEnter={() => {
+              if (enableStreamHover) {
+                onHoverStream?.(streamId || null);
+              }
+              onHoverDrop?.(id);
+              setIsHovered(true);
+            }}
+            onMouseLeave={() => {
+              onHoverStream?.(null);
+              onHoverDrop?.(null);
+              setIsHovered(false);
+            }}
+            transition={{ type: 'spring', stiffness: 300, damping: isMatchingStream ? 15 : 30 }}
+            style={{
+              backgroundImage: isBlocked
+                ? (variant === 'minimal' ? undefined : 'repeating-linear-gradient(45deg, rgba(244,63,94,0.12) 0px, rgba(244,63,94,0.12) 4px, transparent 4px, transparent 12px)')
+                : undefined,
+              ...(variant === 'full' && (isMatchingStream || isSelfHovered) && streamColorHex ? {
+                borderColor: streamColorHex,
+                borderWidth: '2px',
+              } : {}),
+              ...(isDraft || (variant === 'minimal' && isGhost) ? { borderStyle: 'dashed' } : {}),
+              backgroundColor: variant === 'minimal' ? (isBlocked ? '#f43f5e' : (isGhost ? (isReady ? '#06b6d4' : '#64748b') : streamColorHex)) : undefined
+            }}
             {...(isDraggable ? {
               drag: true,
               dragSnapToOrigin: true,
@@ -253,8 +257,8 @@ export function Drop({
               }
             } : {})}
             className={cn(
-              variant === 'full' ? 'h-16 rounded-full pl-6 pr-4' : 'rounded-full px-2',
-              'flex items-center cursor-pointer backdrop-blur-md border border-white/10 relative group transition-all duration-300 z-20 outline-none -ml-1',
+              variant === 'full' ? 'h-16 rounded-full px-6' : 'rounded-full px-2',
+              'flex items-center cursor-pointer backdrop-blur-md border border-white/10 relative group transition-all duration-300 z-20 outline-none',
               isCompleted && variant === 'full' && 'bg-green-950/20 border-green-500/30 hover:bg-green-900/30',
               isActive && !isBlocked && variant === 'full' && 'bg-gradient-to-r from-blue-900/60 to-cyan-900/40 border-cyan-500/50 hover:border-cyan-400',
               isActive && isBlocked && variant === 'full' && 'bg-rose-950/40 border-rose-500/70 hover:border-rose-400',
@@ -275,61 +279,27 @@ export function Drop({
               </div>
             )}
 
-            {/* Complexity badge */}
-            {variant === 'full' && complexityLabel && (
-              <div
-                className="absolute bottom-1.5 right-3 text-[8px] font-bold tracking-[0.15em] opacity-40"
-                style={{ color: streamColorHex || '#94a3b8' }}
-              >
-                {complexityLabel}
-              </div>
-            )}
 
             {/* Milestone violation pulse ring */}
             {(isMilestoneViolation || isLateCriticalPath) && (
               <div className={cn("absolute inset-0 rounded-full border border-amber-500/40 animate-pulse pointer-events-none", (variant === 'minimal' && !isLateCriticalPath) && 'border-amber-500/60', isLateCriticalPath && 'border-rose-500/80 shadow-[0_0_15px_rgba(244,63,94,0.5)]')} />
             )}
 
-            {/* Dependency indicator */}
-            {hasDependencies && variant === 'full' && (
-              <div className={cn(
-                "absolute bottom-0.5 right-6 z-40 p-0.5 rounded-full border shadow-sm transition-colors",
-                isDependencyBlocked
-                  ? "bg-rose-950 border-rose-500/50 text-rose-400 animate-pulse"
-                  : "bg-slate-900/80 border-slate-700/50 text-slate-400"
-              )}>
-                <Link className="w-2.5 h-2.5" />
-              </div>
-            )}
 
-            <div className="flex items-center gap-3 w-full">
+            <div className="absolute inset-0 flex items-center justify-center">
               {variant === 'full' && (
                 <>
                   {isBlocked ? (
-                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                   ) : isCompleted ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-slate-500/40 shrink-0" />
                   ) : isActive ? (
-                    <div className="w-5 h-5 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
-                      <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                    <div className="w-4 h-4 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center animate-pulse">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400" />
                     </div>
-                  ) : (
-                    <CircleDashed className={cn('w-5 h-5 shrink-0', isMilestoneViolation ? 'text-amber-500/60' : 'text-teal-500/50')} />
-                  )}
-
-                  <span className={cn(
-                    'text-sm font-medium truncate pointer-events-none',
-                    isCompleted ? 'text-green-100'
-                      : isActive ? 'text-cyan-50'
-                      : isMilestoneViolation ? 'text-amber-200/80'
-                      : 'text-teal-200/70',
-                  )}>
-                    {title}
-                  </span>
+                  ) : null}
                 </>
               )}
-
-
             </div>
 
             {/* Active shimmer */}
@@ -355,7 +325,7 @@ export function Drop({
         <Popover.Content
           sideOffset={10}
           side="top"
-          className="w-80 bg-[#0a192f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.15)] outline-none z-50 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[480px]"
+          className="w-80 bg-[#0a192f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.15)] outline-none z-[100] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[480px]"
         >
           {/* Header */}
           <div className="p-4 pb-3 border-b border-white/10 relative flex-shrink-0">
@@ -366,21 +336,15 @@ export function Drop({
             )}
             <div className="flex items-center gap-2 mb-1">
               {isCompleted && <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />}
-              {isGhost && <CircleDashed className="w-4 h-4 text-teal-400/60 shrink-0" />}
               {isActive && <div className="w-4 h-4 shrink-0 rounded-full border-2 border-cyan-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-cyan-400" /></div>}
               <span className={cn(
                 'text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full',
                 isCompleted ? 'bg-green-950/60 text-green-400 border border-green-500/30'
                   : isActive ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30'
-                  : 'bg-slate-800/60 text-slate-400 border border-slate-700/30'
+                    : 'bg-slate-800/60 text-slate-400 border border-slate-700/30'
               )}>
                 {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Not Started'}
               </span>
-              {complexity && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800/60 text-slate-400 border border-slate-700/30">
-                  Weight {complexity}/9
-                </span>
-              )}
             </div>
             <h4 className="text-sm font-bold text-cyan-50 leading-snug mt-2 pr-8">{title}</h4>
             {isMilestoneViolation && (
