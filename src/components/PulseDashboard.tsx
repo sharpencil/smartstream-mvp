@@ -1160,7 +1160,7 @@ export function PulseDashboard() {
 
                 {/* ── Swimlane Rows ── */}
                 {viewLevel === 'team' ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-0">
                     <AnimatePresence mode="popLayout">
                       {TEAM_MEMBERS
                         .filter(m => !focusedMemberId || m.id === focusedMemberId)
@@ -1187,8 +1187,8 @@ export function PulseDashboard() {
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.3 } }}
                               className={cn(
-                                "mb-4 rounded-[40px] transition-all duration-700",
-                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "mb-2"
+                                "transition-all duration-700",
+                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "border-b border-white/5"
                               )}
                               style={{ minWidth: (PROJECT_END_X * zoomScale) + 320 }}
                             >
@@ -1366,7 +1366,7 @@ export function PulseDashboard() {
                   </div>
                 ) : viewLevel === 'milestones' ? (
                   // ── MILESTONES VIEW ──
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-0">
                     <AnimatePresence mode="popLayout">
                       {milestones
                         .filter(m => !focusedMilestoneId || m.id === focusedMilestoneId)
@@ -1388,8 +1388,8 @@ export function PulseDashboard() {
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.3 } }}
                               className={cn(
-                                "mb-4 rounded-[40px] transition-all duration-700",
-                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "mb-2"
+                                "transition-all duration-700",
+                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "border-b border-white/5"
                               )}
                               style={{ minWidth: (PROJECT_END_X * zoomScale) + currentSidebarWidth }}
                             >
@@ -1398,7 +1398,7 @@ export function PulseDashboard() {
                                 <div
                                   className={cn(
                                     "shrink-0 flex items-center gap-4 py-6 px-8 sticky left-0 z-[60] border-r border-[#0a192f]/50 bg-[#020617] transition-all duration-500",
-                                    isFocused ? "shadow-[30px_0_60px_rgba(0,0,0,0.8)] rounded-l-[38px]" : "shadow-[15px_0_40px_rgba(0,0,0,0.7)]"
+                                    isFocused ? "shadow-[30px_0_60px_rgba(0,0,0,0.8)]" : "shadow-[15px_0_40px_rgba(0,0,0,0.7)]"
                                   )}
                                   style={{ width: currentSidebarWidth }}
                                 >
@@ -1598,7 +1598,7 @@ export function PulseDashboard() {
                   </div>
                 ) : (
                   // ── OVERVIEW (STREAMS) VIEW ──
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-0">
                     <AnimatePresence mode="popLayout">
                       {[...STAGING_STREAMS]
                         .filter(s => !focusedStreamId || s.id === focusedStreamId)
@@ -1620,8 +1620,8 @@ export function PulseDashboard() {
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.3 } }}
                               className={cn(
-                                "mb-4 rounded-[40px] transition-all duration-700",
-                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "mb-2"
+                                "transition-all duration-700",
+                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "border-b border-white/5"
                               )}
                               style={{ minWidth: (PROJECT_END_X * zoomScale) + currentSidebarWidth }}
                               data-stream-id={stream.id}
@@ -1632,7 +1632,7 @@ export function PulseDashboard() {
                                 <div
                                   className={cn(
                                     "shrink-0 flex items-center gap-4 py-6 px-8 sticky left-0 z-[60] border-r border-[#0a192f]/50 bg-[#020617] transition-all duration-500",
-                                    isFocused ? "shadow-[30px_0_60px_rgba(0,0,0,0.8)] rounded-l-[38px]" : "shadow-[15px_0_40px_rgba(0,0,0,0.7)]"
+                                    isFocused ? "shadow-[30px_0_60px_rgba(0,0,0,0.8)]" : "shadow-[15px_0_40px_rgba(0,0,0,0.7)]"
                                   )}
                                   style={{ width: currentSidebarWidth }}
                                 >
