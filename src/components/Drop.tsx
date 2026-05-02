@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Check, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Check, AlertTriangle, ChevronDown, Clock } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { Reference } from '@/lib/streams';
@@ -111,6 +111,7 @@ export function Drop({
   const [rationale, setRationale] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMouseOverPopup, setIsMouseOverPopup] = useState(false);
 
   const width = getDropWidth({ effortHours, complexity }, zoomScale);
   const actualLeft = xOffset * zoomScale;
@@ -144,14 +145,14 @@ export function Drop({
   };
 
   return (
-    <Popover.Root>
+    <Popover.Root open={isSelected} onOpenChange={(open) => !open && onSelectDrop?.(null)}>
       <div className="relative" style={{ position: 'absolute', left: actualLeft }}>
-        {/* Smart Tooltip (Minimal Only) */}
-        {variant === 'minimal' && isHovered && (
+        {/* Smart Tooltip */}
+        {isHovered && !isSelected && (
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-[999] w-64 p-3 bg-[#030b1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] pointer-events-none origin-bottom"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-[130] w-64 p-3 bg-[#030b1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] pointer-events-none origin-bottom"
           >
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
@@ -161,7 +162,7 @@ export function Drop({
                     : isActive ? 'bg-blue-500/20 text-blue-400'
                       : 'bg-slate-500/20 text-slate-400'
                 )}>
-                  {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'}
+                  {isCompleted ? 'Completed' : isActive ? 'Active' : 'Planned'} • {effortHours}h
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 flex items-center">
                   {ownerName}
@@ -221,7 +222,7 @@ export function Drop({
               filter: isCriticalPath
                 ? 'brightness(1.5) saturate(1.5)'
                 : undefined,
-              zIndex: isSelected || isBlocked || isCriticalPath || isMilestoneViolation ? 40 : 20 
+              zIndex: isSelected || isBlocked || isCriticalPath || isMilestoneViolation ? 40 : 20
             }}
             whileHover={{
               scale: variant === 'minimal' ? 1.2 : (isDimmed ? 0.99 : 1.02),
@@ -256,7 +257,7 @@ export function Drop({
             )}
           >
             {/* Identity Notch */}
-            <div 
+            <div
               className={cn(
                 "absolute left-0 top-0 bottom-0 w-[4px] z-50",
                 isCompleted && "opacity-40"
@@ -272,7 +273,7 @@ export function Drop({
                   ) : isCompleted ? (
                     <Check className="w-3.5 h-3.5 text-white/40 shrink-0" />
                   ) : null}
-                  
+
                   <span className={cn(
                     "text-[11px] font-bold truncate transition-colors",
                     isCompleted ? "text-white/40" : "text-white"
@@ -308,15 +309,15 @@ export function Drop({
         <Popover.Content
           sideOffset={10}
           side="top"
-          className="w-80 bg-[#0a192f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.15)] outline-none z-[100] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[480px]"
+          onMouseEnter={() => setIsMouseOverPopup(true)}
+          onMouseLeave={() => setIsMouseOverPopup(false)}
+          className={cn(
+            "w-80 bg-[#0a192f]/60 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] outline-none z-[1000] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[480px] transition-all duration-500",
+            isSelected && !isHovered && !isMouseOverPopup ? "opacity-10 scale-[0.98] blur-[2px]" : "opacity-100 scale-100 blur-0"
+          )}
         >
           {/* Header */}
           <div className="p-4 pb-3 border-b border-white/10 relative flex-shrink-0">
-            {streamInitials && (
-              <div className="absolute top-3 right-3 text-[10px] font-bold tracking-[0.2em] opacity-40 uppercase" style={{ color: streamColorHex || '#fff' }}>
-                {streamInitials}
-              </div>
-            )}
             <div className="flex items-center gap-2 mb-1">
               {isCompleted && <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />}
               {isActive && <div className="w-4 h-4 shrink-0 rounded-full border-2 border-blue-400 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-blue-400" /></div>}
@@ -327,6 +328,17 @@ export function Drop({
                     : 'bg-slate-800/60 text-slate-400 border border-slate-700/30'
               )}>
                 {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Not Started'}
+              </span>
+              <span className="text-[10px] font-bold text-slate-500 ml-auto flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {effortHours}h
+                </span>
+                {streamInitials && (
+                  <span className="opacity-40 uppercase tracking-[0.2em]" style={{ color: streamColorHex || '#fff' }}>
+                    {streamInitials}
+                  </span>
+                )}
               </span>
             </div>
             <h4 className="text-sm font-bold text-cyan-50 leading-snug mt-2 pr-8">{title}</h4>

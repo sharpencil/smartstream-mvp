@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentPanel, FeedItem } from './AgentPanel';
 import { Drop, DropState, getDropWidth } from './Drop';
@@ -8,7 +8,8 @@ import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
 import { STREAM_COLORS, StreamColorKey, Reference, PALETTE_KEYS, getStreamColor } from '@/lib/streams';
-import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search } from 'lucide-react';
+import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock } from 'lucide-react';
+import { format, addDays, startOfDay, addHours, differenceInDays, isWeekend, startOfWeek } from 'date-fns';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
 
@@ -37,17 +38,154 @@ export interface Milestone {
   xOffset: number; // canvas-space x (pre-zoom)
 }
 
+const DAY_WIDTH = 80;
+const START_DATE = startOfDay(new Date());
+
+// Helper to map xOffset to Date
+function xToDate(x: number, nowX: number): Date {
+  const daysFromNow = (x - nowX) / DAY_WIDTH;
+  return addDays(new Date(), daysFromNow);
+}
+
+// ── TimeAxis Component ──────────────────────────────────────────────────────
+function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, selectedDrop }: {
+  zoomScale: number,
+  nowX: number,
+  totalWidth: number,
+  sidebarWidth: number,
+  hoveredDrop?: DropData | null,
+  selectedDrop?: DropData | null
+}) {
+  const dayWidth = DAY_WIDTH * zoomScale;
+  const numDays = Math.ceil(totalWidth / dayWidth) + 10;
+
+  // Breakpoints
+  const isHighZoom = zoomScale > 1.2;
+  const isLowZoom = zoomScale < 0.4;
+
+  const labels = useMemo(() => {
+    const items = [];
+    const now = startOfDay(new Date());
+
+    if (isHighZoom) {
+      // 2-hour increments
+      const numHours = numDays * 24;
+      for (let i = -10; i < numHours; i += 2) {
+        const date = addHours(now, i);
+        const x = (i / 24 * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
+        items.push({ x, label: format(date, 'ha'), type: 'hour' });
+      }
+    } else if (isLowZoom) {
+      // Month/4-Week increments - Sync with GridLayer
+      const step = zoomScale < 0.15 ? 4 : 2;
+      for (let i = -4; i < numDays / 7 + 10; i += step) {
+        const date = startOfWeek(addDays(now, i * 7));
+        const dayOffset = differenceInDays(date, now);
+        const x = (dayOffset * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
+        items.push({ x, label: `Wk ${format(date, 'w')}`, type: 'week' });
+      }
+    } else {
+      // Day increments
+      for (let i = -5; i < numDays; i++) {
+        const date = addDays(now, i);
+        const x = (i * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
+        items.push({ x, label: format(date, 'EEE MMM d'), type: 'day' });
+      }
+    }
+    return items;
+  }, [isHighZoom, isLowZoom, numDays, zoomScale, nowX]);
+
+  return (
+    <div className="sticky top-0 z-[110] h-12 w-full border-b border-white/5 bg-[#020617]/80 backdrop-blur-md overflow-hidden pointer-events-none">
+      <div className="relative h-full" style={{ marginLeft: sidebarWidth }}>
+        {labels.map((item, i) => (
+          <div
+            key={i}
+            className="absolute top-0 bottom-0 flex flex-col justify-end pb-2"
+            style={{ left: item.x }}
+          >
+            <span className={cn(
+              "text-[9px] font-bold tracking-widest uppercase transition-all duration-500 whitespace-nowrap",
+              item.type === 'day' ? "text-slate-400" : "text-slate-600"
+            )}>
+              {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── GridLayer Component ─────────────────────────────────────────────────────
+function GridLayer({ zoomScale, nowX, totalWidth, sidebarWidth }: {
+  zoomScale: number,
+  nowX: number,
+  totalWidth: number,
+  sidebarWidth: number
+}) {
+  const dayWidth = DAY_WIDTH * zoomScale;
+  const numDays = Math.ceil(totalWidth / dayWidth) + 10;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" style={{ marginLeft: sidebarWidth }}>
+      {Array.from({ length: numDays }).map((_, i) => {
+        const offset = i - 5;
+        const isLowZoom = zoomScale < 0.4;
+
+        // Synchronize with TimeAxis step logic
+        const step = zoomScale < 0.15 ? 28 : 14; // 4 weeks or 2 weeks in days
+        if (isLowZoom && offset % step !== 0) return null;
+
+        const x = (offset * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
+        const date = addDays(startOfDay(new Date()), offset);
+        const weekend = isWeekend(date);
+
+        return (
+          <React.Fragment key={i}>
+            {/* Weekend Trench */}
+            {weekend && (
+              <div
+                className="absolute top-0 bottom-0 bg-black/20 backdrop-brightness-75"
+                style={{ left: x, width: dayWidth }}
+              >
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#0ea5e9_1px,_transparent_1px)] bg-[size:12px_12px]" />
+              </div>
+            )}
+
+            {/* Day Divider */}
+            <div
+              className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-teal-500/20 via-teal-500/5 to-transparent"
+              style={{ left: x }}
+            />
+
+            {/* Workday Segments (8h) */}
+            <div
+              className="absolute top-0 bottom-0 w-px border-l border-dashed border-teal-500/5"
+              style={{ left: x + (dayWidth / 3) }}
+            />
+            <div
+              className="absolute top-0 bottom-0 w-px border-l border-dashed border-teal-500/5"
+              style={{ left: x + (dayWidth * 2 / 3) }}
+            />
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
 
 
 // ── Staging stream definition map ────────────────────────────────────────────
 const STAGING_STREAM_MAP = Object.fromEntries(
   STAGING_STREAMS.map((s, idx) => [
     s.id,
-    { 
-      id: s.id, 
-      title: s.title, 
-      initials: s.initials, 
-      colorKey: PALETTE_KEYS[idx % PALETTE_KEYS.length] 
+    {
+      id: s.id,
+      title: s.title,
+      initials: s.initials,
+      colorKey: PALETTE_KEYS[idx % PALETTE_KEYS.length]
     },
   ])
 );
@@ -323,6 +461,7 @@ export function PulseDashboard() {
 
   const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
   const [minZoom, setMinZoom] = useState(0.05);
+  const [isNowLineHovered, setIsNowLineHovered] = useState(false);
 
   // Initial zoom calculation to fit the whole timeline in the available real estate
   useEffect(() => {
@@ -461,6 +600,10 @@ export function PulseDashboard() {
 
   const [hoveredStreamId, setHoveredStreamId] = useState<string | null>(null);
   const [hoveredDropId, setHoveredDropId] = useState<string | null>(null);
+
+  const handleHoverDrop = (id: string | null) => {
+    setHoveredDropId(id);
+  };
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
   const [selectedStreamDependencyId, setSelectedStreamDependencyId] = useState<string | null>(null);
   const [nodePositions, setNodePositions] = useState<Record<string, { x: number, y: number }>>({});
@@ -832,6 +975,9 @@ export function PulseDashboard() {
             {/* Scrollable Flow Area (Horizontal) */}
             <div
               ref={scrollContainerRef}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setSelectedDropId(null);
+              }}
               className={cn(
                 'flex flex-col pt-0 pb-32 overflow-x-auto custom-scrollbar relative min-w-0 transition-all duration-500'
               )}>
@@ -903,7 +1049,7 @@ export function PulseDashboard() {
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  
+
                   <div className="px-3 flex items-center">
                     <input
                       type="range"
@@ -966,25 +1112,61 @@ export function PulseDashboard() {
                   </AnimatePresence>
                 </div>
               </div>
+              
+              <TimeAxis 
+                zoomScale={zoomScale} 
+                nowX={NOW_LINE_X} 
+                totalWidth={PROJECT_END_X * zoomScale} 
+                sidebarWidth={currentSidebarWidth}
+                hoveredDrop={hoveredDropId ? drops.find(d => d.id === hoveredDropId) : null}
+                selectedDrop={selectedDropId ? drops.find(d => d.id === selectedDropId) : null}
+              />
+
+              {/* Now Line Distance Gauge (Hover-based) */}
+              <AnimatePresence>
+                {isNowLineHovered && selectedDropId && (drops.find(d => d.id === selectedDropId)?.xOffset || 0) > NOW_LINE_BASE && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="absolute top-[135px] pointer-events-none z-[120] flex items-center gap-2 bg-cyan-500 text-cyan-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+                    style={{ left: (NOW_LINE_X * zoomScale) + currentSidebarWidth + 10 }}
+                  >
+                    <Clock className="w-3 h-3" />
+                    T-minus {Math.max(1, Math.round((drops.find(d => d.id === selectedDropId)!.xOffset - NOW_LINE_BASE) / DAY_WIDTH))} days
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Now Line */}
               <div
-                className="absolute top-[120px] bottom-0 w-[2px] bg-gradient-to-b from-cyan-400/0 via-cyan-400 to-cyan-400/0 z-10
-                       animate-time-pulse
+                onMouseEnter={() => setIsNowLineHovered(true)}
+                onMouseLeave={() => setIsNowLineHovered(false)}
+                className="absolute top-[120px] bottom-0 w-[2px] bg-gradient-to-b from-cyan-400/0 via-cyan-400 to-cyan-400/0 z-[120]
+                       animate-time-pulse cursor-pointer group
                        before:absolute before:content-[''] before:left-1/2 before:-translate-x-1/2 before:-top-3
                        before:w-3.5 before:h-3.5 before:bg-cyan-400 before:rounded-full before:shadow-[0_0_10px_rgba(34,211,238,1)]
+                       before:hover:scale-125 before:transition-transform
                        after:content-['NOW'] after:absolute after:-top-8 after:left-1/2 after:-translate-x-1/2
                        after:text-cyan-400 after:text-xs after:font-bold after:tracking-widest
                        transition-all duration-500"
                 style={{ left: (NOW_LINE_X * zoomScale) + currentSidebarWidth }}
-              />
+              >
+                <div className="absolute top-0 -left-4 -right-4 bottom-0" /> {/* Larger hit area */}
+              </div>
 
               {/* Swimlanes container */}
-              <div className="flex flex-col gap-0 mt-14 relative">
+              <div className="flex flex-col gap-0 mt-6 relative">
+                <GridLayer
+                  zoomScale={zoomScale}
+                  nowX={NOW_LINE_X}
+                  totalWidth={PROJECT_END_X * zoomScale}
+                  sidebarWidth={currentSidebarWidth}
+                />
 
 
-                {/* Dependency Traces SVG Layer */}
-                <svg id="svg-overlay-container" className="absolute inset-0 w-full h-full pointer-events-none z-50 overflow-visible">
+                {/* Dependency Traces SVG Layer - Elevated above popups with additive blending */}
+                <svg id="svg-overlay-container" className="absolute inset-0 w-full h-full pointer-events-none z-[1500] overflow-visible" style={{ mixBlendMode: 'plus-lighter' }}>
                   <defs>
                     <filter id="underwater-blur">
                       <feGaussianBlur stdDeviation="3" result="blur" />
@@ -1051,7 +1233,7 @@ export function PulseDashboard() {
                                 return;
                               }
 
-                              if (drop.id === hoveredDropId || parent.id === hoveredDropId) {
+                              if (drop.id === selectedDropId || parent.id === selectedDropId) {
                                 const key = `${parent.id}-${drop.id}`;
                                 // Only draw if BOTH ends are rendered in the DOM (have stored positions)
                                 const bothRendered = nodePositions[`drop-${parent.id}`] !== undefined && nodePositions[`drop-${drop.id}`] !== undefined;
@@ -1102,13 +1284,13 @@ export function PulseDashboard() {
                         <motion.path
                           key={`drop-${src.id}-${dst.id}`}
                           initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ 
-                            pathLength: 1, 
+                          animate={{
+                            pathLength: 1,
                             opacity: (hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) ? 1 : 0.6,
                             strokeDashoffset: (selectedDropId === src.id || selectedDropId === dst.id) ? [0, -20] : 0
                           }}
                           exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                          transition={{ 
+                          transition={{
                             pathLength: { duration: 0.5, ease: "easeInOut" },
                             strokeDashoffset: { repeat: Infinity, duration: 1, ease: "linear" }
                           }}
@@ -1118,10 +1300,10 @@ export function PulseDashboard() {
                           strokeWidth={(hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) || isBroken ? "3" : "1.5"}
                           strokeDasharray={(selectedDropId === src.id || selectedDropId === dst.id) ? "10,5" : "none"}
                           className={cn(isBroken && !isSimulating && 'animate-pulse')}
-                          style={{ 
-                            filter: (hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id) 
-                              ? `drop-shadow(0 0 8px ${traceColor})` 
-                              : 'none' 
+                          style={{
+                            filter: (hoveredDropId === src.id || hoveredDropId === dst.id || selectedDropId === src.id || selectedDropId === dst.id)
+                              ? `drop-shadow(0 0 8px ${traceColor})`
+                              : 'none'
                           }}
                         />
                       );
@@ -1270,7 +1452,7 @@ export function PulseDashboard() {
                                               zoomScale={zoomScale}
                                               onHoverStream={setHoveredStreamId}
                                               hoveredStreamId={hoveredStreamId}
-                                              onHoverDrop={setHoveredDropId}
+                                              onHoverDrop={handleHoverDrop}
                                               selectedDropId={selectedDropId}
                                               onSelectDrop={setSelectedDropId}
                                               isMilestoneViolation={violatingDropIds.has(drop.id)}
@@ -1356,7 +1538,7 @@ export function PulseDashboard() {
                                                       zoomScale={zoomScale}
                                                       onHoverStream={setHoveredStreamId}
                                                       hoveredStreamId={hoveredStreamId}
-                                                      onHoverDrop={setHoveredDropId}
+                                                      onHoverDrop={handleHoverDrop}
                                                       selectedDropId={selectedDropId}
                                                       onSelectDrop={setSelectedDropId}
                                                       hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
@@ -1504,7 +1686,7 @@ export function PulseDashboard() {
                                             zoomScale={zoomScale}
                                             onHoverStream={setHoveredStreamId}
                                             hoveredStreamId={hoveredStreamId}
-                                            onHoverDrop={setHoveredDropId}
+                                            onHoverDrop={handleHoverDrop}
                                             selectedDropId={selectedDropId}
                                             onSelectDrop={setSelectedDropId}
                                             hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
@@ -1589,7 +1771,7 @@ export function PulseDashboard() {
                                                       zoomScale={zoomScale}
                                                       onHoverStream={setHoveredStreamId}
                                                       hoveredStreamId={hoveredStreamId}
-                                                      onHoverDrop={setHoveredDropId}
+                                                      onHoverDrop={handleHoverDrop}
                                                       selectedDropId={selectedDropId}
                                                       onSelectDrop={setSelectedDropId}
                                                       hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
@@ -1660,13 +1842,13 @@ export function PulseDashboard() {
                                   {/* Stream Content Stack */}
                                   <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     {/* Top Line: Name and Focus Controls */}
-                                      <div className="flex-1 flex items-center gap-3 group/title">
-                                        <h3 className={cn(
-                                          "flex-1 font-bold transition-all truncate tracking-tight",
-                                          isFocused ? "text-xl text-white" : "text-sm text-slate-100 group-hover/title:text-white"
-                                        )}>
-                                          {stream.title}
-                                        </h3>
+                                    <div className="flex-1 flex items-center gap-3 group/title">
+                                      <h3 className={cn(
+                                        "flex-1 font-bold transition-all truncate tracking-tight",
+                                        isFocused ? "text-xl text-white" : "text-sm text-slate-100 group-hover/title:text-white"
+                                      )}>
+                                        {stream.title}
+                                      </h3>
 
                                       {!isFocused && (
                                         <button
@@ -1696,8 +1878,8 @@ export function PulseDashboard() {
                                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/50 text-slate-400">
                                             <span className="text-slate-500">PRIORITY</span>
                                             <span className={cn(
-                                              stream.priority === 'High' ? 'text-rose-400' : 
-                                              stream.priority === 'Medium-High' ? 'text-amber-400' : 'text-blue-400'
+                                              stream.priority === 'High' ? 'text-rose-400' :
+                                                stream.priority === 'Medium-High' ? 'text-amber-400' : 'text-blue-400'
                                             )}>{stream.priority}</span>
                                           </div>
                                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/50 text-slate-400">
@@ -1784,7 +1966,7 @@ export function PulseDashboard() {
                                             zoomScale={zoomScale}
                                             onHoverStream={setHoveredStreamId}
                                             hoveredStreamId={hoveredStreamId}
-                                            onHoverDrop={setHoveredDropId}
+                                            onHoverDrop={handleHoverDrop}
                                             selectedDropId={selectedDropId}
                                             onSelectDrop={setSelectedDropId}
                                             hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
@@ -1858,7 +2040,7 @@ export function PulseDashboard() {
                                                     zoomScale={zoomScale}
                                                     onHoverStream={setHoveredStreamId}
                                                     hoveredStreamId={hoveredStreamId}
-                                                    onHoverDrop={setHoveredDropId}
+                                                    onHoverDrop={handleHoverDrop}
                                                     selectedDropId={selectedDropId}
                                                     onSelectDrop={setSelectedDropId}
                                                     hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
