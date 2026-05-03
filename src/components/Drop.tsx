@@ -58,8 +58,14 @@ export function complexityToWidth(complexity: number, zoomScale: number = 1): nu
 }
 
 export function getDropWidth(drop: { effortHours: number, complexity?: number }, zoomScale: number = 1): number {
+  // Use effortHours as the ground truth for duration (scaled to 80px per 24h)
+  if (drop.effortHours > 0) {
+    const baseWidth = (drop.effortHours / 24) * 80;
+    return Math.max(12, baseWidth) * zoomScale;
+  }
+  
   if (drop.complexity) return complexityToWidth(drop.complexity, zoomScale);
-  return Math.max(120 * zoomScale, (drop.effortHours * 80) * zoomScale);
+  return 80 * zoomScale;
 }
 
 export function Drop({

@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
 import { STREAM_COLORS, StreamColorKey, Reference, PALETTE_KEYS, getStreamColor } from '@/lib/streams';
 import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock } from 'lucide-react';
-import { format, addDays, startOfDay, addHours, differenceInDays, isWeekend, startOfWeek } from 'date-fns';
+import { format, addDays, startOfDay, addHours, differenceInDays, differenceInWeeks, isWeekend, startOfWeek } from 'date-fns';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
 
@@ -56,62 +56,87 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
   hoveredDrop?: DropData | null,
   selectedDrop?: DropData | null
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const dayWidth = DAY_WIDTH * zoomScale;
-  const numDays = Math.ceil(totalWidth / dayWidth) + 10;
+  
+  // Transitions: Weeks (default) -> Days (zoomed)
+  const weekOpacity = Math.max(0, Math.min(1, (0.85 - zoomScale) / 0.1));
+  const dayOpacity = Math.max(0, Math.min(1, (zoomScale - 0.75) / 0.1));
 
-  // Breakpoints
-  const isHighZoom = zoomScale > 1.2;
-  const isLowZoom = zoomScale < 0.4;
+  const layers = useMemo(() => {
+    if (!mounted) return { weeks: [], days: [] };
+    
+    const startOfToday = START_DATE;
+    const startOfThisWeek = startOfWeek(startOfToday, { weekStartsOn: 1 });
+    
+    // Dynamic range based on viewport
+    const startDay = Math.floor(-nowX / DAY_WIDTH) - 10;
+    const endDay = Math.ceil((totalWidth / zoomScale - nowX) / DAY_WIDTH) + 2;
+    
+    const res = { weeks: [] as any[], days: [] as any[] };
 
-  const labels = useMemo(() => {
-    const items = [];
-    const now = startOfDay(new Date());
+    // 1. Weeks
+    if (weekOpacity > 0) {
+      for (let i = startDay - 7; i < endDay + 7; i++) {
+        const date = addDays(startOfToday, i);
+        const dayOfThisWeek = (date.getDay() + 6) % 7;
+        const isMacro = zoomScale < 0.35;
 
-    if (isHighZoom) {
-      // 2-hour increments
-      const numHours = numDays * 24;
-      for (let i = -10; i < numHours; i += 2) {
-        const date = addHours(now, i);
-        const x = (i / 24 * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
-        items.push({ x, label: format(date, 'ha'), type: 'hour' });
-      }
-    } else if (isLowZoom) {
-      // Month/4-Week increments - Sync with GridLayer
-      const step = zoomScale < 0.15 ? 4 : 2;
-      for (let i = -4; i < numDays / 7 + 10; i += step) {
-        const date = startOfWeek(addDays(now, i * 7));
-        const dayOffset = differenceInDays(date, now);
-        const x = (dayOffset * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
-        items.push({ x, label: `Wk ${format(date, 'w')}`, type: 'week' });
-      }
-    } else {
-      // Day increments
-      for (let i = -5; i < numDays; i++) {
-        const date = addDays(now, i);
-        const x = (i * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
-        items.push({ x, label: format(date, 'EEE MMM d'), type: 'day' });
+        if (isMacro) {
+          const weekOffset = differenceInWeeks(date, startOfThisWeek);
+          const weekStep = zoomScale < 0.2 ? 4 : 2;
+          if (dayOfThisWeek !== 0 || Math.abs(weekOffset) % weekStep !== 0) continue;
+        } else if (zoomScale < 0.7) {
+          if (dayOfThisWeek !== 0) continue;
+        } else {
+          if (dayOfThisWeek !== 0) continue;
+        }
+
+        const x = (i * DAY_WIDTH + nowX) * zoomScale;
+        res.weeks.push({ x, label: `WK ${format(date, 'w')}` });
       }
     }
-    return items;
-  }, [isHighZoom, isLowZoom, numDays, zoomScale, nowX]);
+
+    // 2. Days
+    if (dayOpacity > 0) {
+      // Adaptive day stepping: show every 2nd day if zoom is low
+      const dayStep = zoomScale < 1.0 ? 2 : 1;
+      for (let i = startDay; i < endDay; i++) {
+        if (i % dayStep !== 0) continue;
+        const date = addDays(startOfToday, i);
+        const x = (i * DAY_WIDTH + nowX) * zoomScale;
+        res.days.push({ x, label: format(date, 'EEE d') });
+      }
+    }
+
+    return res;
+  }, [mounted, zoomScale, nowX, totalWidth, weekOpacity, dayOpacity]);
 
   return (
-    <div className="sticky top-0 z-[110] h-12 w-full border-b border-white/5 bg-[#020617]/80 backdrop-blur-md overflow-hidden pointer-events-none">
-      <div className="relative h-full" style={{ marginLeft: sidebarWidth }}>
-        {labels.map((item, i) => (
-          <div
-            key={i}
-            className="absolute top-0 bottom-0 flex flex-col justify-end pb-2"
-            style={{ left: item.x }}
-          >
-            <span className={cn(
-              "text-[9px] font-bold tracking-widest uppercase transition-all duration-500 whitespace-nowrap",
-              item.type === 'day' ? "text-slate-400" : "text-slate-600"
-            )}>
-              {item.label}
-            </span>
-          </div>
-        ))}
+    <div 
+      className="sticky top-0 z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none" 
+      style={{ width: totalWidth + sidebarWidth }}
+      suppressHydrationWarning
+    >
+      <div className="relative h-full" style={{ marginLeft: sidebarWidth }} suppressHydrationWarning>
+        {/* Weeks */}
+        <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: weekOpacity }}>
+          {layers.weeks.map((item, i) => (
+            <div key={i} className="absolute top-0 bottom-0 flex flex-col justify-end pb-2" style={{ left: item.x }}>
+              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 whitespace-nowrap pl-1.5 pb-0.5">{item.label}</span>
+            </div>
+          ))}
+        </div>
+        {/* Days */}
+        <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: dayOpacity }}>
+          {layers.days.map((item, i) => (
+            <div key={i} className="absolute top-0 bottom-0 flex flex-col justify-end pb-2" style={{ left: item.x }}>
+              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-300 whitespace-nowrap px-1">{item.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -124,25 +149,39 @@ function GridLayer({ zoomScale, nowX, totalWidth, sidebarWidth }: {
   totalWidth: number,
   sidebarWidth: number
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const dayWidth = DAY_WIDTH * zoomScale;
-  const numDays = Math.ceil(totalWidth / dayWidth) + 10;
+  const startOfToday = START_DATE;
+  const startOfThisWeek = startOfWeek(startOfToday, { weekStartsOn: 1 });
+
+  // Dynamic range based on viewport
+  const startDay = Math.floor(-nowX / DAY_WIDTH) - 10;
+  const endDay = Math.ceil((totalWidth / zoomScale - nowX) / DAY_WIDTH) + 2;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" style={{ marginLeft: sidebarWidth }}>
-      {Array.from({ length: numDays }).map((_, i) => {
-        const offset = i - 5;
+    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" style={{ marginLeft: sidebarWidth }} suppressHydrationWarning>
+      {Array.from({ length: endDay - startDay + 20 }).map((_, i) => {
+        const offset = startDay + i;
+        const date = addDays(startOfToday, offset);
         const isLowZoom = zoomScale < 0.4;
 
-        // Synchronize with TimeAxis step logic
-        const step = zoomScale < 0.15 ? 28 : 14; // 4 weeks or 2 weeks in days
-        if (isLowZoom && offset % step !== 0) return null;
+        // Synchronize with TimeAxis step logic (Mondays)
+        if (isLowZoom) {
+          const dayOfThisWeek = differenceInDays(date, startOfWeek(date, { weekStartsOn: 1 }));
+          if (dayOfThisWeek !== 0) return null;
 
-        const x = (offset * DAY_WIDTH) * zoomScale + (nowX * zoomScale);
-        const date = addDays(startOfDay(new Date()), offset);
+          const weekOffset = differenceInWeeks(date, startOfThisWeek);
+          const weekStep = zoomScale < 0.15 ? 4 : 2;
+          if (Math.abs(weekOffset) % weekStep !== 0) return null;
+        }
+
+        const x = (offset * DAY_WIDTH + nowX) * zoomScale;
         const weekend = isWeekend(date);
 
         return (
-          <React.Fragment key={i}>
+          <React.Fragment key={offset}>
             {/* Weekend Trench */}
             {weekend && (
               <div
@@ -152,22 +191,6 @@ function GridLayer({ zoomScale, nowX, totalWidth, sidebarWidth }: {
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#0ea5e9_1px,_transparent_1px)] bg-[size:12px_12px]" />
               </div>
             )}
-
-            {/* Day Divider */}
-            <div
-              className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-teal-500/20 via-teal-500/5 to-transparent"
-              style={{ left: x }}
-            />
-
-            {/* Workday Segments (8h) */}
-            <div
-              className="absolute top-0 bottom-0 w-px border-l border-dashed border-teal-500/5"
-              style={{ left: x + (dayWidth / 3) }}
-            />
-            <div
-              className="absolute top-0 bottom-0 w-px border-l border-dashed border-teal-500/5"
-              style={{ left: x + (dayWidth * 2 / 3) }}
-            />
           </React.Fragment>
         );
       })}
@@ -199,12 +222,10 @@ export const TEAM_MEMBERS = uniqueOwnerIds.map((id, index) => ({
 if (TEAM_MEMBERS.length === 0) {
   TEAM_MEMBERS.push({ id: '1', name: 'Sarah' });
 }
-const DEFAULT_MILESTONES: Milestone[] = [
-  { id: 'm1', label: 'Tracking MVP', xOffset: 1400 },
-  { id: 'm2', label: 'DB Migration', xOffset: 2800 },
-  { id: 'm3', label: 'AI Eval Live', xOffset: 4500 },
-  { id: 'm4', label: 'Beta Release', xOffset: 6500 },
-  { id: 'm5', label: 'GA Launch', xOffset: 8500 },
+let DEFAULT_MILESTONES: Milestone[] = [
+  { id: 'm1', label: 'Tracking MVP', xOffset: 800, status: 'locked', date: 'May 15' },
+  { id: 'm2', label: 'DB Migration', xOffset: 1600, status: 'locked', date: 'Jun 10' },
+  { id: 'm3', label: 'AI Eval Live', xOffset: 2400, status: 'locked', date: 'Jul 15' }
 ];
 
 //  Completed   → left of NOW_LINE_BASE (pre-Now)
@@ -385,7 +406,7 @@ DEFAULT_MILESTONES.forEach(m => { m.xOffset += X_SHIFT; });
 const PROJECT_END_X = Math.max(
   Math.max(...INITIAL_DROPS.map(d => d.xOffset + getDropWidth({ effortHours: d.effortHours, complexity: d.complexity }, 1))),
   Math.max(...DEFAULT_MILESTONES.map(m => m.xOffset))
-) + 250; // Increased padding for last milestone label
+) + 100; // Tighter padding for last milestone label
 
 const INITIAL_ZOOM = Math.min(1, 1400 / Math.max(PROJECT_END_X, 100));
 
@@ -1140,19 +1161,18 @@ export function PulseDashboard() {
 
               {/* Now Line */}
               <div
-                onMouseEnter={() => setIsNowLineHovered(true)}
-                onMouseLeave={() => setIsNowLineHovered(false)}
                 className="absolute top-[120px] bottom-0 w-[2px] bg-gradient-to-b from-cyan-400/0 via-cyan-400 to-cyan-400/0 z-[120]
-                       animate-time-pulse cursor-pointer group
+                       animate-time-pulse pointer-events-none
                        before:absolute before:content-[''] before:left-1/2 before:-translate-x-1/2 before:-top-3
                        before:w-3.5 before:h-3.5 before:bg-cyan-400 before:rounded-full before:shadow-[0_0_10px_rgba(34,211,238,1)]
-                       before:hover:scale-125 before:transition-transform
+                       before:hover:scale-125 before:transition-transform before:pointer-events-auto before:cursor-pointer
                        after:content-['NOW'] after:absolute after:-top-8 after:left-1/2 after:-translate-x-1/2
                        after:text-cyan-400 after:text-xs after:font-bold after:tracking-widest
                        transition-all duration-500"
                 style={{ left: (NOW_LINE_X * zoomScale) + currentSidebarWidth }}
+                onMouseEnter={() => setIsNowLineHovered(true)}
+                onMouseLeave={() => setIsNowLineHovered(false)}
               >
-                <div className="absolute top-0 -left-4 -right-4 bottom-0" /> {/* Larger hit area */}
               </div>
 
               {/* Swimlanes container */}
@@ -1457,8 +1477,9 @@ export function PulseDashboard() {
                                               onSelectDrop={setSelectedDropId}
                                               isMilestoneViolation={violatingDropIds.has(drop.id)}
                                               hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                              isDependencyBlocked={drop.isBlocked}
+                                              isBlocked={drop.isBlocked}
                                               isReady={drop.isReady}
+                                              ownerName={member.name}
                                             />
                                           );
                                         })}
@@ -1542,7 +1563,7 @@ export function PulseDashboard() {
                                                       selectedDropId={selectedDropId}
                                                       onSelectDrop={setSelectedDropId}
                                                       hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                                      isDependencyBlocked={drop.isBlocked}
+                                                      isBlocked={drop.isBlocked}
                                                       forceDimmed={false}
                                                       isCriticalPath={false}
                                                       isLateCriticalPath={false}
@@ -1690,7 +1711,7 @@ export function PulseDashboard() {
                                             selectedDropId={selectedDropId}
                                             onSelectDrop={setSelectedDropId}
                                             hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                            isDependencyBlocked={drop.isBlocked}
+                                            isBlocked={drop.isBlocked}
                                             forceDimmed={false}
                                             isCriticalPath={false}
                                             isLateCriticalPath={false}
@@ -1775,7 +1796,7 @@ export function PulseDashboard() {
                                                       selectedDropId={selectedDropId}
                                                       onSelectDrop={setSelectedDropId}
                                                       hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                                      isDependencyBlocked={drop.isBlocked}
+                                                      isBlocked={drop.isBlocked}
                                                       forceDimmed={false}
                                                       isCriticalPath={false}
                                                       isLateCriticalPath={false}
@@ -1970,7 +1991,7 @@ export function PulseDashboard() {
                                             selectedDropId={selectedDropId}
                                             onSelectDrop={setSelectedDropId}
                                             hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                            isDependencyBlocked={drop.isBlocked}
+                                            isBlocked={drop.isBlocked}
                                             forceDimmed={false}
                                             isCriticalPath={false}
                                             isReady={drop.isReady}
@@ -2044,7 +2065,7 @@ export function PulseDashboard() {
                                                     selectedDropId={selectedDropId}
                                                     onSelectDrop={setSelectedDropId}
                                                     hasDependencies={(drop.dependsOn && drop.dependsOn.length > 0) || drops.some(d => d.dependsOn?.includes(drop.id))}
-                                                    isDependencyBlocked={drop.isBlocked}
+                                                    isBlocked={drop.isBlocked}
                                                     variant="full"
                                                     enableStreamHover={false}
                                                   />

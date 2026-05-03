@@ -32,7 +32,7 @@ export function BacklogTray({ unassignedDrops, onDragEnd, isSandboxActive }: Bac
       initial={false}
       animate={{ y: isOpen ? 0 : 'calc(100% - 48px)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 left-8 right-[400px] z-[60] flex flex-col items-center pointer-events-none"
+      className="fixed bottom-0 left-8 right-[400px] z-[150] flex flex-col items-center pointer-events-none"
     >
       <div className="w-full max-w-4xl bg-[#0b1929]/95 backdrop-blur-xl border border-white/10 rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pointer-events-auto">
         
