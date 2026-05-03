@@ -133,7 +133,7 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
         <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: dayOpacity }}>
           {layers.days.map((item, i) => (
             <div key={i} className="absolute top-0 bottom-0 flex flex-col justify-end pb-2" style={{ left: item.x }}>
-              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-300 whitespace-nowrap px-1">{item.label}</span>
+              <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 whitespace-nowrap px-1">{item.label}</span>
             </div>
           ))}
         </div>
