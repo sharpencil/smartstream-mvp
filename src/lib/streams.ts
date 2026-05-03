@@ -13,20 +13,23 @@ export interface StreamDef {
   workstream_hash?: string;
 }
 
-export const STREAM_COLORS: Record<StreamColorKey, { hex: string, tw: string }> = {
+export const STREAM_COLORS: Record<string, { hex: string, tw: string }> = {
   indigo: { hex: '#818CF8', tw: 'indigo-400' },
-  fuchsia: { hex: '#E879F9', tw: 'fuchsia-400' },
-  emerald: { hex: '#34D399', tw: 'emerald-400' },
-  pink: { hex: '#38BDF8', tw: 'sky-400' },
   violet: { hex: '#A78BFA', tw: 'violet-400' },
+  emerald: { hex: '#10B981', tw: 'emerald-500' },
+  blue: { hex: '#3B82F6', tw: 'blue-500' },
   slate: { hex: '#94A3B8', tw: 'slate-400' },
+  // Redirects
+  cyan: { hex: '#3B82F6', tw: 'blue-500' },
+  teal: { hex: '#10B981', tw: 'emerald-500' },
+  purple: { hex: '#A78BFA', tw: 'violet-400' },
 };
 
-export const PALETTE_KEYS: StreamColorKey[] = ['indigo', 'fuchsia', 'emerald', 'pink', 'violet', 'slate'];
+export const PALETTE_KEYS = Object.keys(STREAM_COLORS);
 
 export function getStreamColor(colorKey: string | undefined): { hex: string, tw: string } {
-  if (colorKey && (PALETTE_KEYS as string[]).includes(colorKey)) {
-    return STREAM_COLORS[colorKey as StreamColorKey];
+  if (colorKey && STREAM_COLORS[colorKey]) {
+    return STREAM_COLORS[colorKey];
   }
   return STREAM_COLORS.slate;
 }
