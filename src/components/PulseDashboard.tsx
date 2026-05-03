@@ -36,6 +36,8 @@ export interface Milestone {
   id: string;
   label: string;
   xOffset: number; // canvas-space x (pre-zoom)
+  status?: 'locked' | 'unlocked';
+  date?: string;
 }
 
 const DAY_WIDTH = 80;
