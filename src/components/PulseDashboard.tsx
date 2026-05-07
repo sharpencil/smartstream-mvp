@@ -487,6 +487,7 @@ export function PulseDashboard() {
   const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
   const [minZoom, setMinZoom] = useState(0.05);
   const [isNowLineHovered, setIsNowLineHovered] = useState(false);
+  const initialZoomDone = useRef(false);
 
   // Initial zoom calculation to fit the whole timeline in the available real estate
   useEffect(() => {
@@ -497,8 +498,13 @@ export function PulseDashboard() {
         if (containerWidth > 0 && PROJECT_END_X > 0) {
           const fitZoom = containerWidth / PROJECT_END_X;
           const finalZoom = Math.min(1.2, Math.max(0.05, fitZoom));
-          setZoomScale(finalZoom);
           setMinZoom(finalZoom);
+          if (!initialZoomDone.current) {
+            setZoomScale(finalZoom);
+            initialZoomDone.current = true;
+          } else {
+            setZoomScale(prev => Math.max(prev, finalZoom));
+          }
         }
       }
     }, 150); // Delay to ensure layout and AgentPanel state are settled
