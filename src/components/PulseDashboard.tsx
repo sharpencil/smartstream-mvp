@@ -71,33 +71,35 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
     if (!mounted) return { weeks: [], days: [] };
     
     const startOfToday = START_DATE;
-    const startOfThisWeek = startOfWeek(startOfToday, { weekStartsOn: 1 });
     
     // Dynamic range based on viewport
     const startDay = Math.floor(-nowX / DAY_WIDTH) - 10;
     const endDay = Math.ceil((totalWidth / zoomScale - nowX) / DAY_WIDTH) + 2;
-    
+
     const res = { weeks: [] as any[], days: [] as any[] };
 
     // 1. Weeks
     if (weekOpacity > 0) {
-      for (let i = startDay - 7; i < endDay + 7; i++) {
-        const date = addDays(startOfToday, i);
-        const dayOfThisWeek = (date.getDay() + 6) % 7;
+      const PROJECT_START_X = 24;
+      const WEEK_WIDTH = 7 * DAY_WIDTH;
+      const canvasStart = (startDay - 7) * DAY_WIDTH + nowX;
+      const canvasEnd = (endDay + 7) * DAY_WIDTH + nowX;
+      
+      const startW = Math.floor((canvasStart - PROJECT_START_X) / WEEK_WIDTH);
+      const endW = Math.ceil((canvasEnd - PROJECT_START_X) / WEEK_WIDTH);
+
+      for (let w = startW; w <= endW; w++) {
+        if (w < 0) continue; // Don't show weeks before project start
+
         const isMacro = zoomScale < 0.35;
+        const weekStep = zoomScale < 0.2 ? 4 : (isMacro ? 2 : 1);
+        
+        if (w % weekStep !== 0) continue;
 
-        if (isMacro) {
-          const weekOffset = differenceInWeeks(date, startOfThisWeek);
-          const weekStep = zoomScale < 0.2 ? 4 : 2;
-          if (dayOfThisWeek !== 0 || Math.abs(weekOffset) % weekStep !== 0) continue;
-        } else if (zoomScale < 0.7) {
-          if (dayOfThisWeek !== 0) continue;
-        } else {
-          if (dayOfThisWeek !== 0) continue;
-        }
-
-        const x = (i * DAY_WIDTH + nowX) * zoomScale;
-        res.weeks.push({ x, label: `WK ${format(date, 'w')}` });
+        const xOffset = PROJECT_START_X + w * WEEK_WIDTH;
+        const x = xOffset * zoomScale;
+        
+        res.weeks.push({ x, label: `WK ${w + 1}` });
       }
     }
 
@@ -122,7 +124,7 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
       style={{ width: totalWidth + sidebarWidth }}
       suppressHydrationWarning
     >
-      <div className="relative h-full" style={{ marginLeft: sidebarWidth }} suppressHydrationWarning>
+      <div className="relative h-full overflow-hidden" style={{ marginLeft: sidebarWidth }} suppressHydrationWarning>
         {/* Weeks */}
         <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: weekOpacity }}>
           {layers.weeks.map((item, i) => (
