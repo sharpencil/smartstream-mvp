@@ -873,7 +873,7 @@ export function PulseDashboard() {
     }, 1200);
   };
 
-  const handleDropEnd = (id: string, clientX: number, clientY: number) => {
+  const handleDragEnd = (id: string, clientX: number, clientY: number) => {
     setGenesisState('scanning');
     // Find drop target by temporarily hiding the dragged element?
     // Actually, simple approximation: lane Y starts at ~230. Each lane is ~100px.
