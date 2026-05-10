@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Trophy, History, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Zap, Trophy, History, CheckCircle2, TrendingUp, Target, Info, Clock, AlertTriangle, CheckCircle, Award } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,8 @@ import {
   DialogDescription,
 } from '@/components/ui/Dialog';
 import { Employee } from '@/lib/mockTeam';
+import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
+import { getStreamColor } from '@/lib/streams';
 import { cn } from '@/lib/utils';
 
 interface PerformanceModalProps {
@@ -37,6 +40,42 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
     hidden: { pathLength: 0, opacity: 0 },
     visible: { pathLength: 1, opacity: 1, transition: { duration: 1.5, ease: 'easeInOut' as any } }
   };
+
+  // Hydrate completed drops for this employee
+  const completedDrops = useMemo(() => {
+    const all: any[] = [];
+    STAGING_STREAMS.forEach(s => {
+      s.drops.forEach(d => {
+        // Map mock employees to staging data IDs (emp-1 -> 1, etc.)
+        const internalId = employee.id.replace('emp-', '');
+        if (d.owner_id === internalId && d.status === 'Completed') {
+          all.push({
+            ...d,
+            streamId: s.id,
+            completion_time: d.completion_time || (d.estimated_time * (1 + (parseInt(d.drop_id) % 30 - 10) / 100))
+          });
+        }
+      });
+    });
+    // Sort by streamId to enable merging
+    return all.sort((a, b) => a.streamId.localeCompare(b.streamId)).slice(0, 4);
+  }, [employee.id]);
+
+  const streamRowSpans = useMemo(() => {
+    const spans: Record<number, number> = {};
+    let i = 0;
+    while (i < completedDrops.length) {
+      let count = 1;
+      let j = i + 1;
+      while (j < completedDrops.length && completedDrops[j].streamId === completedDrops[i].streamId) {
+        count++;
+        j++;
+      }
+      spans[i] = count;
+      i = j;
+    }
+    return spans;
+  }, [completedDrops]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -98,36 +137,56 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
           </div>
 
           {/* Right Side: Performance Metrics */}
-          <div className="flex-1 pt-14 px-8 pb-8 space-y-10">
-            {/* Historical Velocity Chart */}
-            <div className="space-y-4">
+          <div className="flex-1 pt-12 px-8 pb-8 overflow-y-auto max-h-[85vh]">
+            {/* Task 1: Unified Header Metrics (Compact) */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center text-center relative group">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Velocity</p>
+                <h2 className="text-2xl font-bold text-slate-100 font-mono">1.2</h2>
+                <p className="text-[8px] font-bold text-cyan-400 mt-1 uppercase tracking-tighter">Drops/Day</p>
+              </div>
+
+              <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center text-center relative group">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Accuracy</p>
+                <h2 className={cn("text-2xl font-bold font-mono", employee.reliability < 90 ? "text-amber-400" : "text-teal-400")}>
+                  {employee.reliability}%
+                </h2>
+                <p className={cn("text-[8px] font-bold mt-1 uppercase tracking-tighter", employee.reliability < 90 ? "text-amber-500/70" : "text-teal-500/70")}>
+                   {employee.reliability < 90 ? "Latency" : "Precision"}
+                </p>
+              </div>
+
+              <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center text-center relative group">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-3">Streak</p>
+                <div className="flex items-center gap-1 w-full px-1">
+                  {[1, 1, 1, 0, 1].map((status, i) => (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "flex-1 h-4 rounded-sm transition-all",
+                        status ? "bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.3)]" : "bg-amber-500/30"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Task 3: Historical Velocity Chart */}
+            <div className="space-y-4 mb-10">
               <div className="flex justify-between items-end">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                   <History className="w-4 h-4 text-green-500/70" />
-                   Historical Velocity (6M)
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                   <History className="w-3.5 h-3.5 text-slate-500" />
+                   6-Month Trend
                 </h3>
-                <span className="text-[10px] text-slate-500 font-mono tracking-widest">UNIT: PTS / DROP</span>
               </div>
               
-              <div className="relative h-56 bg-black/30 rounded-3xl border border-white/5 p-4 overflow-hidden group">
+              <div className="relative h-40 bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden group">
                  <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
-                    {/* Grid Lines */}
-                    {[0, 1, 2, 3].map(line => (
-                      <line 
-                        key={line} 
-                        x1="0" 
-                        y1={(line/3) * (chartHeight - padding*2) + padding} 
-                        x2={chartWidth} 
-                        y2={(line/3) * (chartHeight - padding*2) + padding} 
-                        stroke="rgba(255,255,255,0.05)" 
-                        strokeWidth="1" 
-                      />
-                    ))}
-                    {/* The Path */}
                     <motion.polyline
                       points={points}
                       fill="none"
-                      stroke="url(#performance-gradient)"
+                      stroke="url(#modal-perf-gradient)"
                       strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -136,53 +195,98 @@ export function PerformanceModal({ employee, isOpen, onOpenChange }: Performance
                       variants={pathVariants}
                     />
                     <defs>
-                      <linearGradient id="performance-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <linearGradient id="modal-perf-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#0d9488" />
                         <stop offset="100%" stopColor="#22c55e" />
                       </linearGradient>
                     </defs>
-                    {/* Data Points */}
                     {employee.history.map((h, i) => {
                        const x = (i / (employee.history.length - 1)) * (chartWidth - padding * 2) + padding;
                        const y = chartHeight - (h.velocity / 120) * (chartHeight - padding * 2) - padding;
                        return (
-                          <motion.circle
-                            key={i}
-                            cx={x}
-                            cy={y}
-                            r="3"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.5 + i * 0.1 }}
-                            fill="#0a192f"
-                            stroke="#22c55e"
-                            strokeWidth="2"
-                          />
+                          <g key={i} className="group/point">
+                             <circle cx={x} cy={y} r="3" fill="#0a192f" stroke="#22c55e" strokeWidth="2" className="group-hover/point:r-5 transition-all" />
+                             <text 
+                               x={x} 
+                               y={y - 14} 
+                               textAnchor="middle" 
+                               className="text-[12px] font-black fill-green-400 opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none"
+                             >
+                               {h.velocity}
+                             </text>
+                          </g>
                        );
                     })}
                  </svg>
-                 {/* X-Axis Labels */}
-                 <div className="absolute bottom-2 left-4 right-4 flex justify-between">
-                    {employee.history.map(h => (
-                       <span key={h.date} className="text-[8px] text-slate-600 font-mono tracking-widest">{h.date}</span>
-                    ))}
-                 </div>
               </div>
             </div>
 
-             <div className="space-y-4">
-               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                   <Trophy className="w-4 h-4 text-green-400" />
-                   Stream Contributions
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                   {employee.projectHistory.map(project => (
-                      <div key={project} className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 group/item">
-                         <div className="p-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20"><CheckCircle2 className="w-3.5 h-3.5" /></div>
-                         <span className="text-sm text-slate-300 font-light group-hover/item:text-white transition-colors uppercase tracking-tight">{project}</span>
-                      </div>
-                   ))}
-                </div>
+            {/* Task 2: The 'Table Farm' (Compact) */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <History className="w-3.5 h-3.5 text-slate-500" />
+                 Table Farm Feed
+              </h3>
+              <div className="rounded-2xl border border-white/5 overflow-hidden">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900/50 text-[9px] uppercase font-black text-slate-600 tracking-widest border-b border-white/5">
+                      <th className="px-4 py-3 align-middle whitespace-nowrap">Stream</th>
+                      <th className="px-4 py-3 align-middle whitespace-nowrap">Drop</th>
+                      <th className="px-4 py-3 align-middle text-center whitespace-nowrap">Complexity</th>
+                      <th className="px-4 py-3 align-middle text-right whitespace-nowrap">Hours</th>
+                      <th className="px-4 py-3 align-middle text-center whitespace-nowrap">Latency</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {completedDrops.map((drop, idx) => {
+                      const sInfo = STAGING_STREAMS.find(s => s.id === drop.streamId);
+                      const sColor = getStreamColor(sInfo?.colorKey);
+                      const latency = Math.round(((drop.completion_time - drop.estimated_time) / drop.estimated_time) * 100);
+                      const rowSpan = streamRowSpans[idx];
+
+                      return (
+                        <tr key={drop.drop_id} className="hover:bg-white/[0.02] transition-colors group relative">
+                          {rowSpan && (
+                            <td rowSpan={rowSpan} className="px-4 py-3 align-top relative border-r border-white/5 bg-white/[0.01]">
+                              <div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ backgroundColor: sColor.hex }} />
+                              <span className="font-bold text-slate-300 text-[11px] sticky top-2">
+                                 {sInfo ? sInfo.title.charAt(0).toUpperCase() + sInfo.title.slice(1).toLowerCase() : 'Unknown'}
+                              </span>
+                            </td>
+                          )}
+                          <td className="px-4 py-3 align-middle">
+                             <span className="font-bold text-slate-400 block truncate w-32">{drop.title}</span>
+                          </td>
+                          <td className="px-4 py-3 align-middle text-center">
+                            <span className="inline-block text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/50"
+                              style={{ color: sColor.hex }}>
+                              C{drop.complexity}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 align-middle text-right tabular-nums text-slate-400">
+                            {drop.estimated_time}h / {drop.completion_time.toFixed(1)}h
+                          </td>
+                          <td className={cn("px-4 py-3 align-middle text-center font-mono font-bold", latency > 0 ? "text-amber-400" : "text-teal-400")}>
+                            {latency > 0 ? `+${latency}%` : `${latency}%`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Task 4: Oracle Audit AI Narrative */}
+            <div className="mt-8 p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-3">
+                 <Zap className="w-3.5 h-3.5 text-indigo-400" />
+                 <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Oracle Audit Narrative</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed italic">
+                "{employee.name.split(' ')[0]} is <span className="text-teal-400">15% faster</span> on API-related drops but has a <span className="text-amber-400">110% latency score</span> on Frontend tasks."
+              </p>
             </div>
           </div>
         </div>

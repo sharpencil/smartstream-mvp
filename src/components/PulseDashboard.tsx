@@ -2,16 +2,18 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AgentPanel, FeedItem } from './AgentPanel';
+
 import { Drop, DropState, getDropWidth } from './Drop';
 import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
 import { STREAM_COLORS, StreamColorKey, Reference, PALETTE_KEYS, getStreamColor } from '@/lib/streams';
-import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock } from 'lucide-react';
+import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock, ArrowLeft } from 'lucide-react';
 import { format, addDays, startOfDay, addHours, differenceInDays, differenceInWeeks, isWeekend, startOfWeek } from 'date-fns';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
+import { usePersona } from '@/context/PersonaContext';
+import { BurndownOverlay } from './BurndownOverlay';
 
 export interface DropData {
   id: string;
@@ -62,16 +64,16 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
   useEffect(() => setMounted(true), []);
 
   const dayWidth = DAY_WIDTH * zoomScale;
-  
+
   // Transitions: Weeks (default) -> Days (zoomed)
   const weekOpacity = Math.max(0, Math.min(1, (0.85 - zoomScale) / 0.1));
   const dayOpacity = Math.max(0, Math.min(1, (zoomScale - 0.75) / 0.1));
 
   const layers = useMemo(() => {
     if (!mounted) return { weeks: [], days: [] };
-    
+
     const startOfToday = START_DATE;
-    
+
     // Dynamic range based on viewport
     const startDay = Math.floor(-nowX / DAY_WIDTH) - 10;
     const endDay = Math.ceil((totalWidth / zoomScale - nowX) / DAY_WIDTH) + 2;
@@ -84,7 +86,7 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
       const WEEK_WIDTH = 7 * DAY_WIDTH;
       const canvasStart = (startDay - 7) * DAY_WIDTH + nowX;
       const canvasEnd = (endDay + 7) * DAY_WIDTH + nowX;
-      
+
       const startW = Math.floor((canvasStart - PROJECT_START_X) / WEEK_WIDTH);
       const endW = Math.ceil((canvasEnd - PROJECT_START_X) / WEEK_WIDTH);
 
@@ -93,12 +95,12 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
 
         const isMacro = zoomScale < 0.35;
         const weekStep = zoomScale < 0.2 ? 4 : (isMacro ? 2 : 1);
-        
+
         if (w % weekStep !== 0) continue;
 
         const xOffset = PROJECT_START_X + w * WEEK_WIDTH;
         const x = xOffset * zoomScale;
-        
+
         res.weeks.push({ x, label: `WK ${w + 1}` });
       }
     }
@@ -119,8 +121,8 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
   }, [mounted, zoomScale, nowX, totalWidth, weekOpacity, dayOpacity]);
 
   return (
-    <div 
-      className="sticky top-0 z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none" 
+    <div
+      className="sticky top-0 z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none"
       style={{ width: totalWidth + sidebarWidth }}
       suppressHydrationWarning
     >
@@ -461,6 +463,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
+  const { isDeepDive, setIsDeepDive, setActivePersona } = usePersona();
   const [viewLevel, setViewLevel] = useState<'streams' | 'team' | 'milestones'>('streams');
   const [focusedStreamId, setFocusedStreamId] = useState<string | null>(null);
   const [focusedMilestoneId, setFocusedMilestoneId] = useState<string | null>(null);
@@ -469,6 +472,7 @@ export function PulseDashboard() {
   const [expandedMilestoneIds, setExpandedMilestoneIds] = useState<Set<string>>(new Set());
   const [expandedMemberIds, setExpandedMemberIds] = useState<Set<string>>(new Set());
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
+  const [isBurndownOpen, setIsBurndownOpen] = useState(false);
 
   const [milestones, setMilestones] = useState<Milestone[]>(DEFAULT_MILESTONES);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
@@ -701,20 +705,7 @@ export function PulseDashboard() {
 
   const [memberVelocity, setMemberVelocity] = useState<Record<string, number>>(INITIAL_VELOCITY);
 
-  const [isAgentOpen, setIsAgentOpen] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
-  const [feed, setFeed] = useState<FeedItem[]>([
-    {
-      id: 'f1',
-      type: 'suggestion',
-      text: <span><span className="text-cyan-400 font-medium">Suggestion:</span> Sarah is projected to finish &quot;API Auth&quot; 2 hours early today. Should I pull &quot;Role Based Access&quot; into her afternoon Ghost Drop?</span>
-    },
-    {
-      id: 'f2',
-      type: 'alert',
-      text: <span><span className="text-rose-400 font-medium">Blocker Risk:</span> The current active drop for Mike depends on the database migration, which has encountered 3 retry failures in QA.</span>
-    }
-  ]);
+
 
   // ── Derived Briefing State ───────────────────────────────────────────────
 
@@ -962,30 +953,43 @@ export function PulseDashboard() {
 
   return (
     <>
-      <div className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out text-slate-50 pb-32",
+      <div className={cn("w-full flex flex-col p-8 transition-all duration-500 ease-in-out text-slate-50 pb-32",
         "bg-[#020617]",
-        isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]",
-        isAgentOpen ? "pr-[392px]" : "pr-8"
+        isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
       )}>
 
         {/* Header Controls */}
         <div className={cn(
           "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500 bg-[#020617]/90"
         )}>
-          <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
-            Pulse
-          </h1>
+          <div className="flex flex-col">
+            {isDeepDive && (
+              <button
+                onClick={() => {
+                  setIsDeepDive(false);
+                  setActivePersona('Org Owner');
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider mb-2 transition-colors w-fit"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Return to Firm Pulse
+              </button>
+            )}
+            <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
+              Pulse
+            </h1>
+          </div>
         </div>
 
         {/* ── Main Scroll Context (Vertical) ── */}
-        <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+        <div className="flex-1 flex flex-col">
           {/* Daily Briefing (Scrollable) */}
           <div>
             <DailyBriefing
               blockerCount={blockerDismissed ? 0 : blockerCount}
               forecastSlipHours={forecastDismissed ? 0 : forecastSlipHours}
               forecastSlipStream="Identity & Auth Hub"
-              isAgentOpen={isAgentOpen}
+
               isSandboxActive={isSandboxActive}
               sandboxDelta={sandboxDelta}
               onToggleSandbox={toggleSandbox}
@@ -994,6 +998,7 @@ export function PulseDashboard() {
               onDismissForecast={() => setForecastDismissed(true)}
               blockerResolutionCount={resolutionDismissed ? 0 : blockerCount}
               onDismissResolution={() => setResolutionDismissed(true)}
+              onBurndownClick={() => setIsBurndownOpen(true)}
               onClickBlocker={() => {
                 // Scroll to first blocked drop (future: auto-scroll)
                 setHoveredStreamId(null);
@@ -1143,11 +1148,11 @@ export function PulseDashboard() {
                   </AnimatePresence>
                 </div>
               </div>
-              
-              <TimeAxis 
-                zoomScale={zoomScale} 
-                nowX={NOW_LINE_X} 
-                totalWidth={PROJECT_END_X * zoomScale} 
+
+              <TimeAxis
+                zoomScale={zoomScale}
+                nowX={NOW_LINE_X}
+                totalWidth={PROJECT_END_X * zoomScale}
                 sidebarWidth={currentSidebarWidth}
                 hoveredDrop={hoveredDropId ? drops.find(d => d.id === hoveredDropId) : null}
                 selectedDrop={selectedDropId ? drops.find(d => d.id === selectedDropId) : null}
@@ -1156,7 +1161,7 @@ export function PulseDashboard() {
               {/* Now Line Distance Gauge (Hover-based) */}
               <AnimatePresence>
                 {isNowLineHovered && selectedDropId && (drops.find(d => d.id === selectedDropId)?.xOffset || 0) > NOW_LINE_BASE && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -2101,15 +2106,6 @@ export function PulseDashboard() {
         </div>
       </div>
 
-      {/* Agent Panel */}
-      <AgentPanel
-        feed={feed}
-        briefing="Exception mode active. Oracle is monitoring 2 blocked drops and tracking 3 milestone proximity alerts."
-        isThinking={isThinking}
-        isOpen={isAgentOpen}
-        onToggle={setIsAgentOpen}
-      />
-
       <BacklogTray unassignedDrops={unassignedDrops} onDragEnd={handleDragEnd} isSandboxActive={isSandboxActive} />
 
       <AnimatePresence>
@@ -2122,6 +2118,13 @@ export function PulseDashboard() {
             setDrops={setDrops}
             onClose={() => setEditingMilestoneId(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Burndown Deep-Dive Overlay */}
+      <AnimatePresence>
+        {isBurndownOpen && (
+          <BurndownOverlay onClose={() => setIsBurndownOpen(false)} />
         )}
       </AnimatePresence>
     </>

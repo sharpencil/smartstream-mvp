@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { StreamAccordion } from './StreamAccordion';
 import { DependencyMatrix } from './DependencyMatrix';
-import { AgentPanel, type FeedItem } from './AgentPanel';
+
 
 export function LibraryDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'genesis' | 'dependencies'>('active');
@@ -14,21 +14,13 @@ export function LibraryDashboard() {
   const [isTeamConfirmed, setIsTeamConfirmed] = useState(false);
   const [synthesisProgress, setSynthesisProgress] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [isAgentOpen, setIsAgentOpen] = useState(false);
-  const [feed, setFeed] = useState<FeedItem[]>([
-    {
-      id: 'l1',
-      type: 'suggestion',
-      text: <span>Provide requirements documentation via the Genesis zone. I am standing by to matrix the data.</span>
-    }
-  ]);
+
 
   const handleUpload = () => {
     if (genesisState !== 'idle') return;
     setGenesisState('uploading');
     setIsTeamConfirmed(false);
     setProgress(0);
-    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span>Deep-scanning uploaded contextual requirements...</span> }, ...prev]);
     
     // Simulate file upload -> AI scan -> decompiled success
     let val = 0;
@@ -44,12 +36,10 @@ export function LibraryDashboard() {
       if (val >= 100) {
         clearInterval(interval);
         setGenesisState('complete');
-        setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-green-400 font-bold">Analysis Complete:</span> 3 Streams successfully decompiled. Formulating dynamic Team suggestions.</span> }, ...prev]);
         
         // Auto-transition to Step 3 (Stream Approval)
         setTimeout(() => {
           setGenesisState('approving');
-          setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Oracle Sync:</span> Porting Team alignments to stream architectures. Sign-off required.</span> }, ...prev]);
         }, 1800);
       }
     }, 200);
@@ -58,13 +48,11 @@ export function LibraryDashboard() {
   const handleConfirmTeam = () => {
     setIsTeamConfirmed(true);
     setGenesisState('approving');
-    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-indigo-400 font-bold">Team Confirmed:</span> Awaiting stream architectural sign-off.</span> }, ...prev]);
   };
 
   const handleApproveStreams = () => {
     setGenesisState('synthesizing');
     setSynthesisProgress(0);
-    setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-cyan-400 font-bold">Synthesis Injected:</span> Generating full backlog constituent Drops...</span> }, ...prev]);
     
     let val = 0;
     const interval = setInterval(() => {
@@ -74,7 +62,6 @@ export function LibraryDashboard() {
         clearInterval(interval);
         setTimeout(() => {
           setGenesisState('reviewed');
-          setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-green-400 font-bold">Backlog Ready:</span> All Drops levelled and matrixed. Ready for Pulse activation.</span> }, ...prev]);
         }, 800);
       }
       setSynthesisProgress(val);
@@ -83,7 +70,7 @@ export function LibraryDashboard() {
 
   return (
     <div 
-      className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32", isAgentOpen ? "pr-[392px]" : "pr-8")}
+      className="w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32"
     >
        
        {/* Library Global Header & Tab Bar */}
@@ -391,7 +378,7 @@ export function LibraryDashboard() {
         </motion.div>
        )}
 
-       <AgentPanel feed={feed} isThinking={genesisState === 'scanning' || genesisState === 'uploading'} isOpen={isAgentOpen} onToggle={setIsAgentOpen} />
+
     </div>
   );
 }

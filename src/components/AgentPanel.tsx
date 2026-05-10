@@ -3,7 +3,8 @@
 import { Bot, Sparkles, AlertTriangle, Info, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { usePersona } from '@/context/PersonaContext';
+import { useGenesis } from '@/context/GenesisContext';
 
 export interface FeedItem {
   id: string;
@@ -11,28 +12,54 @@ export interface FeedItem {
   text: React.ReactNode;
 }
 
-export interface AgentPanelProps {
-  feed: FeedItem[];
-  briefing?: string;
-  isThinking?: boolean;
-  isOpen?: boolean;
-  onToggle?: (isOpen: boolean) => void;
-}
-
-export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpen, onToggle }: AgentPanelProps) {
-  const [internalIsOpen, setInternalIsOpen] = useState(true);
-  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+export function AgentPanel() {
+  const { activePersona, isAgentOpen, setIsAgentOpen } = usePersona();
+  const { genesisState } = useGenesis();
   
+  const isThinking = genesisState === 'scanning' || genesisState === 'uploading';
+
   const handleToggle = () => {
-    if (onToggle) onToggle(!isOpen);
-    else setInternalIsOpen(!isOpen);
+    setIsAgentOpen(!isAgentOpen);
   };
+
+  // Persona-specific context
+  let briefing = '';
+  let feed: FeedItem[] = [];
+  let quickActions: string[] = [];
+
+  switch (activePersona) {
+    case 'Team Member':
+      briefing = "Technical Lead mode engaged. I've reviewed your active drops. 2 specs need clarification.";
+      feed = [
+        { id: '1', type: 'update', text: 'Project Oracle updated your specs for Drop #8120.' },
+        { id: '2', type: 'alert', text: 'Dependency blocker resolved on Database Consolidation.' }
+      ];
+      quickActions = ['Explain this Drop', 'Lookup Technical Spec', 'Record Rationale'];
+      break;
+    case 'Org Owner':
+      briefing = "COO mode engaged. Firm-wide velocity is up 12%. 1 Knowledge Silo detected in Database Consolidation.";
+      feed = [
+        { id: '1', type: 'alert', text: 'Project Database Consolidation just slipped 2 days. Financial impact: +$1.2k.' },
+        { id: '2', type: 'suggestion', text: 'Predictive deficit in PostgreSQL skills. Recommendation: Onboard 1 Senior DB Engineer.' }
+      ];
+      quickActions = ['Identify Hiring Needs', 'Audit Firm Accuracy', 'Security Status Check'];
+      break;
+    case 'Project Manager':
+    default:
+      briefing = "Flight Pilot mode engaged. 3 Drops require scheduling. Capacity is optimal.";
+      feed = [
+        { id: '1', type: 'alert', text: 'Dependency conflict detected in Drop #402. Re-leveling recommended.' },
+        { id: '2', type: 'suggestion', text: 'Elena Gomez has spare capacity. Shift "API Documentation" to her flow?' }
+      ];
+      quickActions = ['Re-level Capacity', 'Analyze Risk', 'Schedule Sync'];
+      break;
+  }
 
   return (
     <aside
       className={cn(
         "fixed right-0 top-16 bottom-0 z-50 transition-all duration-500 ease-in-out flex flex-col",
-        isOpen 
+        isAgentOpen 
           ? "w-[360px] bg-[#0a192f]/40 backdrop-blur-xl border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]" 
           : "w-0 border-none shadow-none"
       )}
@@ -41,7 +68,7 @@ export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpe
         onClick={handleToggle}
         className="absolute -left-10 bottom-6 w-10 h-12 bg-[#0a192f] border-y border-l border-cyan-500/30 rounded-l-xl flex items-center justify-center text-cyan-400 hover:bg-cyan-950 transition-colors z-50 group shadow-[-5px_0_20px_rgba(34,211,238,0.15)]"
       >
-        {isOpen ? (
+        {isAgentOpen ? (
           <motion.div animate={{ rotate: 0 }}>
             <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-all" />
           </motion.div>
@@ -52,9 +79,9 @@ export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpe
         )}
       </button>
 
-      {isOpen && (
+      {isAgentOpen && (
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 animate-in fade-in duration-500 no-scrollbar">
-          <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-3 pb-4 border-b border-white/10 shrink-0">
             <div className="w-10 h-10 rounded-full bg-indigo-950/50 border border-indigo-500/30 flex items-center justify-center text-indigo-400 relative overflow-hidden">
               {isThinking && (
                 <div className="absolute inset-0 bg-indigo-400/20 animate-pulse" />
@@ -67,7 +94,7 @@ export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpe
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 overflow-y-auto shrink-0 pb-4">
             {/* Direct Briefing Section */}
             {briefing && (
               <div className="p-5 rounded-[24px] bg-indigo-500/10 border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.05)] relative overflow-hidden group/briefing">
@@ -115,7 +142,19 @@ export function AgentPanel({ feed, briefing, isThinking, isOpen: controlledIsOpe
             ))}
           </div>
 
-          <div className="mt-auto">
+          <div className="mt-auto shrink-0 flex flex-col gap-3">
+            {/* Quick Actions */}
+            <div className="flex flex-wrap gap-2">
+              {quickActions.map(action => (
+                <button
+                  key={action}
+                  className="px-3 py-1.5 rounded-full bg-[#020617]/50 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-xs font-semibold text-slate-300 hover:text-cyan-400 transition-all text-left whitespace-nowrap"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+
             <div className="relative">
               <input
                 type="text"

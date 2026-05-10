@@ -8,7 +8,7 @@ import { TalentCard } from '@/components/TalentCard';
 import { AISkillsBanner } from '@/components/AISkillsBanner';
 import { PerformanceModal } from '@/components/PerformanceModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
-import { AgentPanel, type FeedItem } from '@/components/AgentPanel';
+import { usePersona } from '@/context/PersonaContext';
 import { mockEmployees as initialEmployees, Employee } from '@/lib/mockTeam';
 import { cn } from '@/lib/utils';
 
@@ -23,20 +23,14 @@ export default function TeamPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [isAgentOpen, setIsAgentOpen] = useState(false);
+  const { isDeepDive, setIsDeepDive } = usePersona();
   
   // Fly-to-bench animation state
   const [flyingCard, setFlyingCard] = useState<{ employee: Employee, startX: number, startY: number } | null>(null);
   const [ripplePos, setRipplePos] = useState<{ x: number, y: number } | null>(null);
   const benchTabRef = useRef<HTMLButtonElement>(null);
 
-  const [feed, setFeed] = useState<FeedItem[]>([
-    {
-      id: 'r1',
-      type: 'suggestion',
-      text: <span>Analyzing current Team alignment against active Streams... Skill density is optimal for "The Crew".</span>
-    }
-  ]);
+
 
   // Get unique skills for filter
   const allSkills = useMemo(() => {
@@ -105,21 +99,13 @@ export default function TeamPage() {
       // Switch to bench
       setActiveTab('bench');
       
-      // Add to feed
-      setFeed(prev => [
-        {
-          id: Date.now().toString(),
-          type: 'update',
-          text: <span><span className="text-cyan-400 font-bold">{newEmployee.name}</span> has joined the Bench. Oracle predicts high synergy with active Streams.</span>
-        },
-        ...prev
-      ]);
+
     }, 1000);
   };
 
   return (
     <div
-      className={cn("w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32", isAgentOpen ? "pr-[392px]" : "pr-8")}
+      className="w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32"
     >
       {/* Ripple Effect */}
       {ripplePos && (
@@ -303,7 +289,7 @@ export default function TeamPage() {
         onAdd={handleOnboardComplete}
       />
 
-      <AgentPanel feed={feed} isOpen={isAgentOpen} onToggle={setIsAgentOpen} />
+
     </div>
   );
 }

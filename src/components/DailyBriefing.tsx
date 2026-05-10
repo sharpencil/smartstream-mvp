@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
-import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2 } from 'lucide-react';
+import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2, Maximize2 } from 'lucide-react';
 import { BurndownChart } from './BurndownChart';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,7 @@ interface DailyBriefingProps {
   onCommitSandbox?: () => void;
   blockerResolutionCount?: number;
   onDismissResolution?: () => void;
+  onBurndownClick?: () => void;
 }
 
 const rowVariants: Variants = {
@@ -50,8 +51,9 @@ function Widget({
   onClick?: () => void;
 }) {
   return (
-    <div
+    <motion.div
       onClick={onClick}
+      whileHover={onClick ? { scale: 1.02 } : {}}
       className={cn(
         'relative flex items-center gap-3 px-4 h-[66px] rounded-2xl',
         'bg-[#0b1929]/70 border border-white/[0.07] backdrop-blur-sm',
@@ -61,7 +63,7 @@ function Widget({
       )}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -79,6 +81,7 @@ export function DailyBriefing({
   onCommitSandbox,
   blockerResolutionCount = 0,
   onDismissResolution,
+  onBurndownClick,
 }: DailyBriefingProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const hasAnyException = blockerCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
@@ -145,7 +148,13 @@ export function DailyBriefing({
           </Widget>
 
           {/* Project Burndown */}
-          <Widget className="flex-1 hover:border-teal-500/20 hover:bg-teal-950/10 group">
+          <Widget 
+            onClick={onBurndownClick}
+            className="flex-1 hover:border-teal-500/20 hover:bg-teal-950/10 group relative"
+          >
+            <div className="absolute top-2 right-2 transition-opacity">
+               <Maximize2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 transition-colors" />
+            </div>
             <div className="w-9 h-9 rounded-xl bg-teal-950/50 border border-teal-500/20 flex items-center justify-center shrink-0">
               <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
             </div>

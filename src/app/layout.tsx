@@ -5,6 +5,9 @@ import { Sidebar } from "@/components/Sidebar";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { GenesisProvider } from "@/context/GenesisContext";
 import { GenesisModal } from "@/components/GenesisModal";
+import { PersonaProvider } from "@/context/PersonaContext";
+import { AgentPanel } from "@/components/AgentPanel";
+import { MainLayoutWrapper } from "@/components/MainLayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,14 +36,19 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="h-screen flex flex-col bg-slate-950 text-slate-50 overflow-hidden w-full relative" suppressHydrationWarning>
-        <GenesisProvider>
-          <Sidebar />
-          <GlobalHeader />
-          <GenesisModal />
-          <main className="flex-1 min-h-0 ml-20 pt-16 overflow-y-auto w-[calc(100%-5rem)]">
-            {children}
-          </main>
-        </GenesisProvider>
+        <PersonaProvider>
+          <GenesisProvider>
+            <Sidebar />
+            <GlobalHeader />
+            <GenesisModal />
+            <AgentPanel />
+            <main className="flex-1 min-h-0 ml-20 pt-16 overflow-y-auto w-[calc(100%-5rem)]">
+              <MainLayoutWrapper>
+                {children}
+              </MainLayoutWrapper>
+            </main>
+          </GenesisProvider>
+        </PersonaProvider>
       </body>
     </html>
   );
