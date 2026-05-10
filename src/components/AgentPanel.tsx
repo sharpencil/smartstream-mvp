@@ -3,17 +3,11 @@
 import { Bot, Sparkles, AlertTriangle, Info, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { usePersona } from '@/context/PersonaContext';
+import { usePersona, FeedItem } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 
-export interface FeedItem {
-  id: string;
-  type: 'suggestion' | 'alert' | 'update';
-  text: React.ReactNode;
-}
-
 export function AgentPanel() {
-  const { activePersona, isAgentOpen, setIsAgentOpen } = usePersona();
+  const { activePersona, isAgentOpen, setIsAgentOpen, feed: dynamicFeed } = usePersona();
   const { genesisState } = useGenesis();
   
   const isThinking = genesisState === 'scanning' || genesisState === 'uploading';
@@ -54,6 +48,9 @@ export function AgentPanel() {
       quickActions = ['Re-level Capacity', 'Analyze Risk', 'Schedule Sync'];
       break;
   }
+
+  // Combine static persona feed with dynamic updates from the dashboard
+  const combinedFeed = [...dynamicFeed, ...feed];
 
   return (
     <aside
@@ -122,7 +119,7 @@ export function AgentPanel() {
               </div>
             )}
 
-            {feed.map(item => (
+            {combinedFeed.map(item => (
               <div
                 key={item.id}
                 className={cn(

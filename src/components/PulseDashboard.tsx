@@ -12,10 +12,9 @@ import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Cros
 import { format, addDays, startOfDay, addHours, differenceInDays, differenceInWeeks, isWeekend, startOfWeek } from 'date-fns';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
-import { usePersona } from '@/context/PersonaContext';
+import { usePersona, FeedItem } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 import { BurndownOverlay } from './BurndownOverlay';
-import { FeedItem } from './AgentPanel';
 
 export interface DropData {
   id: string;
@@ -465,7 +464,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
-  const { isDeepDive, setIsDeepDive, setActivePersona } = usePersona();
+  const { isDeepDive, setIsDeepDive, setActivePersona, setFeed } = usePersona();
   const { setGenesisState } = useGenesis();
   const [viewLevel, setViewLevel] = useState<'streams' | 'team' | 'milestones'>('streams');
   const [focusedStreamId, setFocusedStreamId] = useState<string | null>(null);
