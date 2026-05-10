@@ -177,7 +177,7 @@ export function PerformanceDashboard() {
                         x={x} 
                         y={y - 14} 
                         textAnchor="middle" 
-                        className="text-[12px] font-black fill-cyan-400 opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none"
+                        className="text-[10px] font-bold fill-slate-600 transition-all duration-300 pointer-events-none group-hover/point:fill-slate-400 group-hover/point:text-[14px]"
                       >
                         {h.velocity}
                       </text>

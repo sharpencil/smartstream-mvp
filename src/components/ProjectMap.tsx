@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { STAGING_STREAMS, STAGING_DROPS, StagingDrop, StagingStream } from '@/lib/stagingData';
 import { getStreamColor, STREAM_COLORS } from '@/lib/streams';
-import { Network, FileText, Cpu, Search, Maximize2, X, AlertCircle } from 'lucide-react';
+import { Network, FileText, Cpu, Search, Maximize2, X, AlertCircle, ChevronDown, Clock, CheckCircle2, PlayCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MY_USER_ID = "1";
@@ -237,56 +237,94 @@ export function ProjectMap() {
 
     return (
       <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        className="fixed inset-0 z-[200] bg-[#020617]/95 backdrop-blur-2xl flex flex-col"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] bg-[#020617]/90 backdrop-blur-xl flex items-center justify-center p-6"
+        onClick={() => setFullScreenDropId(null)}
       >
-        <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-8 py-16">
-          <div className="flex justify-between items-start mb-12">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider border" style={{ color: sColor.hex, borderColor: `${sColor.hex}40`, backgroundColor: `${sColor.hex}10` }}>
-                  {stream?.title}
-                </span>
-                <span className="text-slate-500 font-mono text-sm">ID: {drop.drop_id}</span>
-              </div>
-              <h1 className="text-5xl font-bold text-slate-100 leading-tight">{drop.title}</h1>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-3xl bg-[#0a192f]/80 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative"
+        >
+          {/* Identity Notch */}
+          <div className="absolute left-0 top-0 bottom-0 w-2" style={{ backgroundColor: sColor.hex }} />
+
+          {/* Card Header */}
+          <div className="px-10 py-8 border-b border-white/5 relative">
             <button 
               onClick={() => setFullScreenDropId(null)}
-              className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
+
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/40 border border-white/10" style={{ color: sColor.hex }}>
+                {stream?.initials || 'STR'}
+              </span>
+              <span className="text-slate-500 text-xs font-mono">{drop.drop_id}</span>
+
+              {/* Metadata Badges */}
+              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700">
+                <Clock className="w-3 h-3" />
+                {drop.estimated_time}h
+              </span>
+              
+              <span className="ml-2 flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {drop.status === 'Completed' ? <Check className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />}
+                {drop.status}
+              </span>
+            </div>
+
+            <h2 className="text-3xl font-bold text-slate-100 pr-12">
+              {drop.title}
+            </h2>
           </div>
 
-          <div className="bg-[#0a192f] border border-white/10 rounded-2xl p-10 shadow-2xl">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
-              <Cpu className="w-6 h-6 text-slate-400" />
-              <h2 className="text-2xl font-bold text-slate-200">Technical Task Execution Plan</h2>
-            </div>
-            
-            <div className="space-y-4">
-              {drop.tasks.map((t, i) => (
-                <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-mono text-sm text-slate-400 font-bold shrink-0">
-                    {i+1}
-                  </div>
-                  <p className="text-slate-300 text-lg leading-relaxed">{t}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-12 p-6 bg-slate-900 rounded-xl border border-slate-800 flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
+          {/* Card Body */}
+          <div className="p-10">
+            <div className="space-y-6">
               <div>
-                <h4 className="text-amber-400 font-bold mb-1">Architecture Note</h4>
-                <p className="text-slate-400 text-sm leading-relaxed">Ensure backward compatibility when modifying existing API routes. Verify against the unified API Gateway rules before deployment.</p>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4">Execution Checklist</h3>
+                <div className="space-y-3">
+                  {drop.tasks.map((task, idx) => (
+                    <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800/50 group hover:border-slate-700 transition-colors">
+                      <div className="mt-1 w-5 h-5 rounded border border-slate-700 flex items-center justify-center shrink-0">
+                        {drop.status === 'Completed' ? (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                        )}
+                      </div>
+                      <span className={cn(
+                        "text-lg leading-relaxed transition-colors",
+                        drop.status === 'Completed' ? "text-slate-500 line-through" : "text-slate-300"
+                      )}>
+                        {task}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {drop.status !== 'Completed' && (
+                <div className="p-6 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex items-start gap-4">
+                  <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
+                  <div>
+                    <h4 className="text-amber-500 font-bold mb-1 uppercase tracking-wider text-xs">Architectural Oversight</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      This drop is currently in {drop.status.toLowerCase()} state. Ensure all upstream dependencies are validated before committing changes to the core branch.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     );
   };
@@ -299,7 +337,7 @@ export function ProjectMap() {
       {/* Main Content */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto h-full relative p-8 pb-32"
+        className="flex-1 overflow-y-auto h-full relative pb-32"
       >
         {/* SVG Dependencies Overlay */}
         <svg className="absolute top-0 left-0 w-full h-[5000px] pointer-events-none z-0">
@@ -328,7 +366,7 @@ export function ProjectMap() {
         </svg>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
+        <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
           <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
             Project Map
           </h1>
@@ -344,8 +382,7 @@ export function ProjectMap() {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto relative z-10">
-
+        <div className="max-w-4xl mx-auto p-8 pt-8 relative z-10">
           {/* Tree Layout */}
           <div className="flex flex-col gap-6 ml-8 border-l-2 border-slate-800 pl-8 relative">
             {filteredStreams.map(stream => {
@@ -386,12 +423,12 @@ export function ProjectMap() {
 
                     <div className="flex items-center gap-3">
                       {isMyStream && (
-                        <div className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[10px] font-bold uppercase tracking-wider text-cyan-400 animate-pulse">
-                          You Are Here
+                        <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                          In My Flow
                         </div>
                       )}
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white transition-colors">
-                        <FileText className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white transition-all">
+                        <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isExpanded && "rotate-180")} />
                       </div>
                     </div>
                   </div>
