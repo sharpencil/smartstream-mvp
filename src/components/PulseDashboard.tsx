@@ -15,6 +15,7 @@ import { mockEmployees } from '@/lib/mockTeam';
 import { usePersona } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 import { BurndownOverlay } from './BurndownOverlay';
+import { FeedItem } from './AgentPanel';
 
 export interface DropData {
   id: string;
