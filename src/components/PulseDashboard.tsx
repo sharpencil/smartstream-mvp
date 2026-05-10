@@ -13,6 +13,7 @@ import { format, addDays, startOfDay, addHours, differenceInDays, differenceInWe
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
 import { usePersona } from '@/context/PersonaContext';
+import { useGenesis } from '@/context/GenesisContext';
 import { BurndownOverlay } from './BurndownOverlay';
 
 export interface DropData {
@@ -464,6 +465,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 
 export function PulseDashboard() {
   const { isDeepDive, setIsDeepDive, setActivePersona } = usePersona();
+  const { setGenesisState } = useGenesis();
   const [viewLevel, setViewLevel] = useState<'streams' | 'team' | 'milestones'>('streams');
   const [focusedStreamId, setFocusedStreamId] = useState<string | null>(null);
   const [focusedMilestoneId, setFocusedMilestoneId] = useState<string | null>(null);
@@ -790,7 +792,7 @@ export function PulseDashboard() {
   // ── Drop Actions ────────────────────────────────────────────────────────
 
   const handleDropAction = (id: string, action: 'complete' | 'block' | 'in-progress' | 'ghost' | 'remove', rationale?: string) => {
-    setIsThinking(true);
+    setGenesisState('scanning');
 
     setTimeout(() => {
       setDrops(prev => {
@@ -867,12 +869,12 @@ export function PulseDashboard() {
       const msg = feedMessages[action];
       if (msg) setFeed(prev => [msg, ...prev]);
 
-      setIsThinking(false);
+      setGenesisState('idle');
     }, 1200);
   };
 
-  const handleDragEnd = (id: string, clientX: number, clientY: number) => {
-    setIsThinking(true);
+  const handleDropEnd = (id: string, clientX: number, clientY: number) => {
+    setGenesisState('scanning');
     // Find drop target by temporarily hiding the dragged element?
     // Actually, simple approximation: lane Y starts at ~230. Each lane is ~100px.
     setTimeout(() => {
@@ -918,7 +920,7 @@ export function PulseDashboard() {
         ...prev
       ]);
       setForecastSlipHours(prev => Math.max(0, prev - 2)); // Ripple recovery
-      setIsThinking(false);
+      setGenesisState('idle');
     }, 800);
   };
 
