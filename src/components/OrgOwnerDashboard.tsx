@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Activity, AlertTriangle, CheckCircle2, ChevronDown, TrendingUp, Zap, Target, Calendar, Coins, AlertCircle, Link } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, TrendingUp, Zap, Target, Calendar, Coins, AlertCircle, Link } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STREAM_COLORS } from '@/lib/streams';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +12,7 @@ const SPARK_UP = [20, 25, 30, 45, 50, 60, 65, 80, 85, 90, 95];
 const SPARK_DOWN = [90, 85, 82, 70, 65, 50, 45, 30, 25, 20, 15];
 const SPARK_STABLE = [50, 52, 48, 55, 45, 50, 53, 47, 51, 49, 50];
 
-interface FirmProject {
+export interface FirmProject {
   id: string;
   name: string;
   lead: string;
@@ -29,7 +29,7 @@ interface FirmProject {
   accuracyTrend: number[];
 }
 
-const MOCK_FIRM_PROJECTS: FirmProject[] = [
+export const MOCK_FIRM_PROJECTS: FirmProject[] = [
   {
     id: 'p1',
     name: 'SmartStream AI-CFM Core',
@@ -115,7 +115,7 @@ const MOCK_FIRM_PROJECTS: FirmProject[] = [
 
 
 export function OrgOwnerDashboard() {
-  const { setActivePersona, setIsDeepDive } = usePersona();
+  const { setActivePersona, setIsDeepDive, setSelectedProjectId } = usePersona();
   const [sortMode, setSortMode] = useState<'Alphabetical' | 'Highest Cost' | 'Most at Risk'>('Highest Cost');
 
   const sortedProjects = useMemo(() => {
@@ -127,15 +127,14 @@ export function OrgOwnerDashboard() {
   }, [sortMode]);
 
   const handleDeepDive = (projectId: string) => {
-    // In a real app, we would set the selected project ID globally here
+    setSelectedProjectId(projectId);
     setIsDeepDive(true);
-    setActivePersona('Project Manager');
   };
 
   return (
-    <div className="w-full flex flex-col p-8 h-full bg-[#020617] overflow-y-auto pb-32">
+    <div className="w-full h-full bg-[#020617] overflow-y-auto pb-32">
       {/* Header & Sort */}
-      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
+      <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           Firm Pulse
         </h1>
@@ -165,7 +164,7 @@ export function OrgOwnerDashboard() {
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col">
+      <div className="w-full max-w-7xl mx-auto flex flex-col px-8 pt-8">
 
         {/* Executive Project Cards Grid */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -184,20 +183,28 @@ export function OrgOwnerDashboard() {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   onClick={() => handleDeepDive(project.id)}
                   className={cn(
-                    "relative bg-[#0f172a]/80 backdrop-blur-xl rounded-3xl p-6 flex flex-col gap-6 cursor-pointer overflow-hidden transition-all duration-300 group hover:-translate-y-1 hover:shadow-2xl border",
-                    isAlert ? "border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]" : "border-white/5 hover:border-white/20"
+                    "relative bg-[#0f172a]/80 backdrop-blur-xl rounded-3xl p-6 flex flex-col gap-6 cursor-pointer overflow-hidden transition-all duration-500 group border hover:bg-[#111c33]/90",
+                    isAlert 
+                      ? "border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.1)] hover:border-rose-500/60" 
+                      : "border-white/5 hover:border-white/20 shadow-xl"
                   )}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -4,
+                    boxShadow: `0 20px 40px -12px rgba(0,0,0,0.5), 0 0 15px ${c.hex}15`
+                  }}
                 >
-                  {/* Identity Notch */}
-                  <div className="absolute left-0 top-0 bottom-0 w-2" style={{ backgroundColor: c.hex }} />
+
                   
                   {/* Alert Glow */}
                   {isAlert && (
                     <div className="absolute inset-0 bg-rose-500/5 pointer-events-none animate-pulse" />
                   )}
 
+
+
                   {/* Header */}
-                  <div className="pl-2">
+                  <div>
                     <div className="flex justify-between items-start mb-1">
                       <h2 className="text-xl font-bold text-slate-100 group-hover:text-white transition-colors line-clamp-1">{project.name}</h2>
                     </div>
@@ -205,121 +212,112 @@ export function OrgOwnerDashboard() {
                   </div>
 
                   {/* Mini-Flow (Progress) */}
-                  <div className="pl-2">
+                  <div>
                     <div className="flex justify-between text-xs font-semibold mb-2">
                       <span className="text-slate-400">{project.completedDrops} / {project.totalDrops} Drops</span>
                       <span className="text-slate-300">{project.progress}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-900 border border-white/5 overflow-hidden flex">
-                      <div 
-                        className="h-full"
-                        style={{ 
-                          width: `${project.progress}%`,
-                          backgroundColor: c.hex,
-                          boxShadow: `0 0 10px ${c.hex}80`
-                        }}
-                      />
-                      <div 
-                        className="h-full opacity-30"
-                        style={{ 
-                          width: `${100 - project.progress}%`,
-                          backgroundColor: c.hex,
-                        }}
-                      />
+                      {(() => {
+                        const healthColor = project.status === 'healthy' ? '#10b981' : project.status === 'at-risk' ? '#f59e0b' : '#f43f5e';
+                        return (
+                          <>
+                            <div 
+                              className="h-full transition-all duration-1000"
+                              style={{ 
+                                width: `${project.progress}%`,
+                                backgroundColor: healthColor,
+                                boxShadow: `0 0 10px ${healthColor}60`
+                              }}
+                            />
+                            <div 
+                              className="h-full opacity-10"
+                              style={{ 
+                                width: `${100 - project.progress}%`,
+                                backgroundColor: healthColor,
+                              }}
+                            />
+                          </>
+                        );
+                      })()}
                     </div>
                     <div className="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">
                       Target: {project.finalMilestone}
                     </div>
                   </div>
 
-                  {/* Intelligence Grid */}
-                  <div className="pl-2 grid grid-cols-3 gap-3 pt-4 border-t border-white/5">
+                  {/* Executive Intelligence Grid (3x2) */}
+                  <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/5">
                     
-                    {/* Project Health */}
-                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget cursor-default">
+                    {/* Financial ROI */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <Activity className="w-3 h-3 text-teal-400" /> Health
+                        <Coins className="w-3 h-3 text-amber-400" /> ROI
                       </div>
-                      <div className="flex items-center gap-2 mt-auto">
-                        <div className="relative w-6 h-6 shrink-0">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" />
-                            <circle cx="12" cy="12" r="10" stroke={project.status === 'healthy' ? '#2dd4bf' : project.status === 'at-risk' ? '#f59e0b' : '#f43f5e'} strokeWidth="2" fill="none" strokeDasharray="63" strokeDashoffset={63 - (63 * project.progress / 100)} className="drop-shadow-[0_0_3px_currentColor]" />
-                          </svg>
-                        </div>
-                        <div className="text-sm font-bold text-slate-200">
-                          {project.progress}%
-                        </div>
+                      <div className="text-xs font-bold text-slate-200 font-mono mt-auto">
+                        ${(project.tokenBurn / 1000).toFixed(1)}k <span className="text-[9px] text-slate-500">/ $250k</span>
                       </div>
                     </div>
 
-                    {/* AI Forecast */}
-                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget cursor-default">
+                    {/* Scope Drift */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <Calendar className="w-3 h-3 text-cyan-400" /> Forecast
+                        <Target className="w-3 h-3 text-rose-400" /> Drift
                       </div>
-                      <div className="text-sm font-bold text-cyan-50 mt-auto">
-                        Jun {12 + project.daysSlipped}
-                      </div>
-                      <div className="text-[9px] font-bold text-cyan-500/80 uppercase tracking-widest mt-0.5">
-                        92% Conf
+                      <div className="text-xs font-bold text-rose-400 mt-auto">
+                        +{Math.floor(project.daysSlipped * 2.5)}% <span className="text-[9px] opacity-70">Drift</span>
                       </div>
                     </div>
 
-                    {/* Token Burn */}
-                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget cursor-default">
+                    {/* AI Stability */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <Coins className="w-3 h-3 text-amber-400" /> Tokens
+                        <Activity className="w-3 h-3 text-cyan-400" /> Stability
                       </div>
-                      <div className="text-sm font-bold text-slate-200 font-mono mt-auto">
-                        ${(project.tokenBurn / 1000).toFixed(1)}k
+                      <div className="text-xs font-bold text-cyan-50 mt-auto">
+                        94% <span className="text-[9px] text-cyan-500/80">Stable</span>
                       </div>
                     </div>
 
-                    {/* Active Blockers */}
-                    <div className={cn("flex flex-col bg-[#0a192f]/50 border rounded-xl p-3 relative group/widget cursor-help transition-all", project.status !== 'healthy' ? "border-rose-500/30 bg-rose-500/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]" : "border-white/5")}>
+                    {/* Talent Mix */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <AlertCircle className={cn("w-3 h-3", project.status !== 'healthy' ? "text-rose-400" : "text-slate-500")} /> Blockers
+                        <Zap className="w-3 h-3 text-indigo-400" /> Talent
                       </div>
-                      <div className={cn("text-sm font-bold mt-auto", project.status !== 'healthy' ? "text-rose-400" : "text-slate-400")}>
-                        {project.status === 'delayed' ? 3 : project.status === 'at-risk' ? 1 : 0} Blocked
+                      <div className="text-xs font-bold text-slate-200 mt-auto">
+                        3:1 <span className="text-[9px] text-slate-500">Sr/Jr</span>
                       </div>
-                      {project.status !== 'healthy' && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 opacity-0 group-hover/widget:opacity-100 transition-opacity bg-[#030b1a]/95 backdrop-blur-xl border border-rose-500/30 p-3 rounded-xl shadow-2xl pointer-events-none z-50">
-                          <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1">Active Blocker</p>
-                          <p className="text-xs text-slate-300">Awaiting security clearance for prod access.</p>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Forecast Slip */}
-                    <div className={cn("flex flex-col bg-[#0a192f]/50 border rounded-xl p-3 relative group/widget cursor-help transition-all", project.daysSlipped > 0 ? "border-amber-500/30 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.1)]" : "border-white/5")}>
+                    {/* Execution Accuracy */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <TrendingUp className={cn("w-3 h-3", project.daysSlipped > 0 ? "text-amber-400" : "text-slate-500")} /> Slip
+                        <Activity className="w-3 h-3 text-emerald-400" /> Accuracy
                       </div>
-                      <div className={cn("text-sm font-bold mt-auto", project.daysSlipped > 0 ? "text-amber-400" : "text-slate-400")}>
-                        +{project.daysSlipped} Days
+                      <div className="text-xs font-bold text-emerald-400 mt-auto">
+                        108% <span className="text-[9px] opacity-70">Latent</span>
                       </div>
-                      {project.daysSlipped > 0 && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 opacity-0 group-hover/widget:opacity-100 transition-opacity bg-[#030b1a]/95 backdrop-blur-xl border border-amber-500/30 p-3 rounded-xl shadow-2xl pointer-events-none z-50">
-                          <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-1">Slip Rationale</p>
-                          <p className="text-xs text-slate-300">Underestimated complexity of legacy API migration.</p>
-                        </div>
-                      )}
                     </div>
 
-                    {/* Upstream Health */}
-                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget cursor-default">
+                    {/* Milestone Confidence */}
+                    <div className="flex flex-col bg-[#0a192f]/50 border border-white/5 rounded-xl p-3 relative group/widget">
                       <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <Link className="w-3 h-3 text-blue-400" /> Upstream
+                        <TrendingUp className="w-3 h-3 text-amber-400" /> Conf.
                       </div>
-                      <div className={cn("text-[11px] font-bold leading-tight mt-auto", project.status === 'delayed' ? "text-rose-400" : "text-blue-100")}>
-                        {project.status === 'delayed' ? 'Blocked By Ext' : 'Stable'}
+                      <div className="text-xs font-bold text-amber-400 mt-auto">
+                        82% <span className="text-[9px] opacity-70">Prob.</span>
                       </div>
                     </div>
 
                   </div>
 
+                  {/* Project Pulse Action (Standardized with Team Page) */}
+                  <div className="mt-auto pt-4 flex items-center justify-center border-t border-white/5">
+                    <div className="w-full py-2.5 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-xs font-medium uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] group-hover:-translate-y-1">
+                      Project Pulse
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}

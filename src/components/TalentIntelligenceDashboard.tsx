@@ -81,15 +81,15 @@ export function TalentIntelligenceDashboard() {
   }, []);
 
   return (
-    <div className="w-full flex flex-col p-8 h-full bg-[#020617] overflow-y-auto pb-32">
+    <div className="w-full h-full bg-[#020617] overflow-y-auto pb-32">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
+      <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           Talent Intelligence
         </h1>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col gap-8">
+      <div className="w-full max-w-7xl mx-auto flex flex-col gap-8 px-8 pt-8">
         
         {/* Vitals Bar Row (Moved below unified header) */}
         <div className="flex flex-col md:flex-row justify-end items-center gap-6 mb-4">

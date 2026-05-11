@@ -70,11 +70,11 @@ export function LibraryDashboard() {
 
   return (
     <div 
-      className="w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32"
+      className="w-full h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32 overflow-y-auto"
     >
        
        {/* Library Global Header & Tab Bar */}
-       <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
+       <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
          <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
            Streams
          </h1>
@@ -105,7 +105,7 @@ export function LibraryDashboard() {
        {activeTab === 'active' && (
          <motion.div 
            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
-           className="w-full flex-1 flex flex-col items-center"
+           className="w-full flex-1 flex flex-col items-center px-8 pt-8"
          >
            <div className="w-full flex items-center justify-between max-w-4xl mx-auto mb-6">
              <h2 className="text-xl font-bold text-slate-300 flex items-center gap-2 whitespace-nowrap">

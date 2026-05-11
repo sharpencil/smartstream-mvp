@@ -21,6 +21,8 @@ interface PersonaContextType {
   setIsAgentOpen: (val: boolean) => void;
   feed: FeedItem[];
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>;
+  selectedProjectId: string | null;
+  setSelectedProjectId: (id: string | null) => void;
 }
 
 const PersonaContext = createContext<PersonaContextType | undefined>(undefined);
@@ -31,6 +33,7 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
   const [isDeepDive, setIsDeepDive] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   return (
     <PersonaContext.Provider value={{ 
@@ -43,7 +46,9 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
       isAgentOpen, 
       setIsAgentOpen,
       feed,
-      setFeed
+      setFeed,
+      selectedProjectId,
+      setSelectedProjectId
     }}>
       {children}
     </PersonaContext.Provider>

@@ -6,14 +6,14 @@ import { OrgOwnerDashboard } from "@/components/OrgOwnerDashboard";
 import { usePersona } from "@/context/PersonaContext";
 
 export default function Home() {
-  const { activePersona } = usePersona();
+  const { activePersona, isDeepDive } = usePersona();
 
   return (
     <div className="h-full">
       {activePersona === 'Team Member' ? (
         <MyFlowDashboard />
       ) : activePersona === 'Org Owner' ? (
-        <OrgOwnerDashboard />
+        isDeepDive ? <PulseDashboard /> : <OrgOwnerDashboard />
       ) : (
         <PulseDashboard />
       )}

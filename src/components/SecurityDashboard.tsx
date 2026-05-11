@@ -55,18 +55,18 @@ const SECURITY_PILLARS: SecurityPillar[] = [
 
 export function SecurityDashboard() {
   return (
-    <div className="w-full flex flex-col p-8 h-full bg-[#020617] overflow-y-auto pb-32 relative">
+    <div className="w-full h-full bg-[#020617] overflow-y-auto pb-32 relative">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
+      <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
-          Security
+          Security & Access Control
         </h1>
       </div>
 
       {/* Ambient background glow */}
       <div className="absolute top-0 inset-x-0 h-[500px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-[#020617] to-[#020617] pointer-events-none" />
 
-      <div className="w-full max-w-6xl mx-auto flex flex-col z-10">
+      <div className="w-full max-w-6xl mx-auto px-8 pt-8 relative z-10 flex flex-col">
 
         {/* Security Pillars Grid */}
         <div className="grid grid-cols-2 gap-8 w-full">

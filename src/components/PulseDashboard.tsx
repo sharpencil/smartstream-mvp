@@ -15,6 +15,8 @@ import { mockEmployees } from '@/lib/mockTeam';
 import { usePersona, FeedItem } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 import { BurndownOverlay } from './BurndownOverlay';
+import { MOCK_FIRM_PROJECTS } from './OrgOwnerDashboard';
+import * as Popover from '@radix-ui/react-popover';
 
 export interface DropData {
   id: string;
@@ -464,7 +466,12 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
-  const { isDeepDive, setIsDeepDive, setActivePersona, setFeed } = usePersona();
+  const { isDeepDive, setIsDeepDive, setActivePersona, setFeed, selectedProjectId, activePersona } = usePersona();
+  
+  const currentProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return MOCK_FIRM_PROJECTS.find(p => p.id === selectedProjectId);
+  }, [selectedProjectId]);
   const { setGenesisState } = useGenesis();
   const [viewLevel, setViewLevel] = useState<'streams' | 'team' | 'milestones'>('streams');
   const [focusedStreamId, setFocusedStreamId] = useState<string | null>(null);
@@ -955,36 +962,40 @@ export function PulseDashboard() {
 
   return (
     <>
-      <div className={cn("w-full flex flex-col p-8 transition-all duration-500 ease-in-out text-slate-50 pb-32",
+      <div className={cn("w-full flex flex-col transition-all duration-500 ease-in-out text-slate-50 pb-32 h-full",
         "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
       )}>
 
         {/* Header Controls */}
         <div className={cn(
-          "flex items-center justify-between pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500 bg-[#020617]/90"
+          "flex items-center justify-between px-8 pt-8 pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500 bg-[#020617]/95"
         )}>
           <div className="flex flex-col">
             {isDeepDive && (
               <button
                 onClick={() => {
                   setIsDeepDive(false);
-                  setActivePersona('Org Owner');
                 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider mb-2 transition-colors w-fit"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider mb-4 transition-colors w-fit"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Return to Firm Pulse
               </button>
             )}
             <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
-              Pulse
+              {isDeepDive && currentProject ? currentProject.name : "Pulse"}
+              {activePersona === 'Org Owner' && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-500 font-black uppercase tracking-widest">
+                  Executive View
+                </span>
+              )}
             </h1>
           </div>
         </div>
 
         {/* ── Main Scroll Context (Vertical) ── */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col px-8">
           {/* Daily Briefing (Scrollable) */}
           <div>
             <DailyBriefing
@@ -1445,7 +1456,54 @@ export function PulseDashboard() {
                                         <span className="text-cyan-200 font-bold text-lg">{member.name.charAt(0)}</span>
                                       </div>
                                       <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-slate-100 truncate text-lg tracking-tight">{member.name}</span>
+                                        <Popover.Root>
+                                          <Popover.Trigger asChild>
+                                            <span className="font-bold text-slate-100 truncate text-lg tracking-tight cursor-help hover:text-cyan-400 transition-colors">
+                                              {member.name}
+                                            </span>
+                                          </Popover.Trigger>
+                                          {activePersona === 'Org Owner' && (
+                                            <Popover.Content side="right" sideOffset={12} className="w-64 bg-[#0a192f] border border-white/10 rounded-2xl p-5 shadow-2xl z-[100] backdrop-blur-xl">
+                                              <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+                                                <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center font-black text-amber-500">
+                                                  {member.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                  <p className="text-sm font-bold text-slate-100">{member.name}</p>
+                                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{member.role}</p>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="space-y-4">
+                                                <div>
+                                                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Value Impact</p>
+                                                  <div className="flex justify-between items-end">
+                                                    <div className="flex flex-col">
+                                                      <span className="text-lg font-bold text-emerald-400 font-mono">${(120 + (parseInt(member.id.split('-')[1]) * 15)).toString()}</span>
+                                                      <span className="text-[9px] text-slate-500 uppercase font-bold">Cost / Hour</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                      <span className="text-lg font-bold text-cyan-400 font-mono">{member.velocity}%</span>
+                                                      <span className="text-[9px] text-slate-500 uppercase font-bold">Velocity Score</span>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                
+                                                <div className="pt-3 border-t border-white/5">
+                                                  <div className="flex justify-between text-[10px] mb-1">
+                                                    <span className="text-slate-500 font-bold uppercase">ROI Efficiency</span>
+                                                    <span className="text-emerald-400 font-bold">Excellent</span>
+                                                  </div>
+                                                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: '85%' }} />
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              
+                                              <Popover.Arrow className="fill-white/10" />
+                                            </Popover.Content>
+                                          )}
+                                        </Popover.Root>
                                         <div className={cn(
                                           'text-[10px] font-bold px-1.5 py-0.5 rounded transition-all duration-500 w-fit mt-0.5 border',
                                           (memberVelocity[member.id] || 0) >= 0

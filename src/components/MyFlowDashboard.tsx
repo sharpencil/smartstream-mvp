@@ -201,9 +201,9 @@ export function MyFlowDashboard() {
   const TOTAL_GRID_WIDTH = 4000;
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#020617] relative overflow-hidden p-8">
+    <div className="flex flex-col h-full w-full bg-[#020617] relative overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-[120] relative">
+      <div className="sticky top-0 z-[120] bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           My Flow
         </h1>
@@ -451,7 +451,7 @@ export function MyFlowDashboard() {
                     <div className="flex gap-4 w-full max-w-md">
                       <button
                         onClick={handleReject}
-                        className="flex-1 py-4 rounded-full bg-slate-800/50 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 font-bold flex items-center justify-center gap-2 transition-all"
+                        className="flex-1 px-8 py-4 rounded-full bg-slate-800/50 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 font-bold flex items-center justify-center gap-2 transition-all"
                       >
                         <XCircle className="w-5 h-5" />
                         Reject Drop

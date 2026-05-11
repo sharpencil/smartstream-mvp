@@ -5,7 +5,7 @@ import { ChevronDown, Search, Bell, Plus, Check } from 'lucide-react';
 import { useGenesis } from '@/context/GenesisContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { usePersona } from '@/context/PersonaContext';
 
 const organizations = [
   "Acme Corp",
@@ -25,6 +25,7 @@ const projects = [
 
 export function GlobalHeader() {
   const { openGenesis } = useGenesis();
+  const { activePersona } = usePersona();
   const [selectedOrg, setSelectedOrg] = useState(organizations[0]);
   const [selectedProject, setSelectedProject] = useState(projects[0]);
 
@@ -96,14 +97,16 @@ export function GlobalHeader() {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* New Project Action */}
-        <button
-          onClick={openGenesis}
-          className="h-[34px] flex items-center gap-2 px-4 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-[10px] font-black uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95 whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4" />
-          New Project
-        </button>
+        {/* New Project Action (Hidden for Team Members) */}
+        {activePersona !== 'Team Member' && (
+          <button
+            onClick={openGenesis}
+            className="h-[34px] flex items-center gap-2 px-4 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-[10px] font-black uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            New Project
+          </button>
+        )}
 
         {/* Search */}
         <div className="relative group">
