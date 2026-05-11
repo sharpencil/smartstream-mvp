@@ -1470,7 +1470,7 @@ export function PulseDashboard() {
                                                 </div>
                                                 <div>
                                                   <p className="text-sm font-bold text-slate-100">{member.name}</p>
-                                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{member.role}</p>
+                                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{empData.role}</p>
                                                 </div>
                                               </div>
                                               
@@ -1483,7 +1483,7 @@ export function PulseDashboard() {
                                                       <span className="text-[9px] text-slate-500 uppercase font-bold">Cost / Hour</span>
                                                     </div>
                                                     <div className="flex flex-col items-end">
-                                                      <span className="text-lg font-bold text-cyan-400 font-mono">{member.velocity}%</span>
+                                                      <span className="text-lg font-bold text-cyan-400 font-mono">{empData.velocity}%</span>
                                                       <span className="text-[9px] text-slate-500 uppercase font-bold">Velocity Score</span>
                                                     </div>
                                                   </div>
