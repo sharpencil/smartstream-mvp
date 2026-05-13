@@ -23,6 +23,8 @@ interface PersonaContextType {
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>;
   selectedProjectId: string | null;
   setSelectedProjectId: (id: string | null) => void;
+  analysisMode: 'timeline' | 'analysis';
+  setAnalysisMode: (mode: 'timeline' | 'analysis') => void;
 }
 
 const PersonaContext = createContext<PersonaContextType | undefined>(undefined);
@@ -34,6 +36,7 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
   const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [analysisMode, setAnalysisMode] = useState<'timeline' | 'analysis'>('timeline');
 
   return (
     <PersonaContext.Provider value={{ 
@@ -48,7 +51,9 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
       feed,
       setFeed,
       selectedProjectId,
-      setSelectedProjectId
+      setSelectedProjectId,
+      analysisMode,
+      setAnalysisMode
     }}>
       {children}
     </PersonaContext.Provider>

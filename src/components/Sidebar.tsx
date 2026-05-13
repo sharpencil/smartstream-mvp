@@ -62,7 +62,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="fixed top-16 bottom-0 left-0 w-20 flex flex-col items-center py-8 bg-[#0a192f]/40 backdrop-blur-xl border-r border-white/10 z-[100] transition-all duration-300">
+      <aside className="fixed top-16 bottom-0 left-0 w-20 flex flex-col items-center py-8 bg-[#0a192f]/40 backdrop-blur-xl border-r border-white/10 z-[200] transition-all duration-300">
         
         <nav className="flex-1 flex flex-col gap-8 w-full items-center mt-4">
           <AnimatePresence mode="wait">
@@ -112,7 +112,7 @@ export function Sidebar() {
                 side="right" 
                 align="end" 
                 sideOffset={16}
-                className="z-[100] w-56 rounded-[16px] bg-[#0a192f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl p-2 outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+                className="z-[250] w-56 rounded-[16px] bg-[#0a192f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl p-2 outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
               >
                 <div className="px-3 py-2 mb-2 border-b border-white/10">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Switch Persona</p>

@@ -16,6 +16,7 @@ import { usePersona, FeedItem } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 import { BurndownOverlay } from './BurndownOverlay';
 import { MOCK_FIRM_PROJECTS } from './OrgOwnerDashboard';
+import { DeepAnalysisSuite } from './DeepAnalysisSuite';
 import * as Popover from '@radix-ui/react-popover';
 
 export interface DropData {
@@ -466,7 +467,7 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PulseDashboard() {
-  const { isDeepDive, setIsDeepDive, setActivePersona, setFeed, selectedProjectId, activePersona } = usePersona();
+  const { isDeepDive, setIsDeepDive, setActivePersona, setFeed, selectedProjectId, activePersona, analysisMode, setAnalysisMode } = usePersona();
   
   const currentProject = useMemo(() => {
     if (!selectedProjectId) return null;
@@ -524,6 +525,14 @@ export function PulseDashboard() {
     return () => clearTimeout(timer);
   }, [currentSidebarWidth]);
 
+  // Handle persona-specific defaults for Analysis Mode
+  useEffect(() => {
+    if (activePersona === 'Org Owner') {
+      setAnalysisMode('analysis');
+    } else {
+      setAnalysisMode('timeline');
+    }
+  }, [activePersona, setAnalysisMode]);
 
   // Auto-scroll to keep the NOW line centered when zooming
   useEffect(() => {
@@ -962,14 +971,16 @@ export function PulseDashboard() {
 
   return (
     <>
-      <div className={cn("w-full flex flex-col transition-all duration-500 ease-in-out text-slate-50 pb-32 h-full",
+      <div className={cn("w-full flex flex-col transition-all duration-500 ease-in-out text-slate-50 pb-32",
+        analysisMode === 'analysis' ? "min-h-full overflow-y-auto" : "h-full overflow-hidden",
         "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
       )}>
 
         {/* Header Controls */}
         <div className={cn(
-          "flex items-center justify-between px-8 pt-8 pb-5 border-b border-white/5 sticky top-0 backdrop-blur-md z-40 relative transition-all duration-500 bg-[#020617]/95"
+          "flex items-center justify-between px-8 pt-8 pb-5 border-b border-white/5 z-40 relative transition-all duration-500 bg-[#020617]/95",
+          analysisMode === 'timeline' ? "sticky top-0 backdrop-blur-md" : "relative"
         )}>
           <div className="flex flex-col">
             {isDeepDive && (
@@ -1020,156 +1031,209 @@ export function PulseDashboard() {
           </div>
 
           {/* Timeline Section */}
-          <div className="relative">
+          <div className={cn(
+            "flex flex-col relative min-h-0",
+            analysisMode === 'timeline' ? "flex-1" : "flex-none"
+          )}>
             {/* Scrollable Flow Area (Horizontal) */}
-            <div
-              ref={scrollContainerRef}
-              onClick={(e) => {
-                if (e.target === e.currentTarget) setSelectedDropId(null);
-              }}
-              className={cn(
-                'flex flex-col pt-0 pb-32 overflow-x-auto custom-scrollbar relative min-w-0 transition-all duration-500'
-              )}>
+              <div
+                ref={scrollContainerRef}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setSelectedDropId(null);
+                }}
+                className={cn(
+                  'flex flex-col pt-0 pb-32 relative min-w-0 transition-all duration-500',
+                  analysisMode === 'timeline' ? 'flex-1 overflow-x-auto custom-scrollbar' : 'flex-none overflow-visible'
+                )}>
 
               {/* Invisible Scroll Width Spacer */}
-              <div style={{ minWidth: (PROJECT_END_X * zoomScale) + currentSidebarWidth, height: 1 }} className="shrink-0 pointer-events-none" />
+              {analysisMode === 'timeline' && (
+                <div style={{ minWidth: (PROJECT_END_X * zoomScale) + currentSidebarWidth, height: 1 }} className="shrink-0 pointer-events-none" />
+              )}
+
 
               {/* Top toolbar (Sticky within the vertical scroll container) */}
-              <div className="sticky left-0 right-0 top-0 z-[80] flex justify-between items-center pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl">
+              <div className={cn(
+                "left-0 right-0 z-[80] flex items-center justify-between pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 px-8 rounded-b-2xl border-b border-white/5 shadow-2xl",
+                analysisMode === 'timeline' ? "sticky top-0" : "relative"
+              )}>
 
-                {/* View Level Toggle - Centered relative to visible area */}
-                <div className="absolute left-1/2 -translate-x-1/2 flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md pointer-events-auto">
-                  <button
-                    onClick={() => {
-                      setViewLevel('streams');
-                      setFocusedStreamId(null);
-                      setFocusedMemberId(null);
-                      setFocusedMilestoneId(null);
-                      setHoveredStreamId(null);
-                      setHoveredDropId(null);
-                    }}
-                    className={cn(
-                      'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                      viewLevel === 'streams' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
-                    )}
-                  >
-                    Streams
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewLevel('team');
-                      setFocusedStreamId(null);
-                      setFocusedMemberId(null);
-                      setFocusedMilestoneId(null);
-                      setHoveredStreamId(null);
-                      setHoveredDropId(null);
-                    }}
-                    className={cn(
-                      'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                      viewLevel === 'team' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
-                    )}
-                  >
-                    Team
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewLevel('milestones');
-                      setFocusedStreamId(null);
-                      setFocusedMemberId(null);
-                      setFocusedMilestoneId(null);
-                      setActiveMilestoneId(null);
-                      setHoveredStreamId(null);
-                      setHoveredDropId(null);
-                    }}
-                    className={cn(
-                      'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
-                      viewLevel === 'milestones' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
-                    )}
-                  >
-                    Milestones
-                  </button>
-                </div>
+                {/* Left: Empty spacer */}
+                <div className="flex-1" />
 
-                <div className="inline-flex items-center bg-[#0a192f]/80 backdrop-blur-md rounded-xl p-1 h-10 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-auto">
-                  <button
-                    onClick={() => setZoomScale(prev => Math.max(minZoom, prev - 0.1))}
-                    className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all disabled:opacity-30"
-                    disabled={zoomScale <= minZoom}
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-
-                  <div className="px-3 flex items-center">
-                    <input
-                      type="range"
-                      min={minZoom}
-                      max={2}
-                      step={0.01}
-                      value={zoomScale}
-                      onChange={(e) => setZoomScale(parseFloat(e.target.value))}
-                      className="w-32 h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500
-                                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
-                                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500
-                                [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,211,238,0.8)]
-                                hover:[&::-webkit-slider-thumb]:scale-125 transition-transform"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => setZoomScale(prev => Math.min(2, prev + 0.1))}
-                    className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Simulation Toggle and Actions */}
-                <div className="ml-4 flex items-center">
-                  {!isSandboxActive && (
-                    <button
-                      onClick={toggleSandbox}
-                      className="flex items-center justify-center gap-2 px-6 h-10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all pointer-events-auto bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
-                    >
-                      <PlayCircle className="w-4 h-4 shrink-0" />
-                      What-If
-                    </button>
+                {/* Center: Mode Toggles */}
+                <div className="flex items-center gap-4 pointer-events-auto">
+                  {activePersona === 'Org Owner' && (
+                    <div className="flex items-center bg-[#0a192f]/60 p-1 border border-slate-800/60 rounded-xl shadow-inner shadow-black/20 backdrop-blur-md">
+                      <button
+                        onClick={() => setAnalysisMode('analysis')}
+                        className={cn(
+                          'px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
+                          analysisMode === 'analysis' ? 'bg-cyan-500 text-cyan-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                        )}
+                      >
+                        Deep Analysis
+                      </button>
+                      <button
+                        onClick={() => setAnalysisMode('timeline')}
+                        className={cn(
+                          'px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
+                          analysisMode === 'timeline' ? 'bg-cyan-500 text-cyan-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                        )}
+                      >
+                        Timeline Flow
+                      </button>
+                    </div>
                   )}
 
-                  <AnimatePresence>
-                    {isSandboxActive && (
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                        className="flex items-center gap-2 pointer-events-auto"
+                  {(analysisMode === 'timeline' || activePersona !== 'Org Owner') && (
+                    <div className="flex flex-nowrap bg-[#0a192f]/60 p-1.5 border border-slate-800/60 rounded-full shadow-inner shadow-black/20 backdrop-blur-md">
+                      <button
+                        onClick={() => {
+                          setViewLevel('streams');
+                          setFocusedStreamId(null);
+                          setFocusedMemberId(null);
+                          setFocusedMilestoneId(null);
+                          setHoveredStreamId(null);
+                          setHoveredDropId(null);
+                        }}
+                        className={cn(
+                          'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                          viewLevel === 'streams' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                        )}
                       >
-                        <button
-                          onClick={commitSandbox}
-                          className="px-5 h-10 flex items-center justify-center bg-cyan-500 text-cyan-950 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-lg"
-                        >
-                          Apply to Live
-                        </button>
-                        <button
-                          onClick={discardSandbox}
-                          className="px-5 h-10 flex items-center justify-center bg-transparent text-rose-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500/10 transition-colors"
-                        >
-                          Discard
-                        </button>
-                      </motion.div>
+                        Streams
+                      </button>
+                      <button
+                        onClick={() => {
+                          setViewLevel('team');
+                          setFocusedStreamId(null);
+                          setFocusedMemberId(null);
+                          setFocusedMilestoneId(null);
+                          setHoveredStreamId(null);
+                          setHoveredDropId(null);
+                        }}
+                        className={cn(
+                          'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                          viewLevel === 'team' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                        )}
+                      >
+                        Team
+                      </button>
+                      <button
+                        onClick={() => {
+                          setViewLevel('milestones');
+                          setFocusedStreamId(null);
+                          setFocusedMemberId(null);
+                          setFocusedMilestoneId(null);
+                          setActiveMilestoneId(null);
+                          setHoveredStreamId(null);
+                          setHoveredDropId(null);
+                        }}
+                        className={cn(
+                          'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
+                          viewLevel === 'milestones' ? 'bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                        )}
+                      >
+                        Milestones
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Zoom + What-If */}
+                <div className="flex-1 flex justify-end items-center gap-4 pointer-events-auto">
+                  {analysisMode === 'timeline' && (
+                    <div className="inline-flex items-center bg-[#0a192f]/80 backdrop-blur-md rounded-xl p-1 h-10 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                      <button
+                        onClick={() => setZoomScale(prev => Math.max(minZoom, prev - 0.1))}
+                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all disabled:opacity-30"
+                        disabled={zoomScale <= minZoom}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+
+                      <div className="px-3 flex items-center">
+                        <input
+                          type="range"
+                          min={minZoom}
+                          max={2}
+                          step={0.01}
+                          value={zoomScale}
+                          onChange={(e) => setZoomScale(parseFloat(e.target.value))}
+                          className="w-32 h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500
+                                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+                                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500
+                                    [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,211,238,0.8)]
+                                    hover:[&::-webkit-slider-thumb]:scale-125 transition-transform"
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => setZoomScale(prev => Math.min(2, prev + 0.1))}
+                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center">
+                    {!isSandboxActive && activePersona !== 'Org Owner' && (
+                      <button
+                        onClick={toggleSandbox}
+                        className="flex items-center justify-center gap-2 px-6 h-10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all bg-[#0a192f]/80 text-slate-400 border border-white/10 hover:text-slate-200 hover:bg-[#0a192f] shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap flex-nowrap"
+                      >
+                        <PlayCircle className="w-4 h-4 shrink-0" />
+                        What-If
+                      </button>
                     )}
-                  </AnimatePresence>
+
+                    <AnimatePresence>
+                      {isSandboxActive && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                          className="flex items-center gap-2"
+                        >
+                          <button
+                            onClick={commitSandbox}
+                            className="px-5 h-10 flex items-center justify-center bg-cyan-500 text-cyan-950 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-lg"
+                          >
+                            Apply to Live
+                          </button>
+                          <button
+                            onClick={discardSandbox}
+                            className="px-5 h-10 flex items-center justify-center bg-transparent text-rose-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-500/10 transition-colors"
+                          >
+                            Discard
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
 
-              <TimeAxis
-                zoomScale={zoomScale}
-                nowX={NOW_LINE_X}
-                totalWidth={PROJECT_END_X * zoomScale}
-                sidebarWidth={currentSidebarWidth}
-                hoveredDrop={hoveredDropId ? drops.find(d => d.id === hoveredDropId) : null}
-                selectedDrop={selectedDropId ? drops.find(d => d.id === selectedDropId) : null}
-              />
+              <AnimatePresence mode="wait">
+                {analysisMode === 'timeline' ? (
+                  <motion.div
+                    key="timeline"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="contents"
+                  >
+                    <TimeAxis
+                      zoomScale={zoomScale}
+                      nowX={NOW_LINE_X}
+                      totalWidth={PROJECT_END_X * zoomScale}
+                      sidebarWidth={currentSidebarWidth}
+                      hoveredDrop={hoveredDropId ? drops.find(d => d.id === hoveredDropId) : null}
+                      selectedDrop={selectedDropId ? drops.find(d => d.id === selectedDropId) : null}
+                    />
 
               {/* Now Line Distance Gauge (Hover-based) */}
               <AnimatePresence>
@@ -2161,12 +2225,27 @@ export function PulseDashboard() {
                   </div>
                 )}
               </div>
+            </motion.div>
+                ) : (
+                  <motion.div
+                    key="analysis"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-[120] bg-[#020617]"
+                  >
+                    <DeepAnalysisSuite isVisible={true} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
       </div>
 
-      <BacklogTray unassignedDrops={unassignedDrops} onDragEnd={handleDragEnd} isSandboxActive={isSandboxActive} />
+      {activePersona !== 'Org Owner' && (
+        <BacklogTray unassignedDrops={unassignedDrops} onDragEnd={handleDragEnd} isSandboxActive={isSandboxActive} />
+      )}
 
       <AnimatePresence>
         {editingMilestoneId && (

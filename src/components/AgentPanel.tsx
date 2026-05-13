@@ -1,16 +1,21 @@
 'use client';
 
-import { Bot, Sparkles, AlertTriangle, Info, Send, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Bot, Sparkles, AlertTriangle, Info, Send, ChevronLeft, ChevronRight, ChevronDown, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { usePersona, FeedItem } from '@/context/PersonaContext';
 import { useGenesis } from '@/context/GenesisContext';
 
 export function AgentPanel() {
-  const { activePersona, isAgentOpen, setIsAgentOpen, feed: dynamicFeed } = usePersona();
+  const { activePersona, isAgentOpen, setIsAgentOpen, feed: dynamicFeed, analysisMode } = usePersona();
   const { genesisState } = useGenesis();
   
-  const isThinking = genesisState === 'scanning' || genesisState === 'uploading';
+  const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
+  const [isOracleThinking, setIsOracleThinking] = useState(false);
+  const [oracleResponse, setOracleResponse] = useState<string | null>(null);
+
+  const isThinking = genesisState === 'scanning' || genesisState === 'uploading' || isOracleThinking;
 
   const handleToggle = () => {
     setIsAgentOpen(!isAgentOpen);
@@ -36,7 +41,7 @@ export function AgentPanel() {
         { id: '1', type: 'alert', text: 'Project Database Consolidation just slipped 2 days. Financial impact: +$1.2k.' },
         { id: '2', type: 'suggestion', text: 'Predictive deficit in PostgreSQL skills. Recommendation: Onboard 1 Senior DB Engineer.' }
       ];
-      quickActions = ['Identify Hiring Needs', 'Audit Firm Accuracy', 'Security Status Check'];
+      quickActions = analysisMode === 'analysis' ? [] : ['Identify Hiring Needs', 'Audit Firm Accuracy', 'Security Status Check'];
       break;
     case 'Project Manager':
     default:
@@ -55,7 +60,7 @@ export function AgentPanel() {
   return (
     <aside
       className={cn(
-        "fixed right-0 top-16 bottom-0 z-50 transition-all duration-500 ease-in-out flex flex-col",
+        "fixed right-0 top-16 bottom-0 z-[400] transition-all duration-500 ease-in-out flex flex-col",
         isAgentOpen 
           ? "w-[360px] bg-[#0a192f]/40 backdrop-blur-xl border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]" 
           : "w-0 border-none shadow-none"
@@ -137,6 +142,66 @@ export function AgentPanel() {
                 </p>
               </div>
             ))}
+
+            {activePersona === 'Org Owner' && analysisMode === 'analysis' && (
+              <div className="flex flex-col gap-4">
+                <div className="p-4 rounded-2xl bg-[#0a192f]/60 border border-white/10 shadow-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="w-4 h-4 text-cyan-400" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Strategic Inquiries</span>
+                  </div>
+                  <div className="relative">
+                    <select 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none appearance-none cursor-pointer focus:border-cyan-500/50 transition-all"
+                      onChange={(e) => {
+                        const q = e.target.value;
+                        if (!q) return;
+                        setSelectedInquiry(q);
+                        setIsOracleThinking(true);
+                        setOracleResponse(null);
+                        setTimeout(() => {
+                          setIsOracleThinking(false);
+                          const answers: Record<string, string> = {
+                            'How early or late will the project complete?': 'Based on current velocity (+64% completion) and the blue dashed projection, we are tracking for a completion date of July 12, which is 4 days ahead of the initial baseline.',
+                            'How much is the project expected to cost?': 'Current projected cost is $284.5k. This is approximately 15% higher than the initial projected expense of $247k, primarily due to the +115 scope increase in Security Infrastructure.',
+                            'What things could we do in order to complete the project faster?': 'To accelerate completion, we recommend compressing the "Identity & Auth Hub" stream. Increasing staffing by 2 Senior Engineers could pull the completion date in by an additional 12 days.',
+                            'What things could we do in order to complete the project with less cost?': 'To optimize costs, consider offloading external contractors on the "PostgreSQL migration" in favor of internal talent, or deferring the "Advanced Security Audit" until after the initial launch phase.',
+                            'What are the largest factors for the schedule changes?': 'The primary factor for schedule variance was the mid-project scope expansion in the Security Infrastructure milestone. However, increased velocity in the Beta stream has mitigated much of this delay.'
+                          };
+                          setOracleResponse(answers[q]);
+                        }, 1500);
+                      }}
+                    >
+                      <option value="">Select a question...</option>
+                      <option value="How early or late will the project complete?">How early or late will the project complete?</option>
+                      <option value="How much is the project expected to cost?">How much is the project expected to cost?</option>
+                      <option value="What things could we do in order to complete the project faster?">What things could we do in order to complete the project faster?</option>
+                      <option value="What things could we do in order to complete the project with less cost?">What things could we do in order to complete the project with less cost?</option>
+                      <option value="What are the largest factors for the schedule changes?">What are the largest factors for the schedule changes?</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {oracleResponse && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 shadow-inner"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Bot className="w-4 h-4 text-indigo-400" />
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Oracle Analysis</span>
+                      </div>
+                      <p className="text-sm text-indigo-100 leading-relaxed font-medium">
+                        {oracleResponse}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
           <div className="mt-auto shrink-0 flex flex-col gap-3">

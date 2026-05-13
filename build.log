@@ -1,0 +1,83 @@
+
+> smartstream@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./src/components/PulseDashboard.tsx:2200:32
+Expected '</', got 'jsx text'
+  [90m2198 |[0m                   </div>
+  [90m2199 |[0m                 )}
+[31m[1m>[0m [90m2200 |[0m                   </motion.div>
+  [90m     |[0m                                [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2201 |[0m                 :
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2202 |[0m                   <motion.div
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m2203 |[0m                     key=[32m"analysis"[0m
+  [90m2204 |[0m                     initial={{ opacity: [35m0[0m }}
+  [90m2205 |[0m                     animate={{ opacity: [35m1[0m }}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/PulseDashboard.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/PulseDashboard.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+
+
+./src/components/PulseDashboard.tsx:2200:32
+Expected '</', got 'jsx text'
+  [90m2198 |[0m                   </div>
+  [90m2199 |[0m                 )}
+[31m[1m>[0m [90m2200 |[0m                   </motion.div>
+  [90m     |[0m                                [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2201 |[0m                 :
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2202 |[0m                   <motion.div
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m2203 |[0m                     key=[32m"analysis"[0m
+  [90m2204 |[0m                     initial={{ opacity: [35m0[0m }}
+  [90m2205 |[0m                     animate={{ opacity: [35m1[0m }}
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of src/components/PulseDashboard.tsx:
+./src/components/PulseDashboard.tsx:2200:32
+  [90m2198 |[0m                   </div>
+  [90m2199 |[0m                 )}
+[31m[1m>[0m [90m2200 |[0m                   </motion.div>
+  [90m     |[0m                                [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2201 |[0m                 :
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m2202 |[0m                   <motion.div
+  [90m     |[0m [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m2203 |[0m                     key=[32m"analysis"[0m
+  [90m2204 |[0m                     initial={{ opacity: [35m0[0m }}
+  [90m2205 |[0m                     animate={{ opacity: [35m1[0m }}
+
+Import traces:
+  Client Component Browser:
+    ./src/components/PulseDashboard.tsx [Client Component Browser]
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/PulseDashboard.tsx [Client Component SSR]
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (./src/components/PulseDashboard.tsx:2200:32)
+    at <unknown> (./src/components/PulseDashboard.tsx:2200:32)
+    at <unknown> (./src/components/PulseDashboard.tsx:2200:32)
