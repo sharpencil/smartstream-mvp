@@ -1,7 +1,7 @@
 'use client';
 
 import { Bot, Sparkles, AlertTriangle, Info, Send, ChevronLeft, ChevronRight, ChevronDown, MessageSquare } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { usePersona, FeedItem } from '@/context/PersonaContext';
@@ -142,6 +142,33 @@ export function AgentPanel() {
                 </p>
               </div>
             ))}
+
+            {activePersona === 'Team Member' && (
+              <div className="flex flex-col gap-4">
+                <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 shadow-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI-Predicted Upcoming</span>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { id: '8210', title: 'Token Refresh Middleware', confidence: '94%', why: 'best next match when #1290 closes' },
+                      { id: '8211', title: 'Auth Context Provider', confidence: '88%', why: 'Skill match: React Context & Security' },
+                      { id: '8215', title: 'OAuth Redirect Flow', confidence: '82%', why: 'Logical successor to middleware' }
+                    ].map(drop => (
+                      <div key={drop.id} className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all cursor-pointer group">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-mono text-indigo-400 font-bold">#{drop.id}</span>
+                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">{drop.confidence} Confidence</span>
+                        </div>
+                        <p className="text-sm text-slate-200 font-medium group-hover:text-indigo-300 transition-colors">{drop.title}</p>
+                        <p className="text-[10px] text-slate-500 mt-1 italic">&quot;{drop.why}&quot;</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {activePersona === 'Org Owner' && analysisMode === 'analysis' && (
               <div className="flex flex-col gap-4">

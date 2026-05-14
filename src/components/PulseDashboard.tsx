@@ -126,7 +126,7 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
 
   return (
     <div
-      className="sticky top-0 z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none"
+      className="sticky top-[80px] z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none"
       style={{ width: totalWidth + sidebarWidth }}
       suppressHydrationWarning
     >
@@ -972,15 +972,14 @@ export function PulseDashboard() {
   return (
     <>
       <div className={cn("w-full flex flex-col transition-all duration-500 ease-in-out text-slate-50 pb-32",
-        analysisMode === 'analysis' ? "min-h-full overflow-y-auto" : "h-full overflow-hidden",
+        "min-h-full overflow-y-auto",
         "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
       )}>
 
         {/* Header Controls */}
         <div className={cn(
-          "flex items-center justify-between px-8 pt-8 pb-5 border-b border-white/5 z-40 relative transition-all duration-500 bg-[#020617]/95",
-          analysisMode === 'timeline' ? "sticky top-0 backdrop-blur-md" : "relative"
+          "flex items-center justify-between px-8 pt-8 pb-5 border-b border-white/5 z-40 relative transition-all duration-500 bg-[#020617]/95"
         )}>
           <div className="flex flex-col">
             {isDeepDive && (
@@ -1055,7 +1054,7 @@ export function PulseDashboard() {
               {/* Top toolbar (Sticky within the vertical scroll container) */}
               <div className={cn(
                 "left-0 right-0 z-[80] flex items-center justify-between pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 px-8 rounded-b-2xl border-b border-white/5 shadow-2xl",
-                analysisMode === 'timeline' ? "sticky top-0" : "relative"
+                "sticky top-0"
               )}>
 
                 {/* Left: Empty spacer */}

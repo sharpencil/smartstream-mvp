@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
 import { getStreamColor } from '@/lib/streams';
-import { CheckCircle2, AlertOctagon, Send, PlayCircle, XCircle, Clock, Check } from 'lucide-react';
+import { CheckCircle2, AlertOctagon, Send, PlayCircle, XCircle, Clock, Check, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp, Zap, Layers, Target, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // We mock the user as owner_id = "1" (Sarah) for Team Member view
@@ -19,10 +19,82 @@ interface FlowDrop {
   title: string;
   tasks: string[];
   estimated_time: number;
+  complexity?: number;
   streamId: string | undefined;
   xOffset: number; // Logical x position
   width: number;
   state: HandshakeState;
+}
+
+function AlertBanner() {
+  return (
+    <div className="mx-8 mt-6">
+      <div className="relative overflow-hidden rounded-xl border border-rose-500/20 bg-rose-950/10 p-3 backdrop-blur-md">
+        <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-transparent to-transparent" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <AlertCircle className="h-5 w-5 text-rose-500" />
+              <div className="absolute inset-0 animate-ping rounded-full bg-rose-500/40" />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Attention Required</span>
+              <div className="h-4 w-[1px] bg-rose-500/20" />
+              <p className="text-sm text-rose-100/80">
+                <span className="font-mono font-bold text-rose-400">DROP-1284:</span> OAuth2 token refresh logic - <span className="font-bold">Delayed 5d</span>
+              </p>
+            </div>
+          </div>
+          <button className="text-[10px] font-bold uppercase tracking-widest text-rose-400/60 hover:text-rose-400 transition-colors">
+            Acknowledge
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MicroKPICard({ title, value, subtext, icon: Icon, trend, trendDirection = 'up', color = "teal" }: { 
+  title: string, 
+  value: string | number, 
+  subtext?: string, 
+  icon: React.ComponentType<{ className?: string }>, 
+  trend?: string,
+  trendDirection?: 'up' | 'down',
+  color?: "teal" | "amber" 
+}) {
+  const isTeal = color === "teal";
+  const accentColor = isTeal ? "text-[#10B981]" : "text-amber-500";
+  const bgColor = isTeal ? "bg-[#10B981]/5" : "bg-amber-500/5";
+  const borderColor = isTeal ? "border-[#10B981]/20" : "border-amber-500/20";
+  const iconColor = isTeal ? "text-[#10B981]/60" : "text-amber-500/60";
+
+  return (
+    <div className={cn("relative overflow-hidden rounded-2xl border p-4 backdrop-blur-xl transition-all hover:border-white/10", bgColor, borderColor)}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">{title}</p>
+        <div className={cn("rounded-lg bg-white/5 p-1.5", iconColor)}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      
+      <div className="flex items-baseline gap-2 overflow-hidden">
+        <h3 className={cn("text-xl font-bold tracking-tight shrink-0", accentColor)}>{value}</h3>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {trend && (
+            <div className={cn("flex items-center text-[10px] font-bold shrink-0", trendDirection === 'up' ? "text-[#10B981]" : "text-amber-500")}>
+              {trendDirection === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {trend}
+            </div>
+          )}
+          {subtext && <p className="text-[10px] text-slate-500 font-medium truncate">{subtext}</p>}
+        </div>
+      </div>
+
+      {/* Decorative gradient */}
+      <div className={cn("absolute -bottom-4 -right-4 h-16 w-16 opacity-10 blur-2xl", isTeal ? "bg-[#10B981]" : "bg-amber-500")} />
+    </div>
+  );
 }
 
 export function MyFlowDashboard() {
@@ -51,11 +123,12 @@ export function MyFlowDashboard() {
 
       currentXCompleted -= width;
 
-      initialFlowDrops.unshift({
+        initialFlowDrops.unshift({
         drop_id: d.drop_id,
         title: d.title,
         tasks: d.tasks || [],
         estimated_time: d.estimated_time,
+        complexity: d.complexity || 3,
         streamId: streamInfo?.id,
         xOffset: currentXCompleted,
         width,
@@ -84,6 +157,7 @@ export function MyFlowDashboard() {
         title: d.title,
         tasks: d.tasks || [],
         estimated_time: d.estimated_time,
+        complexity: d.complexity || 3,
         streamId: streamInfo?.id,
         xOffset: currentXUpcoming,
         width,
@@ -200,14 +274,83 @@ export function MyFlowDashboard() {
   // Use the exact grid style logic for timeline length
   const TOTAL_GRID_WIDTH = 4000;
 
+  const completedDrops = drops.filter(d => d.state === 'COMPLETED');
+  const complexityHandled = completedDrops.reduce((acc, d) => acc + (d.complexity || 0), 0) || 18;
+
   return (
-    <div className="flex flex-col h-full w-full bg-[#020617] relative overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#020617] relative overflow-hidden no-scrollbar">
       {/* Header */}
       <div className="sticky top-0 z-[120] bg-[#020617]/95 backdrop-blur-md px-8 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
         <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
           My Flow
         </h1>
       </div>
+
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        {/* Task 1: Alert Banner */}
+        <AlertBanner />
+
+        {/* Task 2: Vitals Grid */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-4 gap-4 px-8 mt-6"
+        >
+          <MicroKPICard 
+            title="Acceptance Rate" 
+            value="87%" 
+            icon={Target} 
+            trend="5%"
+            trendDirection="up"
+          />
+          <MicroKPICard 
+            title="Personal Velocity" 
+            value="1.2d" 
+            subtext="Avg cycle time" 
+            icon={TrendingUp} 
+            trend="0.2" 
+            trendDirection="down"
+            color="amber"
+          />
+          <MicroKPICard 
+            title="Drops Remaining" 
+            value="3" 
+            subtext="1 Active • 1 Delayed • 1 Upcoming" 
+            icon={Layers} 
+            color="amber"
+          />
+          <MicroKPICard 
+            title="Drops Completed" 
+            value="2" 
+            subtext="This sprint" 
+            icon={CheckCircle2} 
+          />
+          <MicroKPICard 
+            title="Complexity Handled" 
+            value={`${complexityHandled} pts`} 
+            subtext="Total technical weight" 
+            icon={Zap} 
+          />
+          <MicroKPICard 
+            title="Critical Issues Solved" 
+            value="4" 
+            subtext="High-impact fixes" 
+            icon={AlertOctagon} 
+          />
+          <MicroKPICard 
+            title="High-Priority Drops" 
+            value="3 / 5" 
+            subtext="SLA Alignment" 
+            icon={Activity} 
+            color="amber"
+          />
+          <MicroKPICard 
+            title="Dependency Resolution" 
+            value="92%" 
+            subtext="Blocker clearing rate" 
+            icon={TrendingUp} 
+          />
+        </motion.div>
       {/* Background ambient glow based on stream color */}
       {activeDrop && (
         <div
@@ -216,8 +359,8 @@ export function MyFlowDashboard() {
         />
       )}
 
-      {/* --- TIMELINE HEADER --- */}
-      <div className={cn("relative w-full h-44 border-b border-white/5 bg-[#0a192f]/40 transition-all duration-700 z-10", isPendingBlur ? "blur-sm opacity-50" : "blur-0 opacity-100")}>
+      {/* --- TIMELINE HEADER (Personal Swimlane) --- */}
+      <div className={cn("relative w-full h-44 mt-8 border-y border-white/5 bg-[#0a192f]/40 transition-all duration-700 z-10", isPendingBlur ? "blur-sm opacity-50" : "blur-0 opacity-100")}>
 
         <div
           ref={scrollContainerRef}
@@ -233,7 +376,6 @@ export function MyFlowDashboard() {
                 // Just mock dates relative to "today"
                 const date = new Date();
                 date.setDate(date.getDate() + dayOffset);
-                const isMonday = date.getDay() === 1;
                 return (
                   <div key={i} className="absolute top-0 bottom-0 border-l border-white/5" style={{ left: i * DAY_WIDTH }}>
                     <div className="flex flex-col justify-end h-full pb-2 px-1">
@@ -573,12 +715,13 @@ export function MyFlowDashboard() {
                 <p className="text-sm mt-2 text-slate-600">Click any block to view details or take action.</p>
               </>
             ) : (
-              <p className="text-lg font-medium">No active drops. You're all caught up!</p>
+              <p className="text-lg font-medium">No active drops. You&apos;re all caught up!</p>
             )}
           </div>
         )}
 
       </div>
     </div>
+  </div>
   );
 }
