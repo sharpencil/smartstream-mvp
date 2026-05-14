@@ -16,7 +16,7 @@ export function BurndownOverlay({ onClose }: BurndownOverlayProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-[200] bg-[#020617]/90 backdrop-blur-2xl flex flex-col p-8"
+      className="fixed inset-0 z-[500] bg-[#020617]/90 backdrop-blur-2xl flex flex-col p-8"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-8">

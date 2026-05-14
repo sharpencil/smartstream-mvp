@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Users, Globe, Search, Filter, SlidersHorizontal, Plus, CheckCircle } from 'lucide-react';
+import { Users, Globe, Search, Filter, SlidersHorizontal, Plus, CheckCircle, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { TalentCard } from '@/components/TalentCard';
@@ -11,8 +11,14 @@ import { OnboardingModal } from '@/components/OnboardingModal';
 import { usePersona } from '@/context/PersonaContext';
 import { mockEmployees as initialEmployees, Employee } from '@/lib/mockTeam';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { TeamMatchDashboard } from '@/components/TeamMatchDashboard';
 
 export default function TeamPage() {
+  const router = useRouter();
+  const [viewMode, setViewMode] = useState<'orchestration' | 'roster'>('orchestration');
+  const [selectedDate, setSelectedDate] = useState('Today');
+  
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [activeTab, setActiveTab] = useState('crew');
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,8 +35,6 @@ export default function TeamPage() {
   const [flyingCard, setFlyingCard] = useState<{ employee: Employee, startX: number, startY: number } | null>(null);
   const [ripplePos, setRipplePos] = useState<{ x: number, y: number } | null>(null);
   const benchTabRef = useRef<HTMLButtonElement>(null);
-
-
 
   // Get unique skills for filter
   const allSkills = useMemo(() => {
@@ -98,15 +102,11 @@ export default function TeamPage() {
       
       // Switch to bench
       setActiveTab('bench');
-      
-
     }, 1000);
   };
 
   return (
-    <div
-      className="w-full flex flex-col p-8 min-h-full transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-32"
-    >
+    <div className="w-full h-full flex flex-col p-8 lg:p-12 transition-all duration-500 ease-in-out bg-[#020617] text-slate-50 pb-20 overflow-hidden">
       {/* Ripple Effect */}
       {ripplePos && (
         <div 
@@ -149,14 +149,35 @@ export default function TeamPage() {
         )}
       </AnimatePresence>
 
-      <div className="w-full flex flex-col">
+      {/* Identical Header (Matches Streams/LibraryDashboard) */}
+      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative shrink-0">
+        <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
+          Team
+        </h1>
+        
+        {/* View Switcher Segmented Control */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center bg-[#0a192f] border border-slate-800 rounded-full p-1 shadow-inner">
+            <button
+              onClick={() => setViewMode('orchestration')}
+              className={cn(
+                "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
+                viewMode === 'orchestration' ? "bg-cyan-950/80 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] border border-cyan-500/20" : "text-slate-500 hover:text-slate-300"
+              )}
+            >
+              Orchestration
+            </button>
+            <button
+              onClick={() => setViewMode('roster')}
+              className={cn(
+                "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
+                viewMode === 'roster' ? "bg-cyan-950/80 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] border border-cyan-500/20" : "text-slate-500 hover:text-slate-300"
+              )}
+            >
+              Roster
+            </button>
+          </div>
 
-        {/* Identical Header (Matches Streams/LibraryDashboard) */}
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5 sticky top-0 bg-[#020617]/90 backdrop-blur-md z-40 relative">
-          <h1 className="text-3xl font-bold font-sans tracking-tight text-slate-100 flex items-center gap-3">
-            Team
-          </h1>
-
+        {viewMode === 'roster' && (
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#0a192f]/60 border border-slate-800/60 rounded-full shadow-inner shadow-black/20">
             <button
               onClick={() => setActiveTab('crew')}
@@ -178,8 +199,10 @@ export default function TeamPage() {
               The Bench
             </button>
           </div>
+        )}
 
-          <div className="flex items-center gap-4 pr-4">
+        <div className="flex items-center gap-4 pr-4">
+          {viewMode === 'roster' && (
             <button 
               onClick={() => setIsOnboardingOpen(true)}
               className="px-5 py-2.5 rounded-full bg-transparent border border-cyan-500/50 text-cyan-400 text-sm font-bold uppercase tracking-[0.1em] hover:bg-cyan-500 hover:text-[#020617] transition-all flex items-center gap-2 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95"
@@ -187,10 +210,43 @@ export default function TeamPage() {
               <Plus className="w-4 h-4" />
               ONBOARD
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* Search & Filter Logic (Below the Header) */}
+      {/* Main View Area */}
+      <div className="flex-1 relative min-h-0 flex flex-col">
+        <AnimatePresence mode="wait">
+          {viewMode === 'orchestration' ? (
+            <motion.div
+              key="orchestration"
+              initial={{ opacity: 0, rotateY: -90 }}
+              animate={{ opacity: 1, rotateY: 0 }}
+              exit={{ opacity: 0, rotateY: 90 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="absolute inset-0 flex flex-col"
+              style={{ transformPerspective: 1200, transformOrigin: "center" }}
+            >
+              <TeamMatchDashboard 
+                onTraceDependency={() => router.push('/')} 
+                onOverride={() => {
+                  setViewMode('roster');
+                  setActiveTab('bench');
+                }}
+                selectedDate={selectedDate}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="roster"
+              initial={{ opacity: 0, rotateY: 90 }}
+              animate={{ opacity: 1, rotateY: 0 }}
+              exit={{ opacity: 0, rotateY: -90 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="absolute inset-0 flex flex-col overflow-y-auto custom-scrollbar pr-4"
+              style={{ transformPerspective: 1200, transformOrigin: "center" }}
+            >
+              {/* Search & Filter Logic (Below the Header) */}
         <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-center bg-[#0a192f]/20 backdrop-blur-xl border border-white/5 p-4 rounded-[28px] mb-8">
           <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
             {/* Search */}
@@ -275,6 +331,9 @@ export default function TeamPage() {
             </div>
           </TabsContent>
         </Tabs>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <PerformanceModal
@@ -289,7 +348,29 @@ export default function TeamPage() {
         onAdd={handleOnboardComplete}
       />
 
-
+      {/* Time Machine Footer */}
+      <div className="fixed bottom-0 left-64 right-0 h-16 bg-[#020617] border-t border-white/5 flex items-center px-8 z-50">
+        <div className="flex items-center gap-3">
+          <History className="w-4 h-4 text-slate-400" />
+          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Time Machine:</span>
+        </div>
+        <div className="flex items-center gap-2 ml-6">
+          {['May 5', 'May 6', 'May 7', 'Today'].map((date) => (
+            <button
+              key={date}
+              onClick={() => setSelectedDate(date)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold transition-all",
+                selectedDate === date 
+                  ? "bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]" 
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+              )}
+            >
+              {date}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

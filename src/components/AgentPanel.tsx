@@ -244,14 +244,32 @@ export function AgentPanel() {
               ))}
             </div>
 
-            <div className="relative">
+            <div className={cn(
+              "relative transition-all duration-500",
+              analysisMode === 'timeline' && genesisState === 'idle' && "scale-[1.02]"
+            )}>
+              {analysisMode === 'timeline' && (
+                <div className="absolute -top-10 left-4">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-cyan-500/50 animate-pulse">
+                    Oracle Command Line
+                  </span>
+                </div>
+              )}
               <input
                 type="text"
-                placeholder="Ask Oracle..."
-                className="w-full bg-black/20 border border-white/10 rounded-[20px] py-3 pl-4 pr-10 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all font-mono"
+                placeholder={analysisMode === 'timeline' ? "what if Lin took the OAuth Drop instead of Priya?" : "Ask Oracle..."}
+                className={cn(
+                  "w-full bg-black/40 border rounded-[20px] py-4 pl-4 pr-12 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none transition-all font-mono shadow-2xl",
+                  analysisMode === 'timeline' 
+                    ? "border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.1)] focus:border-cyan-400" 
+                    : "border-white/10 focus:border-cyan-500/50"
+                )}
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-400 transition-colors">
-                <Send className="w-4 h-4" />
+              <button className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2 transition-colors",
+                analysisMode === 'timeline' ? "text-cyan-400 hover:text-cyan-300" : "text-slate-500 hover:text-cyan-400"
+              )}>
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
