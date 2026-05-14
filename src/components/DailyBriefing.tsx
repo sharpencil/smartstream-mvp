@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
-import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2, Maximize2, Coins, Zap, Target, Users, Shield, AlertCircle } from 'lucide-react';
+import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2, Maximize2, Coins, Zap, Target, Users, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import { BurndownChart } from './BurndownChart';
 import { cn } from '@/lib/utils';
 import { usePersona } from '@/context/PersonaContext';
@@ -21,6 +21,7 @@ interface DailyBriefingProps {
   blockerResolutionCount?: number;
   onDismissResolution?: () => void;
   onBurndownClick?: () => void;
+  onCapacityClick?: () => void;
 }
 
 const rowVariants: Variants = {
@@ -83,6 +84,7 @@ export function DailyBriefing({
   blockerResolutionCount = 0,
     onDismissResolution,
     onBurndownClick,
+    onCapacityClick,
   }: DailyBriefingProps) {
     const { activePersona } = usePersona();
     const isOwner = activePersona === 'Org Owner';
@@ -90,7 +92,7 @@ export function DailyBriefing({
   
     return (
       <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
-        <div className="pt-5 pb-5 relative">
+        <div className="py-5 relative">
           {isSandboxActive && (
             <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500">
               <div className="flex items-center gap-8 w-full justify-between">
@@ -219,78 +221,106 @@ export function DailyBriefing({
               </Widget>
             </>
           ) : (
-            <>
-              {/* Project Health */}
-              <Widget className="flex-1 hover:border-green-500/20 hover:bg-green-950/10 group">
-                <div className="w-9 h-9 rounded-full border-2 border-slate-700 relative flex items-center justify-center shrink-0">
-                  <div className="absolute inset-0 rounded-full border-2 border-green-500/80 [clip-path:inset(0_0_0_14%)]" />
-                  <Activity className="w-3.5 h-3.5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Health</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[15px] font-bold text-slate-100 group-hover:text-green-50 transition-colors leading-none">88%</span>
-                    <span className="text-[9px] text-green-500/70 font-bold uppercase tracking-wide">On Track</span>
+            <div className="flex flex-col gap-2.5 w-full">
+              <div className="flex gap-2.5 w-full items-stretch">
+                {/* Task 1: Narrative Oracle Briefing */}
+                <div className="flex-[2.5] bg-[#0b1929]/40 border border-cyan-500/10 rounded-2xl p-5 flex flex-col justify-center relative overflow-hidden group shadow-[inset_0_0_40px_rgba(34,211,238,0.05)]">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-cyan-500/50" />
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-4 h-4 text-cyan-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-cyan-500/70">Oracle Briefing</span>
                   </div>
+                  <p className="text-[14px] text-slate-100 font-medium leading-relaxed max-w-4xl">
+                    Phoenix is on forecast for <span className="text-cyan-400 font-bold">June 12</span> at <span className="text-emerald-400 font-bold">92% confidence</span>. Confidence rose 5% since CDC cleared the dependency on legacy auth.
+                  </p>
                 </div>
-              </Widget>
 
-              {/* Project Burndown */}
-              <Widget 
-                onClick={onBurndownClick}
-                className="flex-1 hover:border-teal-500/20 hover:bg-teal-950/10 group relative"
-              >
-                <div className="absolute top-2 right-2 transition-opacity">
-                   <Maximize2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 transition-colors" />
-                </div>
-                <div className="w-9 h-9 rounded-xl bg-teal-950/50 border border-teal-500/20 flex items-center justify-center shrink-0">
-                  <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Burndown</p>
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[15px] font-bold text-slate-100 group-hover:text-teal-50 transition-colors leading-none">72%</span>
-                    <BurndownChart />
+                {/* Project Burndown */}
+                <Widget 
+                  onClick={onBurndownClick}
+                  className="flex-[1] hover:border-teal-500/20 hover:bg-teal-950/10 group relative !h-auto min-h-[80px]"
+                >
+                  <div className="absolute top-2 right-2 transition-opacity">
+                     <Maximize2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 transition-colors" />
                   </div>
-                </div>
-              </Widget>
+                  <div className="w-9 h-9 rounded-xl bg-teal-950/50 border border-teal-500/20 flex items-center justify-center shrink-0">
+                    <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Burndown</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[15px] font-bold text-slate-100 group-hover:text-teal-50 transition-colors leading-none">72%</span>
+                      <BurndownChart />
+                    </div>
+                  </div>
+                </Widget>
+              </div>
 
-              {/* Completion Forecast */}
-              <Widget className="flex-1 hover:border-indigo-500/20 hover:bg-indigo-950/10 group">
-                <div className="w-9 h-9 rounded-xl bg-indigo-950/50 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                  <Brain className="w-3.5 h-3.5 text-indigo-400" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Completion Forecast</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[15px] font-bold text-slate-100 group-hover:text-indigo-50 transition-colors leading-none">Jun 12</span>
-                    <span className="text-[9px] text-green-500/70 font-bold tracking-widest uppercase">92% Conf</span>
+              <div className="w-full bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex flex-col sm:flex-row overflow-hidden shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]">
+                {/* Throughput */}
+                <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Throughput · 7D</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">Open <ArrowRight className="w-3 h-3" /></span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-slate-100 tracking-tight leading-none">14.2</span>
+                      <span className="text-[10px] text-slate-500 font-medium leading-none">drops/day</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] leading-none">▲ 8%</span>
                   </div>
                 </div>
-              </Widget>
 
-              {/* Upstream Health */}
-              <Widget
-                onClick={() => { }}
-                className="flex-1 hover:border-purple-500/20 hover:bg-purple-950/10 group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-purple-950/50 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-shadow">
-                  <Link2 className="w-3.5 h-3.5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Upstream Health</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[13px] font-bold text-slate-100 group-hover:text-purple-100 transition-colors leading-tight">Blocked by API</span>
+                {/* Capacity Used */}
+                <div 
+                  onClick={onCapacityClick}
+                  className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Capacity Used</span>
+                    <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">Open <ArrowRight className="w-3 h-3" /></span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-slate-100 tracking-tight leading-none">87%</span>
+                    <span className="text-[10px] font-bold text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] leading-none">2 hot teammates</span>
                   </div>
                 </div>
-              </Widget>
-            </>
+
+                {/* On-Time Drop Rate */}
+                <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">On-Time Rate</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">Open <ArrowRight className="w-3 h-3" /></span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-slate-100 tracking-tight leading-none">91%</span>
+                    <span className="text-[10px] font-bold text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] leading-none">▲ 3%</span>
+                  </div>
+                </div>
+
+                {/* Forecast Stability */}
+                <div className="flex-1 p-4 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Forecast Stability</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">Open <ArrowRight className="w-3 h-3" /></span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-slate-100 tracking-tight leading-none">±1.2</span>
+                      <span className="text-[10px] text-slate-500 font-medium leading-none">days</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] leading-none">tight band</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
         {/* ── Row 2: Human Intervention / Executive Accountability ───────────────────────── */}
-        <div className="flex gap-2.5">
-          {isOwner ? (
+        {isOwner && (
+          <div className="flex gap-2.5 mt-2.5">
             <>
               {/* Execution Accuracy */}
               <Widget className="flex-1 border-emerald-500/20 bg-emerald-950/10 group">
@@ -327,84 +357,8 @@ export function DailyBriefing({
                 </div>
               </Widget>
             </>
-          ) : (
-            <AnimatePresence mode="popLayout">
-              {/* Blocker Resolution */}
-              <motion.div key="resolution" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                <Widget
-                  className={cn(
-                    'w-full transition-all duration-300',
-                    blockerResolutionCount > 0
-                      ? 'border-rose-500/25 hover:border-rose-500/50 shadow-[0_0_20px_rgba(225,29,72,0.08)]'
-                      : 'opacity-40 grayscale-[0.5] border-white/5'
-                  )}
-                >
-                  <div className={cn(
-                    "w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors",
-                    blockerResolutionCount > 0 ? "bg-rose-950/60 border-rose-500/30" : "bg-slate-900/40 border-slate-800"
-                  )}>
-                    <AlertTriangle className={cn("w-3.5 h-3.5", blockerResolutionCount > 0 ? "text-rose-400" : "text-slate-600")} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-[9px] font-bold uppercase tracking-widest leading-none mb-1", blockerResolutionCount > 0 ? "text-rose-400" : "text-slate-500")}>
-                      Blockers
-                    </p>
-                    <p className="text-xs text-slate-300 leading-snug truncate">
-                      {blockerResolutionCount > 0
-                        ? <span className="text-rose-400 font-semibold">{blockerResolutionCount} required</span>
-                        : 'No active blockers'}
-                    </p>
-                  </div>
-                  {blockerResolutionCount > 0 && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDismissResolution?.(); }}
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-rose-700/50 hover:text-rose-300 hover:bg-rose-900/40 transition-all shrink-0"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Widget>
-              </motion.div>
-
-              {/* Forecast Slip */}
-              <motion.div key="forecast" variants={cardVariants} initial="initial" animate="animate" exit="exit" layout className="flex-1">
-                <Widget
-                  className={cn(
-                    'w-full transition-all duration-300',
-                    forecastSlipHours > 0
-                      ? 'border-amber-500/25 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.08)]'
-                      : 'opacity-40 grayscale-[0.5] border-white/5'
-                  )}
-                >
-                  <div className={cn(
-                    "w-9 h-9 rounded-full border flex items-center justify-center shrink-0 transition-colors",
-                    forecastSlipHours > 0 ? "bg-amber-950/60 border-amber-500/30" : "bg-slate-900/40 border-slate-800"
-                  )}>
-                    <TrendingUp className={cn("w-3.5 h-3.5", forecastSlipHours > 0 ? "text-amber-400" : "text-slate-600")} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-[9px] font-bold uppercase tracking-widest leading-none mb-1", forecastSlipHours > 0 ? "text-amber-400" : "text-slate-500")}>
-                      Forecast Slip
-                    </p>
-                    <p className="text-xs text-slate-300 leading-snug truncate">
-                      {forecastSlipHours > 0
-                        ? <><span className="text-amber-400 font-semibold">+{forecastSlipHours}h</span> slip</>
-                        : 'On schedule'}
-                    </p>
-                  </div>
-                  {forecastSlipHours > 0 && (
-                    <button
-                      onClick={onDismissForecast}
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-amber-700/50 hover:text-amber-300 hover:bg-amber-900/40 transition-all shrink-0"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Widget>
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

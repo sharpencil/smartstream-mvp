@@ -8,7 +8,7 @@ import { DailyBriefing } from './DailyBriefing';
 import { cn } from '@/lib/utils';
 import { STAGING_DROPS, STAGING_STREAMS } from '@/lib/stagingData';
 import { STREAM_COLORS, StreamColorKey, Reference, PALETTE_KEYS, getStreamColor } from '@/lib/streams';
-import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock, ArrowLeft } from 'lucide-react';
+import { Zap, PlayCircle, ChevronDown, AlertTriangle, Plus, Minus, Link, X, Crosshair, Search, Clock, ArrowLeft, Brain } from 'lucide-react';
 import { format, addDays, startOfDay, addHours, differenceInDays, differenceInWeeks, isWeekend, startOfWeek } from 'date-fns';
 import { BacklogTray } from './BacklogTray';
 import { mockEmployees } from '@/lib/mockTeam';
@@ -126,7 +126,7 @@ function TimeAxis({ zoomScale, nowX, totalWidth, sidebarWidth, hoveredDrop, sele
 
   return (
     <div
-      className="sticky top-[80px] z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none"
+      className="sticky top-[76px] z-[110] h-12 border-b border-white/5 bg-[#020617]/80 backdrop-blur-md pointer-events-none"
       style={{ width: totalWidth + sidebarWidth }}
       suppressHydrationWarning
     >
@@ -466,6 +466,19 @@ function dropRightEdge(drop: DropData, zoomScale: number) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
+interface Decision {
+  id: string;
+  dropId: string;
+  fromMemberId: string;
+  toMemberId: string;
+  impact: string;
+  type: 'reassign';
+}
+
+const INITIAL_DECISIONS: Decision[] = [
+  { id: 'dec-1', dropId: 'staging-8120', fromMemberId: '3', toMemberId: '1', impact: '-4.0h slip', type: 'reassign' }
+];
+
 export function PulseDashboard() {
   const { isDeepDive, setIsDeepDive, setActivePersona, setFeed, selectedProjectId, activePersona, analysisMode, setAnalysisMode } = usePersona();
   
@@ -484,6 +497,7 @@ export function PulseDashboard() {
   const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(null);
   const [isBurndownOpen, setIsBurndownOpen] = useState(false);
 
+  const [decisions, setDecisions] = useState<Decision[]>(INITIAL_DECISIONS);
   const [milestones, setMilestones] = useState<Milestone[]>(DEFAULT_MILESTONES);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
 
@@ -497,6 +511,8 @@ export function PulseDashboard() {
 
   const [drops, setDrops] = useState<DropData[]>(INITIAL_DROPS);
   const [unassignedDrops, setUnassignedDrops] = useState<DropData[]>(INITIAL_UNASSIGNED_DROPS);
+
+  const [highlightHotLanes, setHighlightHotLanes] = useState(false);
 
   const [zoomScale, setZoomScale] = useState(INITIAL_ZOOM);
   const [minZoom, setMinZoom] = useState(0.05);
@@ -967,12 +983,26 @@ export function PulseDashboard() {
     setFeed(prev => [{ id: Date.now().toString(), type: 'update', text: <span><span className="text-slate-400 font-medium">Discarded:</span> What-If changes reverted.</span> }, ...prev]);
   };
 
+  const handleApproveDecision = (decision: Decision) => {
+    setDecisions(prev => prev.filter(d => d.id !== decision.id));
+    setDrops(prev => prev.map(drop => {
+      if (drop.id === decision.dropId) {
+        return { ...drop, lane: TEAM_MEMBERS.findIndex(m => m.id === decision.toMemberId) };
+      }
+      return drop;
+    }));
+    setFeed(prev => [{
+      id: Date.now().toString(),
+      type: 'update',
+      text: <span><span className="text-cyan-400 font-medium">Decision Executed:</span> Reassigned DROP-8120 to {TEAM_MEMBERS.find(m => m.id === decision.toMemberId)?.name}.</span>
+    }, ...prev]);
+  };
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
     <>
       <div className={cn("w-full flex flex-col transition-all duration-500 ease-in-out text-slate-50 pb-32",
-        "min-h-full overflow-y-auto",
         "bg-[#020617]",
         isSandboxActive && "border-[2px] border-amber-500 shadow-[inset_0_0_80px_rgba(245,158,11,0.15)]"
       )}>
@@ -1005,7 +1035,7 @@ export function PulseDashboard() {
         </div>
 
         {/* ── Main Scroll Context (Vertical) ── */}
-        <div className="flex-1 flex flex-col px-8">
+        <div className="flex flex-col px-8">
           {/* Daily Briefing (Scrollable) */}
           <div>
             <DailyBriefing
@@ -1022,6 +1052,14 @@ export function PulseDashboard() {
               blockerResolutionCount={resolutionDismissed ? 0 : blockerCount}
               onDismissResolution={() => setResolutionDismissed(true)}
               onBurndownClick={() => setIsBurndownOpen(true)}
+              onCapacityClick={() => {
+                setViewLevel('team');
+                setFocusedStreamId(null);
+                setFocusedMilestoneId(null);
+                setHoveredStreamId(null);
+                setHoveredDropId(null);
+                setHighlightHotLanes(true);
+              }}
               onClickBlocker={() => {
                 // Scroll to first blocked drop (future: auto-scroll)
                 setHoveredStreamId(null);
@@ -1031,8 +1069,7 @@ export function PulseDashboard() {
 
           {/* Timeline Section */}
           <div className={cn(
-            "flex flex-col relative min-h-0",
-            analysisMode === 'timeline' ? "flex-1" : "flex-none"
+            "flex flex-col relative min-h-0 w-full flex-none"
           )}>
             {/* Scrollable Flow Area (Horizontal) */}
               <div
@@ -1042,7 +1079,7 @@ export function PulseDashboard() {
                 }}
                 className={cn(
                   'flex flex-col pt-0 pb-32 relative min-w-0 transition-all duration-500',
-                  analysisMode === 'timeline' ? 'flex-1 overflow-x-auto custom-scrollbar' : 'flex-none overflow-visible'
+                  analysisMode === 'timeline' ? 'flex-none overflow-x-auto custom-scrollbar' : 'flex-none overflow-visible'
                 )}>
 
               {/* Invisible Scroll Width Spacer */}
@@ -1053,12 +1090,47 @@ export function PulseDashboard() {
 
               {/* Top toolbar (Sticky within the vertical scroll container) */}
               <div className={cn(
-                "left-0 right-0 z-[80] flex items-center justify-between pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 px-8 rounded-b-2xl border-b border-white/5 shadow-2xl",
+                "left-0 right-0 z-[80] flex items-center justify-between pointer-events-none bg-[#020617]/40 backdrop-blur-md py-5 rounded-b-2xl border-b border-white/5 shadow-2xl",
                 "sticky top-0"
               )}>
 
-                {/* Left: Empty spacer */}
-                <div className="flex-1" />
+                {/* Left: Zoom Controls */}
+                <div className="flex-1 flex justify-start items-center pointer-events-auto">
+                  {analysisMode === 'timeline' && (
+                    <div className="inline-flex items-center bg-[#0a192f]/80 backdrop-blur-md rounded-xl p-1 h-10 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                      <button
+                        onClick={() => setZoomScale(prev => Math.max(minZoom, prev - 0.1))}
+                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all disabled:opacity-30"
+                        disabled={zoomScale <= minZoom}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+
+                      <div className="px-3 flex items-center">
+                        <input
+                          type="range"
+                          min={minZoom}
+                          max={2}
+                          step={0.01}
+                          value={zoomScale}
+                          onChange={(e) => setZoomScale(parseFloat(e.target.value))}
+                          className="w-32 h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500
+                                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+                                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500
+                                    [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,211,238,0.8)]
+                                    hover:[&::-webkit-slider-thumb]:scale-125 transition-transform"
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => setZoomScale(prev => Math.min(2, prev + 0.1))}
+                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Center: Mode Toggles */}
                 <div className="flex items-center gap-4 pointer-events-auto">
@@ -1095,6 +1167,7 @@ export function PulseDashboard() {
                           setFocusedMilestoneId(null);
                           setHoveredStreamId(null);
                           setHoveredDropId(null);
+                          setHighlightHotLanes(false);
                         }}
                         className={cn(
                           'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
@@ -1111,6 +1184,7 @@ export function PulseDashboard() {
                           setFocusedMilestoneId(null);
                           setHoveredStreamId(null);
                           setHoveredDropId(null);
+                          setHighlightHotLanes(false);
                         }}
                         className={cn(
                           'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
@@ -1128,6 +1202,7 @@ export function PulseDashboard() {
                           setActiveMilestoneId(null);
                           setHoveredStreamId(null);
                           setHoveredDropId(null);
+                          setHighlightHotLanes(false);
                         }}
                         className={cn(
                           'px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all relative whitespace-nowrap',
@@ -1140,42 +1215,8 @@ export function PulseDashboard() {
                   )}
                 </div>
 
-                {/* Right: Zoom + What-If */}
-                <div className="flex-1 flex justify-end items-center gap-4 pointer-events-auto">
-                  {analysisMode === 'timeline' && (
-                    <div className="inline-flex items-center bg-[#0a192f]/80 backdrop-blur-md rounded-xl p-1 h-10 border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                      <button
-                        onClick={() => setZoomScale(prev => Math.max(minZoom, prev - 0.1))}
-                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all disabled:opacity-30"
-                        disabled={zoomScale <= minZoom}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-
-                      <div className="px-3 flex items-center">
-                        <input
-                          type="range"
-                          min={minZoom}
-                          max={2}
-                          step={0.01}
-                          value={zoomScale}
-                          onChange={(e) => setZoomScale(parseFloat(e.target.value))}
-                          className="w-32 h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500
-                                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
-                                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500
-                                    [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,211,238,0.8)]
-                                    hover:[&::-webkit-slider-thumb]:scale-125 transition-transform"
-                        />
-                      </div>
-
-                      <button
-                        onClick={() => setZoomScale(prev => Math.min(2, prev + 0.1))}
-                        className="w-8 h-full flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
+                {/* Right: What-If */}
+                <div className="flex-1 flex justify-end items-center pointer-events-auto">
 
                   <div className="flex items-center">
                     {!isSandboxActive && activePersona !== 'Org Owner' && (
@@ -1233,6 +1274,71 @@ export function PulseDashboard() {
                       hoveredDrop={hoveredDropId ? drops.find(d => d.id === hoveredDropId) : null}
                       selectedDrop={selectedDropId ? drops.find(d => d.id === selectedDropId) : null}
                     />
+
+                    {/* Task 2: AI-Powered Decisions Waiting */}
+                    {viewLevel === 'team' && (
+                      <div className="absolute top-[60px] z-[130] flex gap-4 px-8 pointer-events-none" style={{ left: currentSidebarWidth }}>
+                        <AnimatePresence>
+                          {decisions.map(decision => {
+                            const drop = drops.find(d => d.id === decision.dropId);
+                            if (!drop) return null;
+                            const fromMember = TEAM_MEMBERS.find(m => m.id === decision.fromMemberId);
+                            const toMember = TEAM_MEMBERS.find(m => m.id === decision.toMemberId);
+                            
+                            return (
+                              <motion.div
+                                key={decision.id}
+                                initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                                className="pointer-events-auto bg-[#0a192f]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-3 shadow-[0_0_30px_rgba(34,211,238,0.2)] flex items-center gap-4 group min-w-[450px]"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                                  <Brain className="w-4 h-4 text-cyan-400" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-black uppercase tracking-tighter text-cyan-400/70">AI Suggestion</span>
+                                  <span className="text-xs text-slate-100 font-bold whitespace-nowrap">
+                                    Move <span className="text-cyan-400 font-black">{drop.id.toUpperCase()}</span> from {fromMember?.name} to {toMember?.name}
+                                  </span>
+                                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-tight">Impact: {decision.impact}</span>
+                                </div>
+                                <div className="flex gap-1.5 ml-2">
+                                  <button 
+                                    onClick={() => handleApproveDecision(decision)}
+                                    className="px-3 py-1 rounded-lg bg-cyan-500 text-cyan-950 text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-colors"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button className="px-3 py-1 rounded-lg bg-white/5 text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors">
+                                    Modify
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {/* Task 5: Week Ahead Pulse (Grid Overlay) */}
+                    {viewLevel !== 'milestones' && (
+                      <div 
+                        className="absolute top-[120px] bottom-0 z-[10] pointer-events-none border-x border-cyan-500/5 bg-cyan-500/[0.02]"
+                        style={{ 
+                          left: (NOW_LINE_X * zoomScale) + currentSidebarWidth,
+                          width: (5 * DAY_WIDTH) * zoomScale
+                        }}
+                      >
+                        <div className="absolute top-0 left-0 right-0 h-8 border-b border-cyan-500/10 flex justify-around items-center px-4">
+                          {['Mon: Mark/Sam free', 'Tue: Stability Up', 'Wed: API Focus', 'Thu: Bottleneck Auth', 'Fri: Prep Release'].map((label, i) => (
+                            <span key={i} className="text-[8px] font-black uppercase tracking-tighter text-cyan-500/40 whitespace-nowrap">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
               {/* Now Line Distance Gauge (Hover-based) */}
               <AnimatePresence>
@@ -1501,7 +1607,8 @@ export function PulseDashboard() {
                               exit={{ opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.3 } }}
                               className={cn(
                                 "transition-all duration-700",
-                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "border-b border-white/5"
+                                isFocused ? "border-2 border-cyan-500/30 bg-cyan-950/5 shadow-[0_0_40px_rgba(34,211,238,0.1)] p-1" : "border-b border-white/5",
+                                highlightHotLanes && (parseInt(member.id) === 3 || parseInt(member.id) === 5) && !isFocused && "bg-amber-950/20 border-amber-500/40 shadow-[inset_0_0_50px_rgba(245,158,11,0.05)]"
                               )}
                               style={{ minWidth: (PROJECT_END_X * zoomScale) + 320 }}
                             >
@@ -1567,13 +1674,28 @@ export function PulseDashboard() {
                                             </Popover.Content>
                                           )}
                                         </Popover.Root>
-                                        <div className={cn(
-                                          'text-[10px] font-bold px-1.5 py-0.5 rounded transition-all duration-500 w-fit mt-0.5 border',
-                                          (memberVelocity[member.id] || 0) >= 0
-                                            ? 'bg-green-950/40 text-green-400 border-green-500/20 shadow-[0_0_8px_rgba(34,197,94,0.1)]'
-                                            : 'bg-amber-950/40 text-amber-500 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]'
-                                        )}>
-                                          {(memberVelocity[member.id] || 0) >= 0 ? '+' : ''}{memberVelocity[member.id] || 0}%
+                                        <div className="flex flex-col gap-1.5 mt-1.5">
+                                          <div className={cn(
+                                            'text-[10px] font-bold px-1.5 py-0.5 rounded transition-all duration-500 w-fit border',
+                                            (memberVelocity[member.id] || 0) >= 0
+                                              ? 'bg-green-950/40 text-green-400 border-green-500/20 shadow-[0_0_8px_rgba(34,197,94,0.1)]'
+                                              : 'bg-amber-950/40 text-amber-500 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]'
+                                          )}>
+                                            {(memberVelocity[member.id] || 0) >= 0 ? '+' : ''}{memberVelocity[member.id] || 0}%
+                                          </div>
+                                          
+                                          {/* Task 3: Resource Load Metrics */}
+                                          <div className="flex items-center gap-2">
+                                            <span className={cn(
+                                              "text-[10px] font-black uppercase tracking-tighter transition-colors duration-500",
+                                              (parseInt(member.id) === 3 || parseInt(member.id) === 5) ? (highlightHotLanes ? "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-amber-500") : "text-emerald-400"
+                                            )}>
+                                              {(parseInt(member.id) === 3 || parseInt(member.id) === 5) ? "145% Load" : "78% Load"}
+                                            </span>
+                                            <span className="text-[9px] text-slate-500 font-bold italic truncate max-w-[80px]">
+                                              {parseInt(member.id) % 2 === 0 ? "free at 2 p.m." : "out Mon"}
+                                            </span>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
