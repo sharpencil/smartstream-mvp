@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
-import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2, Maximize2, Coins, Zap, Target, Users, Shield, AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertTriangle, TrendingUp, X, Activity, Brain, TrendingDown, Link2, Maximize2, Coins, Zap, Target, Users, Shield, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { BurndownChart } from './BurndownChart';
 import { cn } from '@/lib/utils';
 import { usePersona } from '@/context/PersonaContext';
@@ -82,79 +82,79 @@ export function DailyBriefing({
   onToggleSandbox,
   onCommitSandbox,
   blockerResolutionCount = 0,
-    onDismissResolution,
-    onBurndownClick,
-    onCapacityClick,
-  }: DailyBriefingProps) {
-    const { activePersona } = usePersona();
-    const isOwner = activePersona === 'Org Owner';
-    const hasAnyException = blockerCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
-  
-    return (
-      <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
-        <div className="py-5 relative">
-          {isSandboxActive && (
-            <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500">
-              <div className="flex items-center gap-8 w-full justify-between">
-                <div className="flex items-center gap-8">
-                  <div>
-                    <h3 className="text-amber-500 font-bold tracking-widest uppercase text-[10px] mb-1 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                      What-If Mode Active
-                    </h3>
-                    <p className="text-amber-100/70 text-xs font-medium">
-                      {isOwner ? 'Evaluating Margin & Utilization Impact' : 'Evaluating draft scenarios.'}
-                    </p>
-                  </div>
-                  <div className="w-px h-8 bg-white/10" />
-                  <AnimatePresence>
-                    {sandboxDelta && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
-                          {isOwner ? 'Strategic Impact Scorecard' : 'Scenario Comparison'}
-                        </p>
-                        <div className="flex gap-5 bg-black/40 rounded-lg px-4 py-2 border border-white/5">
-                          {isOwner ? (
-                            <>
-                              <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.cost <= 0 ? "text-emerald-400" : "text-amber-400")}>
-                                {sandboxDelta.cost <= 0 ? "+" : "-"}${Math.abs(sandboxDelta.cost * 1.5).toFixed(1)}k
-                                <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.cost <= 0 ? "text-emerald-500/60" : "text-amber-500/60")}>
-                                  Est. Margin
-                                </span>
-                              </span>
-                              <div className="w-px h-full bg-white/10" />
-                              <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.date <= 0 ? "text-emerald-400" : "text-amber-400")}>
-                                {sandboxDelta.date <= 0 ? "+" : "-"}{Math.abs(sandboxDelta.date * 2)}%
-                                <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.date <= 0 ? "text-emerald-500/60" : "text-amber-500/60")}>
-                                  Firm Utilization
-                                </span>
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.date <= 0 ? "text-green-400" : "text-rose-400")}>
-                                {sandboxDelta.date <= 0 ? "" : "+"}{sandboxDelta.date} Days
-                                <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.date <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
-                                  {sandboxDelta.date <= 0 ? "(Earlier)" : "(Later)"} | Finish Date
-                                </span>
-                              </span>
-                              <div className="w-px h-full bg-white/10" />
-                              <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.cost <= 0 ? "text-green-400" : "text-rose-400")}>
-                                {sandboxDelta.cost <= 0 ? "" : "+"}${sandboxDelta.cost}
-                                <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.cost <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
-                                  (Tokens) | Cost
-                                </span>
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+  onDismissResolution,
+  onBurndownClick,
+  onCapacityClick,
+}: DailyBriefingProps) {
+  const { activePersona } = usePersona();
+  const isOwner = activePersona === 'Org Owner';
+  const hasAnyException = blockerCount > 0 || forecastSlipHours > 0 || blockerResolutionCount > 0;
+
+  return (
+    <div className="relative z-20 border-b border-white/[0.06] bg-[#020617]/80 backdrop-blur-xl">
+      <div className="py-5 relative">
+        {isSandboxActive && (
+          <div className="absolute inset-0 z-50 bg-[#020617]/95 backdrop-blur-xl flex items-center justify-between px-0 border-b-2 border-amber-500/50 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.15)] transition-all duration-500">
+            <div className="flex items-center gap-8 w-full justify-between">
+              <div className="flex items-center gap-8">
+                <div>
+                  <h3 className="text-amber-500 font-bold tracking-widest uppercase text-[10px] mb-1 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    What-If Mode Active
+                  </h3>
+                  <p className="text-amber-100/70 text-xs font-medium">
+                    {isOwner ? 'Evaluating Margin & Utilization Impact' : 'Evaluating draft scenarios.'}
+                  </p>
                 </div>
+                <div className="w-px h-8 bg-white/10" />
+                <AnimatePresence>
+                  {sandboxDelta && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                        {isOwner ? 'Strategic Impact Scorecard' : 'Scenario Comparison'}
+                      </p>
+                      <div className="flex gap-5 bg-black/40 rounded-lg px-4 py-2 border border-white/5">
+                        {isOwner ? (
+                          <>
+                            <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.cost <= 0 ? "text-emerald-400" : "text-amber-400")}>
+                              {sandboxDelta.cost <= 0 ? "+" : "-"}${Math.abs(sandboxDelta.cost * 1.5).toFixed(1)}k
+                              <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.cost <= 0 ? "text-emerald-500/60" : "text-amber-500/60")}>
+                                Est. Margin
+                              </span>
+                            </span>
+                            <div className="w-px h-full bg-white/10" />
+                            <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.date <= 0 ? "text-emerald-400" : "text-amber-400")}>
+                              {sandboxDelta.date <= 0 ? "+" : "-"}{Math.abs(sandboxDelta.date * 2)}%
+                              <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.date <= 0 ? "text-emerald-500/60" : "text-amber-500/60")}>
+                                Firm Utilization
+                              </span>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.date <= 0 ? "text-green-400" : "text-rose-400")}>
+                              {sandboxDelta.date <= 0 ? "" : "+"}{sandboxDelta.date} Days
+                              <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.date <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
+                                {sandboxDelta.date <= 0 ? "(Earlier)" : "(Later)"} | Finish Date
+                              </span>
+                            </span>
+                            <div className="w-px h-full bg-white/10" />
+                            <span className={cn("font-bold flex items-baseline gap-1 text-sm", sandboxDelta.cost <= 0 ? "text-green-400" : "text-rose-400")}>
+                              {sandboxDelta.cost <= 0 ? "" : "+"}${sandboxDelta.cost}
+                              <span className={cn("text-[10px] uppercase font-bold", sandboxDelta.cost <= 0 ? "text-green-500/60" : "text-rose-500/60")}>
+                                (Tokens) | Cost
+                              </span>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         {/* ── Row 1: Executive / Status Vitals ─────────────────────────────────────────── */}
         <div className="flex gap-2.5 mb-2.5">
@@ -170,9 +170,9 @@ export function DailyBriefing({
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-[14px] font-bold text-slate-100 group-hover:text-amber-50 transition-colors leading-none">$124k / $250k</span>
                     <div className="flex gap-0.5 items-end h-2.5">
-                       {[30, 45, 35, 60, 55, 75, 70].map((h, i) => (
-                         <div key={i} className="w-0.5 bg-amber-500/60 rounded-full" style={{ height: `${h}%` }} />
-                       ))}
+                      {[30, 45, 35, 60, 55, 75, 70].map((h, i) => (
+                        <div key={i} className="w-0.5 bg-amber-500/60 rounded-full" style={{ height: `${h}%` }} />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -224,36 +224,36 @@ export function DailyBriefing({
             <div className="flex flex-col gap-2.5 w-full">
               <div className="flex gap-2.5 w-full items-stretch">
                 {/* Task 1: Narrative Oracle Briefing */}
-                <div className="flex-[2.5] bg-[#0b1929]/40 border border-cyan-500/10 rounded-2xl p-5 flex flex-col justify-center relative overflow-hidden group shadow-[inset_0_0_40px_rgba(34,211,238,0.05)]">
-                  <div className="absolute top-0 left-0 w-1.5 h-full bg-cyan-500/50" />
+                <div className="flex-[2.5] bg-[#0b1929]/40 border border-indigo-500/10 rounded-2xl p-5 flex flex-col justify-center relative overflow-hidden group shadow-[inset_0_0_40px_rgba(99,102,241,0.05)]">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500/50" />
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-4 h-4 text-cyan-400" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-cyan-500/70">Oracle Briefing</span>
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500/70">Oracle Briefing</span>
                   </div>
                   <p className="text-[14px] text-slate-100 font-medium leading-relaxed max-w-4xl">
-                    Phoenix is on forecast for <span className="text-cyan-400 font-bold">June 12</span> at <span className="text-emerald-400 font-bold">92% confidence</span>. Confidence rose 5% since CDC cleared the dependency on legacy auth.
+                    Phoenix is on forecast for <span className="text-indigo-400 font-bold">June 12</span> at <span className="text-emerald-400 font-bold">92% confidence</span>. Confidence rose 5% since CDC cleared the dependency on legacy auth.
                   </p>
                 </div>
 
                 {/* Project Burndown */}
-                <Widget 
+                <div 
                   onClick={onBurndownClick}
-                  className="flex-[1] hover:border-teal-500/20 hover:bg-teal-950/10 group relative !h-auto min-h-[80px]"
+                  className="flex-[1] bg-[#0b1929]/40 border border-white/[0.07] rounded-2xl p-5 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5"
                 >
-                  <div className="absolute top-2 right-2 transition-opacity">
-                     <Maximize2 className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 transition-colors" />
+                  <div className="absolute top-4 right-4 opacity-40 group-hover:opacity-100 transition-opacity">
+                    <Maximize2 className="w-3 h-3 text-teal-400" />
                   </div>
-                  <div className="w-9 h-9 rounded-xl bg-teal-950/50 border border-teal-500/20 flex items-center justify-center shrink-0">
-                    <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Project Burndown</span>
                   </div>
-                  <div>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-1 whitespace-nowrap">Project Burndown</p>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-[15px] font-bold text-slate-100 group-hover:text-teal-50 transition-colors leading-none">72%</span>
+                  <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline gap-2.5">
+                      <span className="text-2xl font-bold text-slate-100 tracking-tight leading-none">72%</span>
                       <BurndownChart />
                     </div>
+                    <span className="text-[10px] font-bold text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] leading-none">on track</span>
                   </div>
-                </Widget>
+                </div>
               </div>
 
               <div className="w-full bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex flex-col sm:flex-row overflow-hidden shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]">
@@ -273,7 +273,7 @@ export function DailyBriefing({
                 </div>
 
                 {/* Capacity Used */}
-                <div 
+                <div
                   onClick={onCapacityClick}
                   className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-white/10 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5"
                 >
@@ -347,10 +347,10 @@ export function DailyBriefing({
                   <div className="flex items-center gap-4">
                     <span className="text-[15px] font-bold text-cyan-100 leading-none">Beta Launch (82%)</span>
                     <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <motion.div 
+                      <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: '82%' }}
-                        className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
+                        className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
                       />
                     </div>
                   </div>

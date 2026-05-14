@@ -96,7 +96,7 @@ export function TeamMatchDashboard({ onTraceDependency, onOverride, selectedDate
                   {/* Score */}
                   <div className="flex flex-col items-center justify-center min-w-[80px]">
                     <span className={cn(
-                      "text-4xl font-sans font-black tracking-tight leading-none mb-1",
+                      "text-4xl font-sans font-bold tracking-tight leading-none mb-1",
                       match.score >= 0.8 ? "text-teal-400" : "text-amber-400"
                     )}>
                       {match.score.toFixed(2)}
@@ -133,9 +133,9 @@ export function TeamMatchDashboard({ onTraceDependency, onOverride, selectedDate
                       </div>
                     </div>
 
-                    <div className="bg-[#0a192f]/50 rounded-lg p-3 border border-white/5 flex items-start gap-3 mt-2">
-                      <Zap className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                      <p className="text-sm text-slate-300">{match.rationale}</p>
+                    <div className="bg-indigo-500/10 rounded-lg p-3 border border-indigo-500/20 flex items-start gap-3 mt-2 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+                      <Zap className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                      <p className="text-sm text-indigo-100/90 leading-relaxed">{match.rationale}</p>
                     </div>
                   </div>
 

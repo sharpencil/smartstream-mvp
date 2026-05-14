@@ -161,7 +161,7 @@ export default function TeamPage() {
               onClick={() => setViewMode('orchestration')}
               className={cn(
                 "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
-                viewMode === 'orchestration' ? "bg-cyan-950/80 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] border border-cyan-500/20" : "text-slate-500 hover:text-slate-300"
+                viewMode === 'orchestration' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-500 hover:text-slate-300"
               )}
             >
               Orchestration
@@ -170,7 +170,7 @@ export default function TeamPage() {
               onClick={() => setViewMode('roster')}
               className={cn(
                 "px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all outline-none",
-                viewMode === 'roster' ? "bg-cyan-950/80 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] border border-cyan-500/20" : "text-slate-500 hover:text-slate-300"
+                viewMode === 'roster' ? "bg-teal-950/80 text-teal-400 shadow-inner shadow-teal-500/20 border border-teal-500/20" : "text-slate-500 hover:text-slate-300"
               )}
             >
               Roster

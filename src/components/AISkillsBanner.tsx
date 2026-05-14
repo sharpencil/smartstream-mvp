@@ -40,7 +40,7 @@ export function AISkillsBanner({ onRecommend, isRecommending }: AISkillsBannerPr
           onClick={onRecommend}
           disabled={isRecommending}
           className={cn(
-            "px-6 py-3 rounded-full bg-cyan-500 text-[#020617] text-xs font-bold uppercase tracking-[0.1em] shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all flex items-center gap-2 hover:scale-105 active:scale-95",
+            "px-6 py-3 rounded-full bg-indigo-500 text-white text-xs font-bold uppercase tracking-[0.1em] shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all flex items-center gap-2 hover:scale-105 active:scale-95",
             isRecommending && "opacity-50 cursor-not-allowed"
           )}
         >
