@@ -240,8 +240,10 @@ export function DailyBriefing({
                   onClick={onBurndownClick}
                   className="flex-[1] bg-[#0b1929]/40 border border-white/[0.07] rounded-2xl p-5 flex flex-col justify-center group hover:bg-white/[0.02] transition-colors relative cursor-pointer gap-1.5"
                 >
-                  <div className="absolute top-4 right-4 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <Maximize2 className="w-3 h-3 text-teal-400" />
+                  <div className="absolute top-4 right-4 z-20">
+                    <div className="p-1.5 rounded-lg bg-white/10 border border-white/10 text-slate-400 group-hover:text-cyan-400 group-hover:bg-white/20 transition-all shadow-lg">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Project Burndown</span>

@@ -36,12 +36,12 @@ export function AgentPanel() {
       quickActions = ['Explain this Drop', 'Lookup Technical Spec', 'Record Rationale'];
       break;
     case 'Org Owner':
-      briefing = "COO mode engaged. Firm-wide velocity is up 12%. 1 Knowledge Silo detected in Database Consolidation.";
+      briefing = "Strategic Comparison mode active. Project SmartStream is 20% more cost-effective per drop than Enterprise Gateway. However, Mobile App Refresh maintains the highest Forecast Stability (92%), making it your most reliable initiative for upcoming stakeholder commitments.";
       feed = [
-        { id: '1', type: 'alert', text: 'Project Database Consolidation just slipped 2 days. Financial impact: +$1.2k.' },
-        { id: '2', type: 'suggestion', text: 'Predictive deficit in PostgreSQL skills. Recommendation: Onboard 1 Senior DB Engineer.' }
+        { id: '1', type: 'alert', text: 'Database Consolidation ROI is dropping. Cost per drop is now $2.2k (+12% variance).' },
+        { id: '2', type: 'suggestion', text: 'High-Performance Flow detected in SmartStream Core. Cross-train Enterprise Gateway leads on their sprint cadence?' }
       ];
-      quickActions = analysisMode === 'analysis' ? [] : ['Identify Hiring Needs', 'Audit Firm Accuracy', 'Security Status Check'];
+      quickActions = analysisMode === 'analysis' ? [] : ['Audit Firm ROI', 'Optimize Talent Mix', 'Security Status Check'];
       break;
     case 'Project Manager':
     default:
