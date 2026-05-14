@@ -36,7 +36,7 @@ import {
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { mockEmployees } from '@/lib/mockTeam';
-import { STAGING_STREAMS } from '@/lib/stagingData';
+import { STAGING_STREAMS, StagingDrop } from '@/lib/stagingData';
 import { getStreamColor } from '@/lib/streams';
 import * as Popover from '@radix-ui/react-popover';
 
